@@ -58,7 +58,7 @@ Nmap done: 1 IP address (1 host up) scanned in 3.58 seconds
 
 ## STEP 2
 ftpでファイル探索  
-ユーザフラグはゲット！  
+ユーザフラグゲット！  
 ルートフラグは権限不足で確認できず
 ```sh
 └─$ tnftp -a 10.129.17.67
@@ -159,6 +159,7 @@ local: PRTG Configuration.old.bak remote: PRTG Configuration.old.bak
 
 
 ## STEP 4
+PoCでエクスプロイト  
 PoCの仕組みは、`msfvenom`でリバースシェルのDLLを作成し、`impacket-smbserver`でDLLをアップロード  
 CVE-2018-9276のOSコマンドインジェクションでDLLをrundllで実行させ、リバースシェル取得するかんじ  
 ルートフラグゲット！
@@ -233,7 +234,7 @@ whoami
 nt authority\system
 
 
-C:\Windows\system32>cat 'c:\Users\Administrator\Desktop\root.txt'
+C:\Windows\system32>type 'c:\Users\Administrator\Desktop\root.txt'
 cat 'c:\Users\Administrator\Desktop\root.txt'
 74857cea503cf62366e036300f64b6c8
 
