@@ -26,7 +26,7 @@ Open 10.129.207.242:80
 
 curlでヘッダを確認、PHPのバージョンを確認できた
 ```sh
-└─$ curl --head http://10.129.207.242 
+└─$ curl -I http://10.129.207.242 
 HTTP/1.1 200 OK
 Date: Wed, 25 Jun 2025 04:22:33 GMT
 Server: Apache/2.4.41 (Ubuntu)
