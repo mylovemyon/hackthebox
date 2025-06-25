@@ -22,7 +22,7 @@ Open 10.129.207.242:80
 
 
 ## STEP 2  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Knife_01.png" width="100%" height="100%">
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Knife_01.png" width="50%" height="50%">
 
 curlでヘッダを確認、PHPのバージョンを確認できた
 ```sh
