@@ -197,7 +197,7 @@ Using domain: WORKGROUP, user: kali
 smb://10.129.246.135/Replication//active.htb/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/MACHINE/Preferences/Groups/Groups.xml
 Downloaded 533b in 7 seconds
 ```
-[MS14-0245](https://learn.microsoft.com/en-us/security-updates/securitybulletins/2014/ms14-025)という脆弱性があり、以前GPPにユーザとAESで暗号化されたパスワードが含まれていた
+[MS14-025](https://learn.microsoft.com/en-us/security-updates/securitybulletins/2014/ms14-025)という脆弱性があり、以前GPPにユーザとAESで暗号化されたパスワードが含まれていた
 ```sh
 └─$ cat Groups.xml 
 <?xml version="1.0" encoding="utf-8"?>
