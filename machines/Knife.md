@@ -1,3 +1,5 @@
+https://app.hackthebox.com/machines/Knife
+
 ## STEP 1
 ```sh
 └─$ rustscan -a 10.129.207.242 --scripts none
