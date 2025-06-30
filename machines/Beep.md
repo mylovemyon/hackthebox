@@ -1,3 +1,5 @@
+https://app.hackthebox.com/machines/Beep
+
 ## STEP 1
 ```sh
 └─$ rustscan -a 10.129.205.98 --scripts none
