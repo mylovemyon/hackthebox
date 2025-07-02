@@ -166,7 +166,7 @@ Matching Defaults entries for puma on sau:
 User puma may run the following commands on sau:
     (ALL : ALL) NOPASSWD: /usr/bin/systemctl status trail.service
 ```
-systemctlコマンドで画面出力が`less`コマンドに渡される
+systemctlコマンドで画面出力が`less`コマンドに渡される  
 [リンク](https://gtfobins.github.io/gtfobins/systemctl/#sudo)を確認すると、lessコマンド中にシェルを開けることができ、ルートフラグゲット！
 ```sh
 $ sudo systemctl status trail.service
