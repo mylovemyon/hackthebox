@@ -80,7 +80,7 @@ ftp> cd Users\\Administrator
 
 ## STEP 3
 80番にアクセス  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Netmon_01.png" width="100%" height="100%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Netmon_01.png">  
 PRTG Network Monitor には CVE-2018-9276 が存在し、Webコンソール画面からOSコマンドインジェクションできるらしい  
 この脆弱性を悪用するためにクレデンシャルが必要なのでftp上で探す  
 [公式サイト](https://www.paessler.com/manuals/prtg/login#:~:text=When%20you%20log%20in%20for,should%20change%20the%20default%20password.)で確認できるデフォルトクレデンシャルではログインできず  
