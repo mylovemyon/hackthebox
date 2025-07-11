@@ -54,7 +54,7 @@ Nmap done: 1 IP address (1 host up) scanned in 1000 seconds
 
 ## STEP 2
 55555番にアクセス
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Sau_01.png" width="100%" height="100%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Sau_01.png">  
 `request-baskets`バージョン1.2.1には、CVE-2023-27163（SSRFの脆弱性）が存在する  
 [PoC](https://github.com/entr0pie/CVE-2023-27163/tree/main)では、ターゲットで内部向けのポートへフォワーディングできる  
 nmapの結果では80番がフィルタされていたのでPoCで確認してみる
@@ -97,7 +97,7 @@ Proof-of-Concept of SSRF on Request-Baskets (CVE-2023-27163) || More info at htt
 > Response body (Authorization): {"token":"7QE7vU41tjWjcv3ki3lGO01uqgHnFUkunvY5jRfjXWzB"}
 ```
 PoCで作成されたurlにアクセス、80番へのアクセスが成功した  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Sau_02.png" width="50%" height="50%">
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Sau_02.png">
 
 
 ## STEP 3
