@@ -1,4 +1,5 @@
 https://app.hackthebox.com/machines/OpenAdmin
+
 ## STEP 1
 ```sh
 └─$ rustscan -a 10.129.5.45--scripts none
@@ -24,7 +25,7 @@ Open 10.129.5.45:80
 
 ## STEP 2
 80番にアクセス、Apacheのデフォルトページっぽい  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_01.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_01.png">  
 列挙、music/artwork を発見
 ```sh
 └─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://10.129.5.45/FUZZ 
@@ -60,7 +61,7 @@ server-status           [Status: 403, Size: 276, Words: 20, Lines: 10, Duration:
 ```
 musicのログインページから、列挙で見つけれなかったサイトを発見  
 OpenNetAdminというやつが使われているっぽい
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_02.png" width="75%" height="75%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_02.png">  
 
 
 
@@ -262,7 +263,7 @@ Last login: Thu Jan  2 20:50:03 2020 from 10.10.14.3
 jimmy@openadmin:~$
 ```
 52846番ポートアクセス成功  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_03.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_03.png">  
 
 
 ## STEP 5
@@ -407,12 +408,12 @@ Click here to logout <a href="logout.php" tite = "Logout">Session
 </html>
 ```
 sha512のハッシュ値をクラックすることができた、web上での jimmy のパスワードは Revealed  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_04.png" width="75%" height="75%">
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_04.png">
 
 
 ## STEP 6
 ログイン成功、joannnaの秘密鍵ゲット～  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_05.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_05.png">  
 秘密鍵でsshログインしようとしたが、パスフレーズがいるもよう
 ```
 └─$ chmod 0600 id_rsa 
@@ -542,9 +543,9 @@ User joanna may run the following commands on openadmin:
     (ALL) NOPASSWD: /bin/nano /opt/priv
 ```
 実行するとnanoが開いた、nano上でコマンド実行する  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_06.png" width="100%" height="100%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_06.png">  
 「Ctrl+r」からの「Ctrl+x」で次の画面、`reset; /bin/sh 1>&0 2>&0`をコマンド実行  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_07.png" width="100%" height="100%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_07.png">  
 すこし画面がバグるが、rootシェルを開くことができた  
 ルートフラグゲット！  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_08.png" width="100%" height="100%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_08.png">  
