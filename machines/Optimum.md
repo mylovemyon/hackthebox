@@ -24,7 +24,7 @@ Open 10.129.16.57:80
 
 ## STEP 2
 80番にアクセス  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Optimum_01.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Optimum_01.png">  
 http file server 2.3 には CVE-2014-6287 が存在し、「Search」の部分にヌル文字列を介したRCEができる  
 PoCがあったので使用する
 ```sh
