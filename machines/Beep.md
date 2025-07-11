@@ -68,7 +68,7 @@ Nmap done: 1 IP address (1 host up) scanned in 211.41 seconds
 ## PATH 1
 8B番にアクセスすると、443番にリダイレクトされた  
 がsslエラーが発生した  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Beep_01.png" width="75%" height="75%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Beep_01.png">  
 どうやらtlsv1.0が有効らしい
 ```sh
 └─$ sslscan 10.129.205.98                       
@@ -122,9 +122,9 @@ Not valid before: Apr  7 08:22:08 2017 GMT
 Not valid after:  Apr  7 08:22:08 2018 GMT
 ```
 firefoxの設定を修正  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Beep_02.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Beep_02.png">  
 無事確認できた  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Beep_03.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Beep_03.png">  
 elastixには、rceの脆弱性がある
 ```sh
 └─$ searchsploit -m 18650
@@ -573,7 +573,7 @@ uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10
 
 ## PATH 3
 10000番ポートにアクセス  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Beep_04.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Beep_04.png">  
 webページのソースを確認すると、このページは`/session_login.cgi`で動いているっぽい
 ```html
 └─$ curl --insecure --tlsv1.0 https://10.129.205.98:10000/
