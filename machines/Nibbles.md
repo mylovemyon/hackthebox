@@ -24,7 +24,7 @@ Open 10.129.96.84:80
 
 ## STEP 2
 80番にアクセス  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Nibbles_01.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Nibbles_01.png">  
 コメントをみると、nibbledblogが怪しそう
 ```sh
 └─$ curl http://10.129.96.84/         
@@ -46,7 +46,7 @@ Open 10.129.96.84:80
 <!-- /nibbleblog/ directory. Nothing interesting here! -->
 ```
 nibbledblogにアクセス  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Nibbles_02.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Nibbles_02.png">  
 大した情報はなさそうなので、ディレクトリを探索
 ```sh
 └─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://10.129.96.84/nibbleblog/FUZZ
@@ -86,12 +86,12 @@ themes                  [Status: 301, Size: 324, Words: 20, Lines: 10, Duration:
 :: Progress: [4614/4614] :: Job [1/1] :: 136 req/sec :: Duration: [0:00:35] :: Errors: 0 ::
 ```
 admin.phpにアクセスすると、クレデンシャルが必要だった  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Nibbles_03.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Nibbles_03.png">  
 ffufで確認できたディレクトリ内にクレデンシャルがあるかも、例えばadminにアクセスするといくつかのディレクトリを確認できた  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Nibbles_04.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Nibbles_04.png">  
 しかしクレデンシャルはguess問でした、「admin:nibbles」  
 ログイン成功  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Nibbles_05.png" width="100%" height="100%">
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Nibbles_05.png">
 
 
 ## STEP 3
