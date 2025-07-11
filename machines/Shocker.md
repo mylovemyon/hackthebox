@@ -24,7 +24,7 @@ Open 10.129.7.104:2222
 
 ## STEP 2
 80番にアクセス  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Shocker_01.png" width="25%" height="25%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Shocker_01.png">  
 列挙
 ```sh
 └─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://10.129.7.104/FUZZ             
