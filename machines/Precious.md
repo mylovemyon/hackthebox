@@ -1,3 +1,5 @@
+https://app.hackthebox.com/machines/Precious
+
 ## STEP 1
 ```sh
 └─$ rustscan -a 10.129.228.98 --scripts none
@@ -23,22 +25,22 @@ Open 10.129.228.98:80
 
 ## STEP 2
 80番にアクセス、「precious.htb」にリダイレクトされたので名前解決できない  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Precious_01.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Precious_01.png">  
 hostsを編集
 ```sh
 └─$ echo '10.129.228.98 precious.htb' | sudo tee -a /etc/hosts
 ```
 アクセスできた、urlを入力できるっぽい  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Precious_02.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Precious_02.png">  
 試しに「hxxp://127.0.0.1」を入力したらエラーが出た  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Precious_03.png" width="50%" height="50%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Precious_03.png">  
 今度はkaliでpythonでwebサーバをたてて確認させる
 ```sh
 └─$ python3.13 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 pdfが自動でダウンロードされた、実際にkaliでたてたwebサーバのキャプチャになっている  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Precious_04.png" width="75%" height="75%">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Precious_04.png">  
 ダウンロードされたpdfの情報を確認すると、pdfkitで作成されているっぽい
 ```sh
 └─$ exiftool Downloads/muzjrzs750ms8sopaxtjok1iojlb19li.pdf 
