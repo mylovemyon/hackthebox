@@ -35,9 +35,9 @@ Open 10.129.190.164:80
 再度アクセス  
 [リンク](https://rt-wiki.bestpractical.com/wiki/RecoverRootPassword)よりデフォルトクレデンシャル root/password が判明、ログインできた　　
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Keeper_02.png">  
-Adminタブから、lnorgaard というユーザを確認できるが、コメントからパスワードが「Welcome2023!」と判明した  
+Adminタブから lnorgaard というユーザを確認できるが、コメントからパスワードが「Welcome2023!」と判明した  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Keeper_03.png">  
-22番が開いていたので、先ほどのクレデンシャルでsshログイン、成功！ユーザフラグゲット
+22番が開いていたので、先ほどのクレデンシャルでsshログイン成功！ユーザフラグゲット
 ```sh
 └─$ ssh lnorgaard@10.129.190.164    
 The authenticity of host '10.129.190.164 (10.129.190.164)' can't be established.
@@ -75,7 +75,7 @@ lnorgaard@10.129.190.164's password:
 RT30000.zip
 ```
 zipには、メモリダンプファイルと.kdbxがあった  
-kdbxはkeepas（パスワード管理ツールのパスワードが入ったファイル）だそう
+kdbxはkeepass（パスワード管理ツール）のパスワードが入ったファイルだそう
 ```sh
 └─$ unzip RT30000.zip                  
 Archive:  RT30000.zip
@@ -111,10 +111,10 @@ Press 'q' or Ctrl-C to abort, almost any other key for status
 0g 0:00:00:23 DONE (2025-07-12 07:25) 0g/s 153.5p/s 153.5c/s 153.5C/s notused..sss
 Session completed.
 ```
-先ほどのブラウザで、keepasのissueに関するチケットを lnorgaard が作成したこと確認  
-とういことはzip内のメモリダンプはkeepasのクラッシュダンプね  
+先ほどのブラウザで、keepassのissueに関するチケットを lnorgaard が作成したこと確認  
+とういことはzip内のメモリダンプはkeepassのクラッシュダンプね  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Keeper_05.png">  
-ここでkeepasは、CVE-2023-32784が存在しクラッシュダンプからパスワードを復元できる脆弱性があるらしい
+ここでkeepassには、CVE-2023-32784が存在しクラッシュダンプからパスワードを復元できる脆弱性があるらしい  
 PoCを試してみると文字列は抽出できたが、何文字が欠落しているっぽい
 ```sh
 └─$ wget https://raw.githubusercontent.com/z-jxy/keepass_dump/refs/heads/main/keepass_dump.py
