@@ -101,7 +101,6 @@ Just an uptime test script
 
  05:51:45 up  3:17,  0 users,  load average: 0.00, 0.00, 0.00
 
-
 └─$ curl http://10.129.7.104/cgi-bin/user.sh
 Content-Type: text/plain
 
