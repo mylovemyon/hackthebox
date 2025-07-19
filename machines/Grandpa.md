@@ -22,6 +22,9 @@ Open 10.129.95.233:80
 ```
 
 ## STEP 2
+80番にアクセス  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Grandpa_01.png">  
+ヘッダを確認すると、iis 6.0 っぽい
 ```sh
 └─$ curl -I http://10.129.95.233                                      
 HTTP/1.1 200 OK
@@ -36,6 +39,7 @@ MicrosoftOfficeWebServer: 5.0_Pub
 X-Powered-By: ASP.NET
 Date: Thu, 17 Jul 2025 01:26:05 GMT
 ```
+列挙してみるとアクセスできるファイルがあったが、有益そうなものはなかった
 ```sh
 └─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://10.129.95.233/FUZZ 
 
@@ -72,5 +76,50 @@ _vti_bin/shtml.dll      [Status: 200, Size: 96, Words: 11, Lines: 1, Duration: 4
 aspnet_client           [Status: 403, Size: 218, Words: 14, Lines: 2, Duration: 252ms]
 images                  [Status: 301, Size: 151, Words: 9, Lines: 2, Duration: 252ms]
 :: Progress: [4746/4746] :: Job [1/1] :: 150 req/sec :: Duration: [0:00:32] :: Errors: 0 ::
+```
+使えるhttpメソッドを確認すると、PROPFIND があった。  
+こいつは webdab で使われていたもの
+```sh
+└─$ nmap -n -Pn -p80 --script http-methods 10.129.95.233
+Starting Nmap 7.95 ( https://nmap.org ) at 2025-07-19 11:07 EDT
+Nmap scan report for 10.129.95.233
+Host is up (0.33s latency).
+
+PORT   STATE SERVICE
+80/tcp open  http
+| http-methods: 
+|   Supported Methods: OPTIONS TRACE GET HEAD COPY PROPFIND SEARCH LOCK UNLOCK DELETE PUT POST MOVE MKCOL PROPPATCH
+|_  Potentially risky methods: TRACE COPY PROPFIND SEARCH LOCK UNLOCK DELETE PUT MOVE MKCOL PROPPATCH
+
+Nmap done: 1 IP address (1 host up) scanned in 4.72 seconds
+```
+webdavでは、ファイルを移動したり・アップロードできる  
+`dabtest`でファイルアップロードできるかテスト、すべて失敗
+```sh
+└─$ davtest -url http://10.129.95.233
+********************************************************
+ Testing DAV connection
+OPEN            SUCCEED:                http://10.129.95.233
+********************************************************
+NOTE    Random string for this session: pJ3Ic1CJYFcLb
+********************************************************
+ Creating directory
+MKCOL           FAIL
+********************************************************
+ Sending test files
+PUT     cfm     FAIL
+PUT     jsp     FAIL
+PUT     txt     FAIL
+PUT     php     FAIL
+PUT     pl      FAIL
+PUT     aspx    FAIL
+PUT     asp     FAIL
+PUT     cgi     FAIL
+PUT     jhtml   FAIL
+PUT     shtml   FAIL
+PUT     html    FAIL
+
+********************************************************
+/usr/bin/davtest Summary:
 ```
 https://jlajara.gitlab.io/process-migration
