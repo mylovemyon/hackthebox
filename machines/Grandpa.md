@@ -388,5 +388,3 @@ C:\WINDOWS\TEMP>type C:\"Documents and Settings"\Administrator\Desktop\root.txt
 type C:\"Documents and Settings"\Administrator\Desktop\root.txt
 9359e905a2c35f861f6a57cecf28bb7b
 ```
-
-https://jlajara.gitlab.io/process-migration
