@@ -307,7 +307,7 @@ Jul 22 01:50:58 traverxec nhttpd[1547]: /../../../../bin/sh sent a bad cgi heade
 Jul 22 01:51:22 traverxec nhttpd[1549]: /../../../../bin/sh sent a bad cgi header                                         
 Jul 22 02:05:56 traverxec nhttpd[1554]: /../../../../bin/sh sent a bad cgi header 
 ```
-５行文がターミナルに出力されるが、そのサイズより小さいとjournalctlは`less`コマンドに渡されるかも  
+５行文がターミナルに出力されるが、そのサイズよりターミナル小さいとjournalctlは`less`コマンドに渡されるかも  
 ビンゴ！  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Traverxec_03.png">  
 あとは、[リンク](https://gtfobins.github.io/gtfobins/journalctl/#sudo)どおりにシェルを開けた、ルートフラグゲット！
@@ -316,6 +316,6 @@ Jul 22 02:05:56 traverxec nhttpd[1554]: /../../../../bin/sh sent a bad cgi heade
 # id
 uid=0(root) gid=0(root) groups=0(root)
                                                                                                           
-# cat /root/root.txt                                                                                                                                
+# cat /root/root.txt
 3ee17ab5224f06e14897ce20320f8665
 ```
