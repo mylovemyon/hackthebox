@@ -74,7 +74,6 @@ python3 -c 'import pty; pty.spawn("/bin/bash")'
 james@knife:/$ ^Z
 zsh: suspended  nc -lnvp 4444
 
-
 └─$ stty raw -echo; fg
 [1]  + continued  nc -lnvp 4444
                                ^C
