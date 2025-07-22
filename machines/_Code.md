@@ -32,3 +32,5 @@ Content-Type: text/html; charset=utf-8
 Content-Length: 3435
 Vary: Cookie
 ```
+
+https://github.com/search?q=%22Use+of+restricted+keywords+is+not+allowed.%22&type=code
