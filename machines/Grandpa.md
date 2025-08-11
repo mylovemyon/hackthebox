@@ -2,7 +2,7 @@ https://app.hackthebox.com/machines/Grandpa
 
 ## STEP 1
 ```sh
-└─$ rustscan -a 10.129.95.233 --scripts none
+└─$ rustscan -a 10.129.95.233 --no-banner --scripts none
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.95.233:80
