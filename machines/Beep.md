@@ -2,19 +2,7 @@ https://app.hackthebox.com/machines/Beep
 
 ## STEP 1
 ```sh
-└─$ rustscan -a 10.129.205.98 --scripts none
-.----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
-| {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
-| .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
-`-' `-'`-----'`----'  `-'  `----'  `---' `-'  `-'`-' `-'
-The Modern Day Port Scanner.
-________________________________________
-: http://discord.skerritt.blog         :
-: https://github.com/RustScan/RustScan :
- --------------------------------------
-RustScan: Where '404 Not Found' meets '200 OK'.
-
-[~] The config file is expected to be at "/home/kali/.rustscan.toml"
+└─$ rustscan -a 10.129.205.98 --no-banner --scripts none
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.205.98:22
@@ -71,7 +59,7 @@ Nmap done: 1 IP address (1 host up) scanned in 211.41 seconds
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Beep_01.png">  
 どうやらtlsv1.0が有効らしい
 ```sh
-└─$ sslscan 10.129.205.98                       
+└─$ sslscan --no-check-certificate --no-ciphersuites --no-compression --no-fallback --no-groups --no-heartbleed --no-renegotiation 10.129.205.98
 Version: 2.1.5
 OpenSSL 3.5.0 8 Apr 2025
 
@@ -86,46 +74,12 @@ TLSv1.0   enabled
 TLSv1.1   disabled
 TLSv1.2   disabled
 TLSv1.3   disabled
-
-  TLS Fallback SCSV:
-Server does not support TLS Fallback SCSV
-
-  TLS renegotiation:
-Secure session renegotiation supported
-
-  TLS Compression:
-Compression enabled (CRIME)
-
-  Heartbleed:
-TLSv1.0 not vulnerable to heartbleed
-
-  Supported Server Cipher(s):
-Preferred TLSv1.0  256 bits  DHE-RSA-AES256-SHA            DHE 1024 bits
-Accepted  TLSv1.0  128 bits  DHE-RSA-AES128-SHA            DHE 1024 bits
-Accepted  TLSv1.0  256 bits  AES256-SHA                   
-Accepted  TLSv1.0  128 bits  AES128-SHA                   
-Accepted  TLSv1.0  128 bits  TLS_RSA_WITH_RC4_128_MD5     
-Accepted  TLSv1.0  128 bits  TLS_RSA_WITH_RC4_128_SHA     
-Accepted  TLSv1.0  56 bits   TLS_RSA_WITH_DES_CBC_SHA     
-Accepted  TLSv1.0  112 bits  TLS_RSA_WITH_3DES_EDE_CBC_SHA
-Accepted  TLSv1.0  56 bits   TLS_DHE_RSA_WITH_DES_CBC_SHA 
-Accepted  TLSv1.0  112 bits  TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA
-
-  SSL Certificate:
-Signature Algorithm: sha1WithRSAEncryption
-RSA Key Strength:    1024
-
-Subject:  localhost.localdomain
-Issuer:   localhost.localdomain
-
-Not valid before: Apr  7 08:22:08 2017 GMT
-Not valid after:  Apr  7 08:22:08 2018 GMT
 ```
 firefoxの設定を修正  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Beep_02.png">  
 無事確認できた  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Beep_03.png">  
-elastixには、rceの脆弱性がある
+elastixには、CVE-2012-4869の脆弱性があり、rceできるらしい
 ```sh
 └─$ searchsploit -m 18650
   Exploit: FreePBX 2.10.0 / Elastix 2.2.0 - Remote Code Execution
@@ -136,7 +90,7 @@ elastixには、rceの脆弱性がある
 File Type: Python script, ASCII text executable, with very long lines (418)
 Copied to: /home/kali/18650.py
 ```
-PoCが実行エラーしたが、コードを確認するとurlのワンライナーでRCEできるっぽい  
+PoCは実行エラーしたが、コードを確認するとurlのワンライナーでRCEできるっぽい  
 修正する部分は、rhost、lhost、lport、extension  
 extensionは、sipのextensinのこと、elastixはVoIP系のソフトウェアなのね
 ```
