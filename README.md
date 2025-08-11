@@ -2,4 +2,5 @@
 - Bashed
 - Grandpa
 - Granny
+- Mirai
 - Sauna
