@@ -230,6 +230,8 @@ hype@Valentine:~$ history
 
 hype@Valentine:~$ ls -l /.devs/dev_sess 
 srw-rw---- 1 root hype 0 Aug 12 04:41 /.devs/dev_sess
+
+hype@Valentine:~$ tmux -S /.devs/dev_sess
 ```
 ルートのセッションを開けた！ルートフラグゲット！  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Valentine_03.png">  
