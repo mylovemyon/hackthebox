@@ -115,6 +115,8 @@ RUgZkbMQZNIIfzj1QuilRVBm/F76Y/YMrmnM9k/1xSGIskwCUQ+95CGHJE8MkhD3
 ということで秘密鍵でログイン  
 が、パスフレーズが必要な模様
 ```sh
+└─$ chmod 600 id_rsa.txt
+
 └─$ ssh -i id_rsa.txt hype@10.129.232.136 
 Enter passphrase for key 'id_rsa.txt':
 ```
