@@ -2,6 +2,7 @@
 - Bashed
 - Beep
 - Blue
+- Devel
 - Grandpa
 - Granny
 - Mirai
