@@ -1,7 +1,7 @@
 - Active
 - Bashed
 - Beep
-- blue
+- Blue
 - Grandpa
 - Granny
 - Mirai
