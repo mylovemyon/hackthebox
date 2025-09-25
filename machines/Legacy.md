@@ -2,19 +2,7 @@ https://app.hackthebox.com/machines/Legacy
 ## STEP 1
 `ms08-067`があるっぽい
 ```sh
-└─$ rustscan -a 10.129.22.40 --scripts none
-.----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
-| {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
-| .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
-`-' `-'`-----'`----'  `-'  `----'  `---' `-'  `-'`-' `-'
-The Modern Day Port Scanner.
-________________________________________
-: http://discord.skerritt.blog         :
-: https://github.com/RustScan/RustScan :
- --------------------------------------
-HACK THE PLANET
-
-[~] The config file is expected to be at "/home/kali/.rustscan.toml"
+└─$ rustscan -a 10.129.22.40 --no-banner --scripts none
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.22.40:135
@@ -55,17 +43,8 @@ Nmap done: 1 IP address (1 host up) scanned in 11.50 seconds
 ## STEP 2
 MS08-067のPoCをダウンロード
 ```sh
-└─$ wget https://raw.githubusercontent.com/andyacer/ms08_067/refs/heads/master/ms08_067_2018.py   
---2025-04-15 09:04:55--  https://raw.githubusercontent.com/andyacer/ms08_067/refs/heads/master/ms08_067_2018.py
-Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.108.133, 185.199.109.133, ...
-Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 12003 (12K) [text/plain]
-Saving to: ‘ms08_067_2018.py’
-
-ms08_067_2018.py                                           100%[========================================================================================================================================>]  11.72K  --.-KB/s    in 0.004s  
-
-2025-04-15 09:04:56 (3.09 MB/s) - ‘ms08_067_2018.py’ saved [12003/12003]
+└─$ wget -nv https://raw.githubusercontent.com/andyacer/ms08_067/refs/heads/master/ms08_067_2018.py   
+2025-04-15 09:04:56 URL:https://raw.githubusercontent.com/andyacer/ms08_067/refs/heads/master/ms08_067_2018.py [12003/12003] -> "ms08_067_2018.py" [1]
 ```
 PoCはPython2.x用ぽいので、`2to3-2.7`でPython3.x用に変換
 ```sh
