@@ -1,19 +1,7 @@
 https://app.hackthebox.com/machines/Lame
 ## STEP 1
 ```sh
-└─$ rustscan -a 10.129.2.250 --scripts none
-.----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
-| {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
-| .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
-`-' `-'`-----'`----'  `-'  `----'  `---' `-'  `-'`-' `-'
-The Modern Day Port Scanner.
-________________________________________
-: http://discord.skerritt.blog         :
-: https://github.com/RustScan/RustScan :
- --------------------------------------
-I don't always scan ports, but when I do, I prefer RustScan.
-
-[~] The config file is expected to be at "/home/kali/.rustscan.toml"
+└─$ rustscan -a 10.129.2.250 --no-banner --scripts none
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.2.250:21
@@ -56,17 +44,8 @@ Nmap done: 1 IP address (1 host up) scanned in 49.14 seconds
 smbd 3.0.20には、CVE-2007-2447が存在する  
 [PoC](https://github.com/amriunix/CVE-2007-2447)でエクスプロイト
 ```sh
-└─$ wget https://raw.githubusercontent.com/amriunix/CVE-2007-2447/refs/heads/master/usermap_script.py
---2025-05-01 02:02:38--  https://raw.githubusercontent.com/amriunix/CVE-2007-2447/refs/heads/master/usermap_script.py
-Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.108.133, 185.199.109.133, ...
-Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.111.133|:443... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 1027 (1.0K) [text/plain]
-Saving to: ‘usermap_script.py’
-
-usermap_script.py                                          100%[========================================================================================================================================>]   1.00K  --.-KB/s    in 0s      
-
-2025-05-01 02:02:39 (72.8 MB/s) - ‘usermap_script.py’ saved [1027/1027]
+└─$ wget -nv https://raw.githubusercontent.com/amriunix/CVE-2007-2447/refs/heads/master/usermap_script.py
+2025-05-01 02:02:38 URL:https://raw.githubusercontent.com/amriunix/CVE-2007-2447/refs/heads/master/usermap_script.py [1027/1027] -> "usermap_script.py" [1]
 
 └─$ uv init -p 3.13
 Initialized project `uv`
