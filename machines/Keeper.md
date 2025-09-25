@@ -101,7 +101,7 @@ Session completed.
 PoCを試してみると文字列は抽出できたが、何文字が欠落しているっぽい
 ```sh
 └─$ wget -nv https://raw.githubusercontent.com/z-jxy/keepass_dump/refs/heads/main/keepass_dump.py
---2025-07-12 10:30:42--  https://raw.githubusercontent.com/z-jxy/keepass_dump/refs/heads/main/keepass_dump.py
+2025-07-12 10:30:42 URL:https://raw.githubusercontent.com/z-jxy/keepass_dump/refs/heads/main/keepass_dump.py [14948/14948] -> "keepass_dump.py" [1]
 
 └─$ python3.13 keepass_dump.py -f KeePassDumpFull.dmp 
 [*] Searching for masterkey characters
