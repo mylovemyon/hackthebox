@@ -6,6 +6,7 @@
 - Forest
 - Grandpa
 - Granny
+- Jerry
 - Mirai
 - Monteverde
 - Sauna
