@@ -10,6 +10,7 @@
 - Keeper
 - Knife
 - Lame
+- Legacy
 - Mirai
 - Monteverde
 - Sauna
