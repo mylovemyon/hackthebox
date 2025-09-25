@@ -9,6 +9,7 @@
 - Jerry
 - Keeper
 - Knife
+- Lame
 - Mirai
 - Monteverde
 - Sauna
