@@ -7,6 +7,7 @@
 - Grandpa
 - Granny
 - Jerry
+- Keeper
 - Mirai
 - Monteverde
 - Sauna
