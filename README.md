@@ -8,6 +8,7 @@
 - Granny
 - Jerry
 - Keeper
+- Knife
 - Mirai
 - Monteverde
 - Sauna
