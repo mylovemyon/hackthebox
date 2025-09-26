@@ -2,19 +2,7 @@ https://app.hackthebox.com/machines/Optimum
 ## STEP 1
 80番がオープン
 ```sh
-└─$ rustscan -a 10.129.16.57 --scripts none
-.----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
-| {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
-| .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
-`-' `-'`-----'`----'  `-'  `----'  `---' `-'  `-'`-' `-'
-The Modern Day Port Scanner.
-________________________________________
-: http://discord.skerritt.blog         :
-: https://github.com/RustScan/RustScan :
- --------------------------------------
-0day was here ♥
-
-[~] The config file is expected to be at "/home/kali/.rustscan.toml"
+└─$ rustscan -a 10.129.16.57 --no-banner --scripts none
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.16.57:80
@@ -75,16 +63,8 @@ PS C:\Users\kostas\Desktop> type user.txt
 ## STEP 3
 `Sherlock.ps1`で権限昇格を探す
 ```sh
-└─$ wget https://raw.githubusercontent.com/rasta-mouse/Sherlock/refs/heads/master/Sherlock.ps1
---2025-04-28 04:11:38--  https://raw.githubusercontent.com/rasta-mouse/Sherlock/refs/heads/master/Sherlock.ps1
-Connecting to ... connected.
-Proxy request sent, awaiting response... 200 OK
-Length: 16663 (16K) [text/plain]
-Saving to: ‘Sherlock.ps1’
-
-Sherlock.ps1                                               100%[========================================================================================================================================>]  16.27K  --.-KB/s    in 0.002s  
-
-2025-04-28 04:11:39 (8.72 MB/s) - ‘Sherlock.ps1’ saved [16663/16663]
+└─$ wget -nv https://raw.githubusercontent.com/rasta-mouse/Sherlock/refs/heads/master/Sherlock.ps1
+2025-04-28 04:11:39 URL:https://raw.githubusercontent.com/rasta-mouse/Sherlock/refs/heads/master/Sherlock.ps1 [16663/16663] -> "Sherlock.ps1" [1]
 
 └─$ python3.13 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
