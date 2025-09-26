@@ -50,7 +50,7 @@ nibbledblogにアクセス
 ________________________________________________
 
  :: Method           : GET
- :: URL              : http://10.129.155.211/nibbleblog/FUZZ
+ :: URL              : http://10.129.96.84/nibbleblog/FUZZ
  :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
  :: Follow redirects : false
  :: Calibration      : false
