@@ -2,19 +2,7 @@ https://app.hackthebox.com/machines/OpenAdmin
 
 ## STEP 1
 ```sh
-└─$ rustscan -a 10.129.5.45--scripts none
-.----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
-| {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
-| .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
-`-' `-'`-----'`----'  `-'  `----'  `---' `-'  `-'`-' `-'
-The Modern Day Port Scanner.
-________________________________________
-: http://discord.skerritt.blog         :
-: https://github.com/RustScan/RustScan :
- --------------------------------------
-I scanned ports so fast, even my computer was surprised.
-
-[~] The config file is expected to be at "/home/kali/.rustscan.toml"
+└─$ rustscan -a 10.129.5.45 --no-banner --scripts none
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.5.45:22
@@ -26,9 +14,9 @@ Open 10.129.5.45:80
 ## STEP 2
 80番にアクセス、Apacheのデフォルトページっぽい  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_01.png">  
-列挙、music/artwork を発見
+列挙
 ```sh
-└─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://10.129.5.45/FUZZ 
+└─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -u http://10.129.5.45/FUZZ 
 
         /'___\  /'___\           /'___\       
        /\ \__/ /\ \__/  __  __  /\ \__/       
@@ -42,7 +30,7 @@ ________________________________________________
 
  :: Method           : GET
  :: URL              : http://10.129.5.45/FUZZ
- :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/common.txt
+ :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
  :: Follow redirects : false
  :: Calibration      : false
  :: Timeout          : 10
@@ -50,14 +38,11 @@ ________________________________________________
  :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
 ________________________________________________
 
-.hta                    [Status: 403, Size: 276, Words: 20, Lines: 10, Duration: 4592ms]
-.htaccess               [Status: 403, Size: 276, Words: 20, Lines: 10, Duration: 4592ms]
-.htpasswd               [Status: 403, Size: 276, Words: 20, Lines: 10, Duration: 4593ms]
-artwork                 [Status: 301, Size: 312, Words: 20, Lines: 10, Duration: 283ms]
-index.html              [Status: 200, Size: 10918, Words: 3499, Lines: 376, Duration: 304ms]
-music                   [Status: 301, Size: 310, Words: 20, Lines: 10, Duration: 299ms]
-server-status           [Status: 403, Size: 276, Words: 20, Lines: 10, Duration: 291ms]
-:: Progress: [4744/4744] :: Job [1/1] :: 141 req/sec :: Duration: [0:00:41] :: Errors: 0 ::
+music                   [Status: 301, Size: 314, Words: 20, Lines: 10, Duration: 433ms]
+artwork                 [Status: 301, Size: 316, Words: 20, Lines: 10, Duration: 434ms]
+server-status           [Status: 403, Size: 278, Words: 20, Lines: 10, Duration: 278ms]
+sierra                  [Status: 301, Size: 315, Words: 20, Lines: 10, Duration: 466ms]
+:: Progress: [29999/29999] :: Job [1/1] :: 95 req/sec :: Duration: [0:04:13] :: Errors: 1 ::
 ```
 musicのログインページから、列挙で見つけれなかったサイトを発見  
 OpenNetAdminというやつが使われているっぽい
@@ -481,6 +466,7 @@ Matching Defaults entries for joanna on openadmin:
 User joanna may run the following commands on openadmin:
     (ALL) NOPASSWD: /bin/nano /opt/priv
 ```
+[リンク](https://gtfobins.github.io/gtfobins/nano/#sudo)どおりで権限昇格  
 実行するとnanoが開いた、nano上でコマンド実行する  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/OpenAdmin_06.png">  
 「Ctrl+r」からの「Ctrl+x」で次の画面、`reset; /bin/sh 1>&0 2>&0`をコマンド実行  
