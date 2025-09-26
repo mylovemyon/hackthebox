@@ -1,19 +1,7 @@
 https://app.hackthebox.com/machines/Shocker
 ## STEP 1
 ```sh
-└─$ rustscan -a 10.129.7.104 --scripts none
-.----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
-| {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
-| .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
-`-' `-'`-----'`----'  `-'  `----'  `---' `-'  `-'`-' `-'
-The Modern Day Port Scanner.
-________________________________________
-: http://discord.skerritt.blog         :
-: https://github.com/RustScan/RustScan :
- --------------------------------------
-I scanned my computer so many times, it thinks we're dating.
-
-[~] The config file is expected to be at "/home/kali/.rustscan.toml"
+└─$ rustscan -a 10.129.7.104  --no-banner --scripts none
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.7.104:80
@@ -57,8 +45,8 @@ index.html              [Status: 200, Size: 137, Words: 9, Lines: 10, Duration: 
 server-status           [Status: 403, Size: 298, Words: 22, Lines: 12, Duration: 294ms]
 :: Progress: [4744/4744] :: Job [1/1] :: 138 req/sec :: Duration: [0:00:36] :: Errors: 0 ::
 ```
-`cgi-bin`にはアクセス拒否されているが、配下のスクリプトにアクセス可能なものがあるかもしれないので列挙  
-`user.sh`がアクセス可能であった
+cgi-binにはアクセス拒否されているが、配下のスクリプトにアクセス可能なものがあるかもしれないので列挙  
+user.shがアクセス可能であった
 ```sh
 └─$  ffuf -c -w /usr/share/seclists/Discovery/Web-Content/raft-small-words.txt -u http://10.129.7.104/cgi-bin/FUZZ -e .sh
 
@@ -92,7 +80,7 @@ ________________________________________________
 user.sh                 [Status: 200, Size: 118, Words: 19, Lines: 8, Duration: 291ms]
 :: Progress: [9492/9492] :: Job [1/1] :: 145 req/sec :: Duration: [0:01:21] :: Errors: 0 ::
 ```
-`user.sh`にアクセスすると、`uptime`コマンドが実行されるスクリプトが動作しているっぽい
+user.shにアクセスすると、uptimeコマンドが実行されるスクリプトが動作しているっぽい
 ```sh
 └─$ curl http://10.129.7.104/cgi-bin/user.sh          
 Content-Type: text/plain
