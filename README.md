@@ -17,5 +17,6 @@
 - Nibbles
 - OpenAdmin
 - Optimum
+- Precious
 - Sauna
 - Valentine
