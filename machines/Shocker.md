@@ -15,7 +15,7 @@ Open 10.129.7.104:2222
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Shocker_01.png">  
 列挙
 ```sh
-└─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/common.txt -u http://10.129.7.104/FUZZ             
+└─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -u http://10.129.7.104/FUZZ             
 
         /'___\  /'___\           /'___\       
        /\ \__/ /\ \__/  __  __  /\ \__/       
@@ -29,7 +29,7 @@ ________________________________________________
 
  :: Method           : GET
  :: URL              : http://10.129.7.104/FUZZ
- :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/common.txt
+ :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
  :: Follow redirects : false
  :: Calibration      : false
  :: Timeout          : 10
@@ -37,13 +37,35 @@ ________________________________________________
  :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
 ________________________________________________
 
-.htpasswd               [Status: 403, Size: 294, Words: 22, Lines: 12, Duration: 343ms]
-.htaccess               [Status: 403, Size: 294, Words: 22, Lines: 12, Duration: 343ms]
-.hta                    [Status: 403, Size: 289, Words: 22, Lines: 12, Duration: 369ms]
-cgi-bin/                [Status: 403, Size: 293, Words: 22, Lines: 12, Duration: 306ms]
-index.html              [Status: 200, Size: 137, Words: 9, Lines: 10, Duration: 290ms]
-server-status           [Status: 403, Size: 298, Words: 22, Lines: 12, Duration: 294ms]
-:: Progress: [4744/4744] :: Job [1/1] :: 138 req/sec :: Duration: [0:00:36] :: Errors: 0 ::
+server-status           [Status: 403, Size: 302, Words: 22, Lines: 12, Duration: 404ms]
+:: Progress: [29999/29999] :: Job [1/1] :: 111 req/sec :: Duration: [0:04:46] :: Errors: 1 ::
+
+└─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -u http://10.129.7.104/FUZZ/
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : GET
+ :: URL              :http://10.129.7.104/FUZZ/
+ :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+________________________________________________
+
+cgi-bin                 [Status: 403, Size: 297, Words: 22, Lines: 12, Duration: 306ms]
+icons                   [Status: 403, Size: 295, Words: 22, Lines: 12, Duration: 521ms]
+server-status           [Status: 403, Size: 303, Words: 22, Lines: 12, Duration: 514ms]
+:: Progress: [29999/29999] :: Job [1/1] :: 98 req/sec :: Duration: [0:04:34] :: Errors: 1 ::
 ```
 cgi-binにはアクセス拒否されているが、配下のスクリプトにアクセス可能なものがあるかもしれないので列挙  
 user.shがアクセス可能であった
