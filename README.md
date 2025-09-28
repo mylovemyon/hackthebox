@@ -20,4 +20,6 @@
 - Precious
 - Sau
 - Sauna
+- Shocker
+- (yet)Traverxec
 - Valentine
