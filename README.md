@@ -21,5 +21,6 @@
 - Sau
 - Sauna
 - Shocker
+- Timelapse
 - (yet)Traverxec
 - Valentine
