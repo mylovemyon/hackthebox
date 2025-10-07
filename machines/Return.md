@@ -1057,7 +1057,6 @@ wmiでSYSTEM権限で動いているサービスを確認できるが、アク�
 ```sh
 └─$ cp /usr/share/windows-resources/binaries/nc.exe .
 
-┌──(kali㉿kali)-[~/htb]
 └─$ impacket-smbserver share . -smb2support
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
