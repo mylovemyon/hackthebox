@@ -198,16 +198,16 @@ ANSI color bit for Windows is not set. If you are executing this from a Windows 
 Long paths are disabled, so the maximum length of a path supported is 260 chars (this may cause false negatives when looking for files). If you are admin, you can enable it with 'REG ADD HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v VirtualTerminalLevel /t REG_DWORD /d 1' and then start a new CMD
   WinPEAS-ng by @hacktricks_live
 
-       /---------------------------------------------------------------------------------\                                                                                                                                                  
-       |                             Do you like PEASS?                                  |                                                                                                                                                  
-       |---------------------------------------------------------------------------------|                                                                                                                                                  
-       |         Learn Cloud Hacking       :     training.hacktricks.xyz                 |                                                                                                                                                  
-       |         Follow on Twitter         :     @hacktricks_live                        |                                                                                                                                                  
-       |         Respect on HTB            :     SirBroccoli                             |                                                                                                                                                  
-       |---------------------------------------------------------------------------------|                                                                                                                                                  
-       |                                 Thank you!                                      |                                                                                                                                                  
-       \---------------------------------------------------------------------------------/                                                                                                                                                  
-                                                                                                                                                                                                                                            
+       /---------------------------------------------------------------------------------\
+       |                             Do you like PEASS?                                  |
+       |---------------------------------------------------------------------------------|
+       |         Learn Cloud Hacking       :     training.hacktricks.xyz                 |
+       |         Follow on Twitter         :     @hacktricks_live                        |
+       |         Respect on HTB            :     SirBroccoli                             |
+       |---------------------------------------------------------------------------------|
+       |                                 Thank you!                                      |
+       \---------------------------------------------------------------------------------/
+                                                                                                          
   [+] Legend:
          Red                Indicates a special privilege over an object or something is misconfigured
          Green              Indicates that some protection is enabled or something is well configured
@@ -216,17 +216,17 @@ Long paths are disabled, so the maximum length of a path supported is 260 chars 
          LightYellow        Indicates links
 
  You can find a Windows local PE Checklist here: https://book.hacktricks.wiki/en/windows-hardening/checklist-windows-privilege-escalation.html
-   Creating Dynamic lists, this could take a while, please wait...                                                                                                                                                                          
+   Creating Dynamic lists, this could take a while, please wait...                
    - Loading sensitive_files yaml definitions file...
    - Loading regexes yaml definitions file...
    - Checking if domain...
    - Getting Win32_UserAccount info...
 Error while getting Win32_UserAccount info: System.Management.ManagementException: Access denied
-   at System.Management.ThreadDispatch.Start()                                                                                                                                                                                              
-   at System.Management.ManagementScope.Initialize()                                                                                                                                                                                        
-   at System.Management.ManagementObjectSearcher.Initialize()                                                                                                                                                                               
-   at System.Management.ManagementObjectSearcher.Get()                                                                                                                                                                                      
-   at winPEAS.Checks.Checks.CreateDynamicLists(Boolean isFileSearchEnabled)                                                                                                                                                                 
+   at System.Management.ThreadDispatch.Start()                
+   at System.Management.ManagementScope.Initialize()                
+   at System.Management.ManagementObjectSearcher.Initialize()                
+   at System.Management.ManagementObjectSearcher.Get()                
+   at winPEAS.Checks.Checks.CreateDynamicLists(Boolean isFileSearchEnabled)                
    - Creating current user groups list...
    - Creating active users list (local only)...
   [X] Exception: Object reference not set to an instance of an object.
@@ -388,14 +388,14 @@ Error while getting Win32_UserAccount info: System.Management.ManagementExceptio
 
 ÉÍÍÍÍÍÍÍÍÍÍ¹ Print Logon Sessions
 
-       /---------------------------------------------------------------------------------\                                                                                                                                                  
-       |                             Do you like PEASS?                                  |                                                                                                                                                  
-       |---------------------------------------------------------------------------------|                                                                                                                                                  
-       |         Learn Cloud Hacking       :     training.hacktricks.xyz                 |                                                                                                                                                  
-       |         Follow on Twitter         :     @hacktricks_live                        |                                                                                                                                                  
-       |         Respect on HTB            :     SirBroccoli                             |                                                                                                                                                  
-       |---------------------------------------------------------------------------------|                                                                                                                                                  
-       |                                 Thank you!                                      |                                                                                                                                                  
+       /---------------------------------------------------------------------------------\                
+       |                             Do you like PEASS?                                  |                
+       |---------------------------------------------------------------------------------|                
+       |         Learn Cloud Hacking       :     training.hacktricks.xyz                 |                
+       |         Follow on Twitter         :     @hacktricks_live                        |                
+       |         Respect on HTB            :     SirBroccoli                             |                
+       |---------------------------------------------------------------------------------|                
+       |                                 Thank you!                                      |                
        \---------------------------------------------------------------------------------/  
 ```
 autologonから、svc_loanmgr のパスワード判明！
