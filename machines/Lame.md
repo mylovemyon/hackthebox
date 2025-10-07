@@ -58,7 +58,7 @@ Installed 3 packages in 1ms
  + pyasn1==0.6.1
  + pysmb==1.2.11
  + tqdm==4.67.1
-                                                                                                                                                                                                                                            
+
 └─$ uv run usermap_script.py
 [*] CVE-2007-2447 - Samba usermap script
 [-] usage: python usermap_script.py <RHOST> <RPORT> <LHOST> <LPORT>
