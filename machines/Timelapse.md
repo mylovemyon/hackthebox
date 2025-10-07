@@ -347,7 +347,7 @@ Error while getting Win32_UserAccount info: System.Management.ManagementExceptio
     Wdigest is not enabled
 
 ÉÍÍÍÍÍÍÍÍÍÍ¹ LSA Protection
-È If enabled, a driver is needed to read LSASS memory (If Secure Boot or UEFI, RunAsPPL cannot be disabled by deleting the registry key) https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#lsa-protection                                                                                                                                                                                                                                 
+È If enabled, a driver is needed to read LSASS memory (If Secure Boot or UEFI, RunAsPPL cannot be disabled by deleting the registry key) https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#lsa-protection                                         
     LSA Protection is not enabled
 
 ÉÍÍÍÍÍÍÍÍÍÍ¹ Credentials Guard
@@ -376,7 +376,7 @@ Error while getting Win32_UserAccount info: System.Management.ManagementExceptio
     LocalAccountTokenFilterPolicy: 
     FilterAdministratorToken: 
       [*] LocalAccountTokenFilterPolicy set to 0 and FilterAdministratorToken != 1.
-      [-] Only the RID-500 local admin account can be used for lateral movement.                                                                                                                                                            
+      [-] Only the RID-500 local admin account can be used for lateral movement.
 
 ÉÍÍÍÍÍÍÍÍÍÍ¹ PowerShell Settings
     PowerShell v2 Version: 2.0
@@ -432,7 +432,7 @@ You are NOT inside a container
     AlwaysInstallElevated isn't available
 
 ÉÍÍÍÍÍÍÍÍÍÍ¹ Enumerate LSA settings - auth packages included
-                                                                                                                                                                                                                                            
+                
     auditbasedirectories                 :       0
     auditbaseobjects                     :       0
     Bounds                               :       00-30-00-00-00-20-00-00
@@ -455,21 +455,21 @@ You are NOT inside a container
 
 ÉÍÍÍÍÍÍÍÍÍÍ¹ Enumerating NTLM Settings
   LanmanCompatibilityLevel    :  (Send NTLMv2 response only - Win7+ default)
-                                                                                                                                                                                                                                            
+                
 
-  NTLM Signing Settings                                                                                                                                                                                                                     
+  NTLM Signing Settings                
       ClientRequireSigning    : False
       ClientNegotiateSigning  : True
       ServerRequireSigning    : True
       ServerNegotiateSigning  : True
       LdapSigning             : Negotiate signing (Negotiate signing)
 
-  Session Security                                                                                                                                                                                                                          
+  Session Security                
       NTLMMinClientSec        : 536870912 (Require 128-bit encryption)
       NTLMMinServerSec        : 536870912 (Require 128-bit encryption)
-                                                                                                                                                                                                                                            
+                
 
-  NTLM Auditing and Restrictions                                                                                                                                                                                                            
+  NTLM Auditing and Restrictions                
       InboundRestrictions     :  (Not defined)
       OutboundRestrictions    :  (Not defined)
       InboundAuditing         :  (Not defined)
@@ -508,7 +508,7 @@ You are NOT inside a container
       You must be an administrator to run this check
 
 ÉÍÍÍÍÍÍÍÍÍÍ¹ Installed .NET versions
-                                                                                                                                                                                                                                            
+                
 
        /---------------------------------------------------------------------------------\                                                                                                                                                  
        |                             Do you like PEASS?                                  |                                                                                                                                                  
