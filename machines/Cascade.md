@@ -514,8 +514,14 @@ Id  uname   pwd                       domain
 sqlite> SELECT * FROM Misc;
 
 ```
-もういちど
+今度は書き込み可能なdbファイルに対してCascAudit.exeを動かす
+```powershell
+*Evil-WinRM* PS C:\Shares\Audit> .\CascAudit.exe C:\Users\s.smith\audit.db
 
+*Evil-WinRM* PS C:\Shares\Audit> .\CascAudit.exe C:\Users\s.smith\audit.db
+Found 2 results from LDAP query
+Successfully inserted 2 row(s) into database
+```
 ```sh
 └─$ smbclient -U 'cascade.local/s.smith%sT333ve2' -c 'recurse ON; dir' //10.129.188.71/Audit$
 
