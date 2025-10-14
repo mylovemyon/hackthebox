@@ -39,9 +39,6 @@ hosts編集
 80番にアクセス  
 めぼしい情報は特になし  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_01.png">  
-```sh
-コンテンツ探索
-```
 サブドメイン列挙  
 別ウェブページを探索するため、サイズが異なるレスポンスを実施するドメインを調査
 ```sh
@@ -89,5 +86,17 @@ hosts追加
 └─$ tail -n 1 /etc/hosts
 10.129.171.253 flight.htb school.flight.htb
 ```
-school.flight.htbにアクセス
+
+
+## STEP 3
+school.flight.htbにアクセス  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_02.png">  
+ページ内の「Home」「About Us」「Blog」にリンクが設定されていた  
+```sh
+http://school.flight.htb/index.php?view=home.html
+http://school.flight.htb/index.php?view=about.html
+http://school.flight.htb/index.php?view=blog.html
+```
+
+phpでファイルインクルード処理を実施しているが、lfiの脆弱性があるかも
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_03.png">
