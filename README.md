@@ -4,6 +4,7 @@
 - Blue
 - Cascade
 - Devel
+- Flight
 - Forest
 - Grandpa
 - Granny
