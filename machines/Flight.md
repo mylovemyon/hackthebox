@@ -43,7 +43,7 @@ hosts編集
 サブドメイン列挙  
 別ウェブページを探索するため、サイズが異なるレスポンスを実施するドメインを調査
 ```sh
-└─$ curl http://flight.htb -I
+└─$ curl -I http://flight.htb
 HTTP/1.1 200 OK
 Date: Tue, 14 Oct 2025 08:07:10 GMT
 Server: Apache/2.4.52 (Win64) OpenSSL/1.1.1m PHP/8.1.1
