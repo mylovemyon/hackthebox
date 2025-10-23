@@ -4,6 +4,7 @@
 - Blackfield
 - Blue
 - Cascade
+- Cicada
 - Devel
 - Flight
 - Forest
