@@ -216,6 +216,7 @@ LDAP        10.129.180.164  389    DC01             Done in 01M 02S
 LDAP        10.129.180.164  389    DC01             Compressing output into /home/kali/.nxc/logs/DC01_10.129.180.164_2025-10-26_134930_bloodhound.zip
 ```
 winrm_svcにShadow Credentials攻撃パスを発見  
+https://eladshamir.com/2021/06/21/Shadow-Credentials.html  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Fluffy_02.png">  
 追加
 ```sh
