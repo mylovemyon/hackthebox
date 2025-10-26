@@ -131,18 +131,6 @@ LDAP        10.129.194.101  389    DC01             [+] blackfield.local\support
 LDAP        10.129.194.101  389    DC01             Resolved collection methods: psremote, objectprops, dcom, rdp, session, localadmin, container, acl, group, trusts
 LDAP        10.129.194.101  389    DC01             Done in 02M 22S
 LDAP        10.129.194.101  389    DC01             Compressing output into /home/kali/.nxc/logs/DC01_10.129.194.101_2025-10-19_004440_bloodhound.zip
-
-└─$ cp /home/kali/.nxc/logs/DC01_10.129.194.101_2025-10-19_004440_bloodhound.zip .
-
-└─$ unzip DC01_10.129.194.101_2025-10-19_004440_bloodhound.zip 
-Archive:  DC01_10.129.194.101_2025-10-19_004440_bloodhound.zip
- extracting: DC01_10.129.194.101_2025-10-19_004440_computers.json  
- extracting: DC01_10.129.194.101_2025-10-19_004440_containers.json  
- extracting: DC01_10.129.194.101_2025-10-19_004440_groups.json  
- extracting: DC01_10.129.194.101_2025-10-19_004440_gpos.json  
- extracting: DC01_10.129.194.101_2025-10-19_004440_domains.json  
- extracting: DC01_10.129.194.101_2025-10-19_004440_users.json  
- extracting: DC01_10.129.194.101_2025-10-19_004440_ous.json
 ```
 audit2020に対して`ForceChangePaasord`権限を有していることを確認  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Blackfield_01.png">  
