@@ -641,7 +641,7 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 作成したチケットでmssqlにログイン成功！
 ```sh
 └─$ echo '10.129.80.180 dc.sequel.htb' | sudo tee -a /etc/hosts
-10.129.80.180 sequel.htb
+10.129.80.180 dc.sequel.htb
 ```
 ```sh
 └─$ export KRB5CCNAME=test.ccache
