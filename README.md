@@ -8,6 +8,7 @@
 - Escape
 - Devel
 - Flight
+- Fluffy
 - Forest
 - Grandpa
 - Granny
