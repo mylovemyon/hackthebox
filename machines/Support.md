@@ -28,7 +28,7 @@ Open 10.129.230.181:49707
 
 
 ## STEP 2
-guestでsmbれっきょ
+guestでsmb列挙
 ```sh
 └─$ netexec smb 10.129.230.181 -u 'ldap' -p 'nvEfEK16^1aM4$e7AclUf8x$tRWxPWO1%lmz' --shares                 
 SMB         10.129.230.181  445    DC               [*] Windows Server 2022 Build 20348 x64 (name:DC) (domain:support.htb) (signing:True) (SMBv1:False) 
