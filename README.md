@@ -27,6 +27,7 @@
 - Return
 - Sau
 - Sauna
+- ServMon
 - Shocker
 - Timelapse
 - (yet)Traverxec
