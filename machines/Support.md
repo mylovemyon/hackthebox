@@ -64,7 +64,7 @@ Using domain: WORKGROUP, user: kali
 smb://10.129.230.181/support-tools/UserInfo.exe.zip
 Downloaded 271.00kB in 10 seconds
 ```
-zipを展開すると、exeやdllが展開された  
+zipを展開すると、exeやdllが確認された  
 userinfo.exeのファイル種別を確認すると、.net製であることを確認
 ```sh
 └─$ unzip UserInfo.exe.zip 
@@ -90,8 +90,9 @@ ilspyでデコンパイル
 ユーザ名ldapのパスワードは、protectedクラスから取得されているっぽい  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Support_01.png">  
 protectedクラスを確認、暗号化パスワードの復号化処理を確認  
+base64デコード後、xor暗号を２回実行している
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Support_02.png">  
-復号化するためにをc#コードをpowershellに実装し実行  
+復号化するためにc#コードをpowershellに実装し実行  
 結果、`nvEfEK16^1aM4$e7AclUf8x$tRWxPWO1%lmz`を取得
 ```powershell
 $enc_password = "0Nv32PTwgYjzg9/8j5TbmvPd3e7WhtWWyuPsyO76/Y+U193E"
@@ -107,6 +108,8 @@ for ($i = 0; $i -lt $array.Length; $i++) {
 $decoded = [System.Text.Encoding]::UTF8.GetString($array2)
 Write-Output $decoded
 ```
+ということでユーザ名ldapでログイン成功  
+5985番がオープンだったためwinrmログイン可能だが、ldapではログインできないことを確認
 ```sh
 └─$ netexec ldap 10.129.230.181 -u ldap -p 'nvEfEK16^1aM4$e7AclUf8x$tRWxPWO1%lmz' --groups 'Remote Management Users'
 LDAP        10.129.230.181  389    DC               [*] Windows Server 2022 Build 20348 (name:DC) (domain:support.htb)
