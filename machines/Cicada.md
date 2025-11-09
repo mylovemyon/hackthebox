@@ -1,4 +1,4 @@
-https://app.hackthebox.com/machines/627
+https://app.hackthebox.com/machines/Cicada
 
 ## STEP 1
 ```sh
