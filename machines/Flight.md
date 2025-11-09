@@ -1,3 +1,5 @@
+https://app.hackthebox.com/machines/Flight
+
 ## STEP 1
 ```sh
 └─$ rustscan -a 10.129.200.222 --no-banner --scripts none
