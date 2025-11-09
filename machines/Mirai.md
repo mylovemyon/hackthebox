@@ -1,3 +1,5 @@
+https://app.hackthebox.com/machines/Mirai
+
 ## STEP 1
 ```sh
 └─$ rustscan -a 10.129.159.64 --no-banner --scripts none
