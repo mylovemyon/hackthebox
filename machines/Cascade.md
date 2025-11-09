@@ -1,4 +1,4 @@
-https://app.hackthebox.com/machines/235
+https://app.hackthebox.com/machines/Cascade
 
 ## STEP 1
 ```sh
