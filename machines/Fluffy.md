@@ -1,4 +1,4 @@
-https://app.hackthebox.com/machines/662
+https://app.hackthebox.com/machines/Fluffy
 
 ## STEP 1
 ```sh
