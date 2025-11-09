@@ -1,4 +1,4 @@
-https://app.hackthebox.com/machines/240
+https://app.hackthebox.com/machines/Servmon
 
 ## STEP 1
 ```sh
