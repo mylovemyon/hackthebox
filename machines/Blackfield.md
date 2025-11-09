@@ -1,3 +1,5 @@
+https://app.hackthebox.com/machines/Blackfield
+
 ## STEP 1
 ```sh
 └─$ rustscan -a 10.129.194.101 --no-banner --scripts none
