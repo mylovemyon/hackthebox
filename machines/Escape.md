@@ -1,4 +1,4 @@
-https://app.hackthebox.com/machines/531
+https://app.hackthebox.com/machines/Escape
 
 ## STEP 1
 ```sh
