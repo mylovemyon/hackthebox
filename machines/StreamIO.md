@@ -30,3 +30,29 @@ Open 10.129.62.39:49731
 
 
 ## STEP 2
+443番ポートの証明書からドメイン名を確認
+```sh
+└─$ openssl s_client -connect 10.129.159.242:443 | openssl x509 -nocert -ext subjectAltName
+Connecting to 10.129.159.242
+Can't use SSL_get_servername
+depth=0 C=EU, CN=streamIO
+verify error:num=18:self-signed certificate
+verify return:1
+depth=0 C=EU, CN=streamIO
+verify error:num=10:certificate has expired
+notAfter=Mar 24 07:03:28 2022 GMT
+verify return:1
+depth=0 C=EU, CN=streamIO
+notAfter=Mar 24 07:03:28 2022 GMT
+verify return:1
+X509v3 Subject Alternative Name: 
+    DNS:streamIO.htb, DNS:watch.streamIO.htb
+^C
+```
+hosts編集
+```sh
+└─$ echo '10.129.159.242 streamio.htb watch.streamio.htb' | sudo tee -a /etc/hosts
+10.129.159.242 streamio.htb watch.streamio.htb
+```
+443番アクセス  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Bashed_01.png">  
