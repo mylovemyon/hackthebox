@@ -56,7 +56,8 @@ hosts編集
 ```
 443番アクセス  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_01.png">  
-列挙
+列挙  
+すべて403だが、adminのみレスポンスサイズが小さいね
 ```sh
 └─$ ffuf -r  -u https://streamio.htb/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
 
@@ -136,5 +137,10 @@ Favicon.ico             [Status: 200, Size: 1150, Words: 4, Lines: 1, Duration: 
 favicon.ICO             [Status: 200, Size: 1150, Words: 4, Lines: 1, Duration: 278ms]
 :: Progress: [17129/17129] :: Job [1/1] :: 131 req/sec :: Duration: [0:02:03] :: Errors: 0 ::
 ```
+search.phpにアクセス  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_03.png">  
+クエリした文字列に部分一致した結果が返される  
+この際のクエリした文字列は、httpデータ内の「q」パラメータに格納されることを確認  
+バックエンドのsqlサーバにこのクエリが投げられると予想  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_04.png">  
+sqlmapはうまくいかず  
