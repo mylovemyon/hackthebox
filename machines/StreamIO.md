@@ -139,8 +139,34 @@ favicon.ICO             [Status: 200, Size: 1150, Words: 4, Lines: 1, Duration: 
 ```
 search.phpにアクセス  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_03.png">  
-クエリした文字列に部分一致した結果が返される  
-この際のクエリした文字列は、httpデータ内の「q」パラメータに格納されることを確認  
-バックエンドのsqlサーバにこのクエリが投げられると予想  
+フォーム内に入力した文字列に部分一致した結果が返されるwebページであった  
+この際の文字列は、httpデータ内の「q」パラメータに格納されることを確認  
+バックエンドのsqlサーバにこのリクエストが送信されると仮定した場合のsqlは、
+```sql
+# microsoft sql の場合
+select name from table where name like '%入力文字列%' 
+```
+になると予想  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_04.png">  
-sqlmapはうまくいかず  
+みんな大好き[portswigger](https://portswigger.net/web-security/sql-injection#what-is-sql-injection-sqli)のサイトを使ってsqlインジェクションを考える  
+まずはコメントアウトが動作するか確認  
+```sql
+# oracle, mssql, PostgreSQL がこの構文を使用
+select name from table where name like '%showman'-- %' 
+```
+みごとコメントアウトが動作した  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_05.png">  
+次にunion演算子を使用して悪意あるsqlをインジェクションできるかテスト  
+[リンク](https://portswigger.net/web-security/sql-injection/union-attacks)で確認できる通り、２つのsql文の結果は同じ列数かつ同じ列の型でないといけない  
+列数を把握するために便利なunionインジェクションの一例として
+```sql
+showman' ORDER BY 1--
+showman' ORDER BY 1--
+# や
+showman' UNION SELECT NULL--
+showman' UNION SELECT NULL,NULL--
+```
+などが使用できるが、こいつらを入力すると別ページにリダイレクトされる仕組みになっていた  
+どうやら`order`や`null`文字列がwafみたいなやつにひっかかったぽい  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_06.png">  
+
