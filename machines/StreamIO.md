@@ -56,6 +56,7 @@ hosts編集
 ```
 443番アクセス  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_01.png">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_02.png">  
 列挙  
 すべて403だが、adminのみレスポンスサイズが小さいね
 ```sh
@@ -129,7 +130,7 @@ master.php              [Status: 200, Size: 58, Words: 5, Lines: 2, Duration: 32
 
 ## STEP 3
 サブドメインにアクセス  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_02.png">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_03.png">  
 列挙
 ```sh
 └─$ ffuf -u https://watch.streamio.htb/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt 
@@ -166,7 +167,7 @@ favicon.ICO             [Status: 200, Size: 1150, Words: 4, Lines: 1, Duration: 
 :: Progress: [17129/17129] :: Job [1/1] :: 131 req/sec :: Duration: [0:02:03] :: Errors: 0 ::
 ```
 search.phpにアクセス  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_03.png">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_04.png">  
 フォーム内に入力した文字列に部分一致した結果が返されるwebページであった  
 入力した文字列は、httpsリクエストデータ内の「q」パラメータに格納されることを確認  
 この際のバックエンドのsqlサーバで動作するsqlは、
@@ -175,7 +176,7 @@ search.phpにアクセス
 select name from table where name like '%入力文字列%' 
 ```
 になると予想  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_04.png">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_05.png">  
 みんな大好き[portswigger](https://portswigger.net/web-security/sql-injection#what-is-sql-injection-sqli)のサイトを使ってsqlインジェクションを考える  
 まずはコメントアウトが動作するか確認  
 ```sql
@@ -183,7 +184,7 @@ select name from table where name like '%入力文字列%'
 select name from table where name like '%showman'-- %' 
 ```
 みごとコメントアウトが動作した  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_05.png">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_06.png">  
 次にunion演算子を使用して悪意あるsqlを結合できるかテスト  
 [リンク](https://portswigger.net/web-security/sql-injection/union-attacks)で確認できる通り、２つのsql文の結果は同じ列数かつ同じ列の型でないといけない  
 列数を把握するために便利なunionインジェクションの一例として
@@ -196,7 +197,7 @@ select name from table where name like '%showman'-- %'
 ```
 などが使用できるが、こいつらを入力すると別ページにリダイレクトされる仕組みになっていた  
 どうやら`order`や`null`文字列がwafみたいなやつにひっかかったぽい  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_06.png">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_07.png">  
 他にも下記のsqlで列数を把握できるため試行
 ```sql
 # select 1,2 だと２列のテーブルを表示する
@@ -205,7 +206,7 @@ select name from table where name like '%showman'-- %'
 ```
 ちなみにunion対象のテーブルは文字列型のデータっぽいので、インジェクションするデータも文字列型を指定する  
 すると６列のテーブルを結合すると結果が確認できた、ちなみにテーブルの２列目がwebページに表示されているイメージ  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_07.png">  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_08.png">  
 
 
 ## STEP 4
