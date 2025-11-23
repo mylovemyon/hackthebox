@@ -29,6 +29,8 @@
 - Sauna
 - ServMon
 - Shocker
+- StreamIO
+- Support
 - Timelapse
 - (yet)Traverxec
 - Valentine
