@@ -1,3 +1,4 @@
+//go build -ldflags "-H=windowsgui"
 package main
 
 import (
