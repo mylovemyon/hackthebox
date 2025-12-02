@@ -31,7 +31,6 @@ package main
 import (
 	"crypto/rc4"
 	"encoding/base64"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -108,9 +107,9 @@ func main() {
 	for {
 		<-ticker.C
 
-		fmt.Println(time.Now())
 		httprequest(data)
 
+		// for flag
 		_ = flag
 	}
 }
